@@ -1,0 +1,44 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+  <div class="bodega-admin-dashboard">
+    <section class="bodega-admin-dashboard__hero">
+      <div>
+        <p class="bodega-admin-dashboard__eyebrow">Centro operativo</p>
+        <h2>Todo lo importante del store, ordenado para el equipo interno.</h2>
+        <p>
+          Desde aca pueden administrar vinos, precios, stock, imagenes, clientes,
+          pedidos y promociones sin tener que navegar un admin crudo.
+        </p>
+      </div>
+      <div class="bodega-admin-dashboard__actions">
+        <a class="button" href="{% url 'admin:catalog_wine_add' %}">Cargar nuevo vino</a>
+        <a class="button button--ghost" href="{% url 'admin:catalog_wine_changelist' %}">Ver catálogo</a>
+      </div>
+    </section>
+
+    <section class="bodega-admin-dashboard__grid">
+      <article class="bodega-admin-card">
+        <p class="bodega-admin-card__title">Catalogo</p>
+        <p>Vinos, categorias, varietales, imagenes y reviews con foco comercial.</p>
+      </article>
+      <article class="bodega-admin-card">
+        <p class="bodega-admin-card__title">Clientes</p>
+        <p>Usuarios, preferencias y señales de automatizacion en una sola vista.</p>
+      </article>
+      <article class="bodega-admin-card">
+        <p class="bodega-admin-card__title">Store</p>
+        <p>Carritos, pedidos y promos disponibles para operaciones y soporte.</p>
+      </article>
+    </section>
+  </div>
+
+  <div id="content-main">
+    {% if app_list %}
+      {% include "admin/app_list.html" with app_list=app_list show_changelinks=True %}
+    {% else %}
+      <p>{% translate "No tienes permisos para ver o editar nada." %}</p>
+    {% endif %}
+  </div>
+{% endblock %}

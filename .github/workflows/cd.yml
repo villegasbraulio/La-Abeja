@@ -1,0 +1,16 @@
+name: CD
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate compose file
+        run: docker compose -f docker-compose.prod.yml config >/dev/null
+      - name: Build containers
+        run: docker compose -f docker-compose.prod.yml build

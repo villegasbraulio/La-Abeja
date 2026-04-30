@@ -1,0 +1,25 @@
+{% extends "admin/base.html" %}
+{% load i18n static %}
+
+{% block title %}Bodega La Abeja Admin | {{ title }}{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'admin/css/bodega_admin.css' %}">
+{% endblock %}
+
+{% block branding %}
+  <div class="bodega-admin-branding">
+    <div class="bodega-admin-branding__eyebrow">Panel interno</div>
+    <h1 id="site-name">
+      <a href="{% url 'admin:index' %}">Bodega La Abeja</a>
+    </h1>
+    <p class="bodega-admin-branding__subtitle">
+      Catalogo, clientes, pedidos y promociones desde una vista mas amigable.
+    </p>
+  </div>
+{% endblock %}
+
+{% block nav-global %}
+  <div class="bodega-admin-nav-global">Operaciones · San Rafael · Mendoza</div>
+{% endblock %}

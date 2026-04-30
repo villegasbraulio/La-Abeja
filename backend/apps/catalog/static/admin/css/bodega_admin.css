@@ -1,0 +1,213 @@
+:root {
+  --bodega-burgundy: #722f37;
+  --bodega-burgundy-dark: #420d15;
+  --bodega-gold: #c8a96e;
+  --bodega-cream: #faf7f2;
+  --bodega-ink: #251e1a;
+  --bodega-success: #1f6b46;
+  --bodega-warning: #af6e1f;
+  --bodega-danger: #8f1e2a;
+}
+
+#header {
+  background:
+    radial-gradient(circle at top left, rgba(200, 169, 110, 0.18), transparent 24%),
+    linear-gradient(135deg, var(--bodega-burgundy-dark), var(--bodega-burgundy));
+  color: #fff;
+}
+
+#site-name a,
+#site-name a:visited {
+  color: #fff;
+}
+
+.bodega-admin-branding {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.bodega-admin-branding__eyebrow,
+.bodega-admin-nav-global {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.bodega-admin-branding__subtitle {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.9rem;
+}
+
+div.breadcrumbs {
+  background: #f1e7dc;
+  color: var(--bodega-ink);
+}
+
+div.breadcrumbs a {
+  color: var(--bodega-burgundy);
+}
+
+.module h2,
+.module caption,
+.inline-group h2 {
+  background: var(--bodega-burgundy);
+}
+
+.button,
+input[type="submit"],
+input[type="button"],
+.submit-row input,
+a.button {
+  background: var(--bodega-burgundy);
+  border-radius: 999px;
+  border: none;
+}
+
+.button:hover,
+input[type="submit"]:hover,
+input[type="button"]:hover,
+.submit-row input:hover,
+a.button:hover {
+  background: var(--bodega-burgundy-dark);
+}
+
+.button.button--ghost {
+  background: #fff;
+  color: var(--bodega-burgundy);
+  border: 1px solid rgba(114, 47, 55, 0.2);
+}
+
+.bodega-admin-dashboard {
+  display: grid;
+  gap: 1.2rem;
+  margin-bottom: 1.6rem;
+}
+
+.bodega-admin-dashboard__hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.2rem;
+  padding: 1.4rem 1.6rem;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(200, 169, 110, 0.2), transparent 24%),
+    var(--bodega-cream);
+  border: 1px solid rgba(114, 47, 55, 0.12);
+}
+
+.bodega-admin-dashboard__eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--bodega-burgundy);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.bodega-admin-dashboard__hero h2 {
+  margin: 0;
+  color: var(--bodega-burgundy-dark);
+}
+
+.bodega-admin-dashboard__hero p {
+  max-width: 52rem;
+  color: #5f524a;
+}
+
+.bodega-admin-dashboard__actions {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.bodega-admin-dashboard__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+}
+
+.bodega-admin-card {
+  padding: 1rem 1.1rem;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid rgba(114, 47, 55, 0.12);
+  box-shadow: 0 12px 28px rgba(66, 13, 21, 0.06);
+}
+
+.bodega-admin-card__title {
+  margin: 0 0 0.3rem;
+  color: var(--bodega-burgundy-dark);
+  font-weight: 700;
+}
+
+.bodega-admin-thumb {
+  width: 62px;
+  height: 62px;
+  object-fit: cover;
+  border-radius: 16px;
+}
+
+.bodega-admin-hero {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.bodega-admin-hero__image {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: 20px;
+}
+
+.bodega-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.bodega-badge--success {
+  background: rgba(31, 107, 70, 0.12);
+  color: var(--bodega-success);
+}
+
+.bodega-badge--warning {
+  background: rgba(175, 110, 31, 0.14);
+  color: var(--bodega-warning);
+}
+
+.bodega-badge--danger {
+  background: rgba(143, 30, 42, 0.14);
+  color: var(--bodega-danger);
+}
+
+.bodega-badge--neutral {
+  background: rgba(114, 47, 55, 0.08);
+  color: var(--bodega-burgundy);
+}
+
+.help {
+  margin-top: 0.5rem;
+  color: #7b6f68;
+}
+
+#changelist-filter h2 {
+  background: var(--bodega-burgundy-dark);
+}
+
+.aligned label {
+  font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .bodega-admin-dashboard__hero {
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,215 @@
+"""Integration tests for custom backoffice catalog endpoints."""
+
+from __future__ import annotations
+
+import pytest
+from rest_framework.test import APIClient
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from apps.authentication.tests.factories import UserFactory
+
+from .factories import CategoryFactory, VarietalFactory, WineFactory, WineImageFactory
+
+
+@pytest.fixture
+def staff_client() -> tuple[APIClient, object]:
+    """Return a JWT-authenticated staff client."""
+    user = UserFactory(is_staff=True, is_superuser=True)
+    client = APIClient()
+    refresh = RefreshToken.for_user(user)
+    client.credentials(HTTP_AUTHORIZATION=f"Bearer {str(refresh.access_token)}")
+    return client, user
+
+
+@pytest.mark.django_db
+def test_backoffice_dashboard_requires_staff(
+    authenticated_client: tuple[APIClient, object],
+) -> None:
+    """Regular authenticated users should be blocked from the backoffice."""
+    client, _ = authenticated_client
+
+    response = client.get("/api/v1/backoffice/dashboard/")
+
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_backoffice_dashboard_returns_summary(staff_client: tuple[APIClient, object]) -> None:
+    """Staff should receive dashboard KPIs."""
+    client, _ = staff_client
+    wine = WineFactory(stock=3, low_stock_threshold=5, is_active=True)
+    WineImageFactory(wine=wine, is_primary=True)
+
+    response = client.get("/api/v1/backoffice/dashboard/")
+
+    assert response.status_code == 200
+    assert response.data["total_wines"] >= 1
+    assert response.data["low_stock_wines"] >= 1
+    assert response.data["low_stock_items"][0]["name"] == wine.name
+
+
+@pytest.mark.django_db
+def test_staff_can_create_category(staff_client: tuple[APIClient, object]) -> None:
+    """Staff can create categories through the backoffice API."""
+    client, _ = staff_client
+
+    response = client.post(
+        "/api/v1/backoffice/categories/",
+        {
+            "name": "Espumantes",
+            "description": "Metodo tradicional.",
+            "icon": "sparkles",
+            "order": 2,
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201
+    assert response.data["slug"] == "espumantes"
+
+
+@pytest.mark.django_db
+def test_staff_can_update_and_delete_category(staff_client: tuple[APIClient, object]) -> None:
+    """Staff can update and delete categories."""
+    client, _ = staff_client
+    category = CategoryFactory(name="Tintos", slug="tintos")
+
+    patch_response = client.patch(
+        f"/api/v1/backoffice/categories/{category.id}/",
+        {"name": "Tintos Reserva", "slug": ""},
+        format="json",
+    )
+    delete_response = client.delete(f"/api/v1/backoffice/categories/{category.id}/")
+
+    assert patch_response.status_code == 200
+    assert patch_response.data["slug"] == "tintos-reserva"
+    assert delete_response.status_code == 204
+
+
+@pytest.mark.django_db
+def test_staff_can_create_and_update_varietal(staff_client: tuple[APIClient, object]) -> None:
+    """Staff can create and update varietals."""
+    client, _ = staff_client
+
+    create_response = client.post(
+        "/api/v1/backoffice/varietals/",
+        {
+            "name": "Bonarda",
+            "description": "Fruta roja vibrante.",
+            "origin_region": "San Rafael",
+        },
+        format="json",
+    )
+
+    varietal_id = create_response.data["id"]
+    update_response = client.patch(
+        f"/api/v1/backoffice/varietals/{varietal_id}/",
+        {"origin_region": "Mendoza"},
+        format="json",
+    )
+
+    assert create_response.status_code == 201
+    assert update_response.status_code == 200
+    assert update_response.data["origin_region"] == "Mendoza"
+
+
+@pytest.mark.django_db
+def test_staff_can_list_wines(staff_client: tuple[APIClient, object]) -> None:
+    """Staff can load the wine manager list."""
+    client, _ = staff_client
+    wine = WineFactory(is_active=True, is_featured=True)
+    WineImageFactory(wine=wine, is_primary=True, url="https://example.com/hero.jpg")
+
+    response = client.get("/api/v1/backoffice/wines/")
+
+    assert response.status_code == 200
+    assert response.data["results"][0]["name"] == wine.name
+    assert response.data["results"][0]["primary_image"] == "https://example.com/hero.jpg"
+
+
+@pytest.mark.django_db
+def test_staff_can_create_wine_with_images(staff_client: tuple[APIClient, object]) -> None:
+    """Staff can create wines with images through the custom backoffice."""
+    client, _ = staff_client
+    category = CategoryFactory()
+    varietal = VarietalFactory()
+
+    response = client.post(
+        "/api/v1/backoffice/wines/",
+        {
+            "name": "Gran Blend de Operaciones",
+            "category": category.id,
+            "varietal": varietal.id,
+            "vintage_year": 2024,
+            "price": "7800.00",
+            "compare_at_price": "8600.00",
+            "cost_price": "3500.00",
+            "stock": 18,
+            "low_stock_threshold": 6,
+            "sku": "LAB-OPS-001",
+            "alcohol_percentage": "14.0",
+            "serving_temperature_min": 15,
+            "serving_temperature_max": 18,
+            "ageing_months": 10,
+            "ageing_type": "oak",
+            "tannins": 60,
+            "acidity": 50,
+            "body": 72,
+            "sweetness": 18,
+            "fruit_intensity": 78,
+            "description": "Texto comercial.",
+            "tasting_notes": "Notas intensas.",
+            "pairing_suggestions": ["Asado", "Quesos"],
+            "winemaker_notes": "Lote especial.",
+            "awards": [{"award": "Decanter", "score": 92, "year": 2024}],
+            "blend_varietals": [{"varietal": "Malbec", "percentage": 80}],
+            "meta_title": "Gran Blend",
+            "meta_description": "Detalle del vino.",
+            "is_featured": True,
+            "is_active": True,
+            "is_limited_edition": False,
+            "images": [
+                {
+                    "url": "https://example.com/gran-blend.jpg",
+                    "alt_text": "Botella principal",
+                    "is_primary": True,
+                    "order": 0,
+                }
+            ],
+        },
+        format="json",
+    )
+
+    assert response.status_code == 201
+    assert response.data["slug"] == "gran-blend-de-operaciones"
+    assert len(response.data["images"]) == 1
+
+
+@pytest.mark.django_db
+def test_staff_can_update_and_delete_wine(staff_client: tuple[APIClient, object]) -> None:
+    """Staff can update a wine and replace its images."""
+    client, _ = staff_client
+    wine = WineFactory()
+
+    patch_response = client.patch(
+        f"/api/v1/backoffice/wines/{wine.id}/",
+        {
+            "price": "9999.00",
+            "stock": 4,
+            "images": [
+                {
+                    "url": "https://example.com/new-primary.jpg",
+                    "alt_text": "Nueva principal",
+                    "is_primary": True,
+                    "order": 0,
+                }
+            ],
+        },
+        format="json",
+    )
+    delete_response = client.delete(f"/api/v1/backoffice/wines/{wine.id}/")
+
+    assert patch_response.status_code == 200
+    assert patch_response.data["price"] == "9999.00"
+    assert patch_response.data["images"][0]["url"] == "https://example.com/new-primary.jpg"
+    assert delete_response.status_code == 204

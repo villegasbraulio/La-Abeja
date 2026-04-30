@@ -1,0 +1,99 @@
+import { Link } from "react-router-dom";
+import { PageHero } from "../../components/common/PageHero";
+import { SectionHeading } from "../../components/common/SectionHeading";
+import { Button } from "../../components/ui/Button";
+import { guideFaqs, shippingHighlights } from "../../lib/siteContent";
+
+export function GuidePage() {
+  return (
+    <div>
+      <PageHero
+        eyebrow="Guia de compra y envios"
+        title="La capa de confianza que ayuda a comprar sin dudar."
+        description="Agregamos una pagina utilitaria para envios, retiro, preguntas frecuentes y criterios de atencion, algo que las bodegas maduras muestran de forma muy visible."
+        aside={
+          <div className="space-y-4 text-burgundy-900">
+            <p>
+              <span className="font-semibold">Cobertura demo:</span> Cuyo y AMBA priorizados
+            </p>
+            <p>
+              <span className="font-semibold">Retiro:</span> disponible con coordinacion previa
+            </p>
+            <p>
+              <span className="font-semibold">Asistencia:</span> soporte humano para regalos, volumen y visitas
+            </p>
+          </div>
+        }
+      >
+        <Link to="/contacto?tipo=envios">
+          <Button>Consultar un envio</Button>
+        </Link>
+        <Link to="/carrito">
+          <Button variant="ghost">Ver carrito</Button>
+        </Link>
+      </PageHero>
+
+      <section className="mx-auto max-w-7xl px-6 py-8">
+        <div className="grid gap-6 md:grid-cols-3">
+          {shippingHighlights.map((highlight) => (
+            <article
+              key={highlight.title}
+              className="rounded-[30px] border border-burgundy-100 bg-white p-6 shadow-velvet"
+            >
+              <h2 className="font-serif text-3xl text-burgundy-950">{highlight.title}</h2>
+              <p className="mt-4 leading-7 text-burgundy-800">{highlight.description}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section id="retiro" className="mx-auto max-w-7xl px-6 py-20">
+        <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+          <div className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
+            <SectionHeading
+              eyebrow="Retiro en bodega"
+              title="Una opcion simple, clara y visible para quienes pasan por San Rafael."
+            />
+            <p className="mt-6 leading-8 text-burgundy-800">
+              Esta pagina ahora contempla algo que en negocios reales suele pesar mucho: poder
+              comprar online y retirar en finca. Eso reduce dudas, suma conveniencia y mejora la
+              integracion entre hospitalidad y ecommerce.
+            </p>
+          </div>
+          <div className="rounded-[32px] border border-white/70 bg-burgundy-950 p-8 text-cream-50 shadow-velvet">
+            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gold-300">
+              Lo que comunica
+            </p>
+            <ul className="mt-6 space-y-3 text-cream-100/80">
+              <li>• Coordinacion posterior a la compra con franja horaria sugerida.</li>
+              <li>• Oportunidad de sumar visita, regalo o compra asistida el mismo dia.</li>
+              <li>• Menos friccion para clientes locales o turistas con agenda ajustada.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" className="mx-auto max-w-7xl px-6 py-8">
+        <div className="rounded-[36px] border border-burgundy-100 bg-white px-8 py-10 shadow-velvet md:px-10">
+          <SectionHeading
+            eyebrow="FAQ"
+            title="Preguntas frecuentes pensadas como capa de conversion."
+          />
+          <div className="mt-8 space-y-4">
+            {guideFaqs.map((item) => (
+              <details
+                key={item.question}
+                className="rounded-[24px] border border-burgundy-100 bg-cream-50 px-5 py-4"
+              >
+                <summary className="cursor-pointer list-none text-lg font-semibold text-burgundy-950">
+                  {item.question}
+                </summary>
+                <p className="mt-3 leading-7 text-burgundy-800">{item.answer}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
