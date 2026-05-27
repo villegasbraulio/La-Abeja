@@ -10,6 +10,7 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 CELERY_TASK_ALWAYS_EAGER = True
 MIGRATION_MODULES = {
     "authentication": None,
+    "ai": None,
     "catalog": None,
     "orders": None,
     "payments": None,

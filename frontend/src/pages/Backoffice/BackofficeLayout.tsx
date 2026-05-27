@@ -7,6 +7,7 @@ import { cn } from "../../lib/utils";
 
 const backofficeLinks = [
   { label: "Resumen", href: "/backoffice" },
+  { label: "Copilot", href: "/backoffice/copilot" },
   { label: "Vinos", href: "/backoffice/vinos" },
   { label: "Categorias", href: "/backoffice/categorias" },
   { label: "Varietales", href: "/backoffice/varietales" },

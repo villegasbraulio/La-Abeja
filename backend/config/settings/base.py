@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt.token_blacklist",
     "django_filters",
     "apps.authentication",
+    "apps.ai",
     "apps.catalog",
     "apps.orders",
     "apps.payments",
@@ -153,6 +154,13 @@ ENABLE_WHATSAPP_NOTIFICATIONS = (
 )
 ENABLE_SMS_NOTIFICATIONS = os.getenv("ENABLE_SMS_NOTIFICATIONS", "False").lower() == "true"
 LOW_STOCK_ALERT_ENABLED = os.getenv("LOW_STOCK_ALERT_ENABLED", "True").lower() == "true"
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+AI_CHAT_MODEL = os.getenv("AI_CHAT_MODEL", "gpt-4.1")
+AI_REASONING_MODEL = os.getenv("AI_REASONING_MODEL", "gpt-5.1")
+AI_EMBEDDING_MODEL = os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-large")
+AI_MAX_KNOWLEDGE_RESULTS = int(os.getenv("AI_MAX_KNOWLEDGE_RESULTS", "6"))
+AI_USE_LLM = os.getenv("AI_USE_LLM", "True").lower() == "true"
 
 LOGGING = {
     "version": 1,

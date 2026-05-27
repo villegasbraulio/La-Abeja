@@ -3,6 +3,7 @@ import { Layout } from "./components/layout/Layout";
 import { AboutPage } from "./pages/About";
 import { BackofficeLayout } from "./pages/Backoffice/BackofficeLayout";
 import { CategoriesPage } from "./pages/Backoffice/CategoriesPage";
+import { BackofficeCopilotPage } from "./pages/Backoffice/CopilotPage";
 import { BackofficeDashboardPage } from "./pages/Backoffice/DashboardPage";
 import { BackofficeLoginPage } from "./pages/Backoffice/LoginPage";
 import { VarietalsPage } from "./pages/Backoffice/VarietalsPage";
@@ -33,6 +34,7 @@ export default function App() {
       <Route path="/backoffice/login" element={<BackofficeLoginPage />} />
       <Route path="/backoffice" element={<BackofficeLayout />}>
         <Route index element={<BackofficeDashboardPage />} />
+        <Route path="copilot" element={<BackofficeCopilotPage />} />
         <Route path="vinos" element={<WinesPage />} />
         <Route path="categorias" element={<CategoriesPage />} />
         <Route path="varietales" element={<VarietalsPage />} />
