@@ -10,6 +10,7 @@ export function HeroSection() {
         <motion.p
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.65, ease: "easeOut" }}
           className="mb-5 text-sm font-semibold uppercase tracking-[0.35em] text-burgundy-700"
         >
           San Rafael · Mendoza · Desde 1883
@@ -17,7 +18,7 @@ export function HeroSection() {
         <motion.h1
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
+          transition={{ delay: 0.12, duration: 0.75, ease: "easeOut" }}
           className="max-w-3xl font-serif text-5xl leading-tight text-burgundy-950 md:text-7xl"
         >
           Una bodega historica convertida en experiencia premium de compra, visita y marca.
@@ -25,7 +26,7 @@ export function HeroSection() {
         <motion.p
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.24, duration: 0.75, ease: "easeOut" }}
           className="mt-6 max-w-2xl text-lg leading-8 text-burgundy-800"
         >
           Bodega La Abeja combina hospitalidad cuyana, storytelling enologico y una plataforma
@@ -34,7 +35,7 @@ export function HeroSection() {
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.36, duration: 0.75, ease: "easeOut" }}
           className="mt-10 flex flex-wrap gap-4"
         >
           <Link to="/vinos">
@@ -65,6 +66,7 @@ export function HeroSection() {
       <motion.div
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.85, ease: "easeOut" }}
         className="relative overflow-hidden rounded-[32px] border border-white/60 bg-hero-radial p-6 shadow-velvet"
       >
         <img

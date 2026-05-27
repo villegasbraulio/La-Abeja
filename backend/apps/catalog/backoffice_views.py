@@ -15,6 +15,8 @@ from apps.orders.models import Order
 from .backoffice_serializers import (
     BackofficeCategorySerializer,
     BackofficeDashboardSerializer,
+    BackofficeOrderDetailSerializer,
+    BackofficeOrderListSerializer,
     BackofficeVarietalSerializer,
     BackofficeWineDetailSerializer,
     BackofficeWineListSerializer,
@@ -212,3 +214,38 @@ class BackofficeWineDetailView(generics.RetrieveUpdateDestroyAPIView):
         """Return a more explicit delete response for the frontend."""
         self.destroy(request, *args, **kwargs)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class BackofficeOrderListView(generics.ListAPIView):
+    """List orders for the custom backoffice queue."""
+
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    serializer_class = BackofficeOrderListSerializer
+    filter_backends = [filters.OrderingFilter, filters.SearchFilter]
+    ordering_fields = ["created_at", "total", "status"]
+    ordering = ["-created_at"]
+    search_fields = ["order_number", "user__email", "user__first_name", "user__last_name"]
+
+    def get_queryset(self) -> QuerySet[Order]:
+        """Return orders with staff-friendly filters."""
+        queryset = (
+            Order.objects.select_related("user", "payment")
+            .prefetch_related("items")
+            .all()
+        )
+        status_filter = self.request.query_params.get("status")
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        return queryset
+
+
+class BackofficeOrderDetailView(generics.RetrieveAPIView):
+    """Retrieve a single order for internal operations."""
+
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    serializer_class = BackofficeOrderDetailSerializer
+    queryset = (
+        Order.objects.select_related("user", "payment")
+        .prefetch_related("items__wine__images")
+        .all()
+    )

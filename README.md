@@ -2,7 +2,7 @@
 
 Showcase premium de e-commerce vitivinícola y automatizaciones para una bodega de San Rafael, Mendoza.
 
-El proyecto está pensado como portfolio de alto nivel: combina un storefront editorial, un catálogo administrable, un backoffice custom para operación interna y una base backend preparada para crecer hacia checkout, reservas, pagos y automatizaciones más complejas.
+El proyecto está pensado como portfolio de alto nivel: combina un storefront editorial, un catálogo administrable, un backoffice custom para operación interna y una base backend preparada para crecer hacia reservas, automatizaciones y operaciones más complejas.
 
 ## Estado actual
 
@@ -10,8 +10,8 @@ Hoy el repositorio ya incluye un producto navegable y usable para demo:
 
 - storefront público en React con landing, catálogo, ficha de vino, carrito y páginas editoriales
 - autenticación JWT con perfil y flujo base de sesión
-- backoffice custom para gestionar vinos, categorías y varietales sin depender del Django admin
-- backend Django REST con catálogo, auth y API interna para operación
+- backoffice custom para gestionar catálogo y pedidos sin depender del Django admin
+- backend Django REST con catálogo, auth, checkout fase 1 y API interna para operación
 - automatizaciones iniciales de carrito abandonado y descuentos de cumpleaños
 - tests y tooling de calidad para backend y frontend
 
@@ -23,17 +23,21 @@ Lo que ya está implementado:
 - ficha de producto
 - carrito visual/persistido
 - login JWT
+- checkout real fase 1 con creación de órdenes
+- integración con Mercado Pago Checkout Pro
+- webhook de pagos y sincronización de estado
+- historial de pedidos del cliente
 - backoffice custom
+- visibilidad de pedidos en backoffice
 - seeds demo
 - automatizaciones iniciales
 
 Lo que sigue siendo roadmap:
 
-- checkout real
-- órdenes end-to-end
-- integración productiva con Mercado Pago
 - reservas completas
+- endurecimiento productivo de pagos, envíos y notificaciones
 - workers y servicios externos operando en producción
+- evolución a Checkout Bricks si se busca una UX de pago totalmente embebida
 
 ## Stack
 
@@ -78,6 +82,10 @@ Rutas principales disponibles:
 - `/vinos`
 - `/vinos/:slug`
 - `/carrito`
+- `/checkout`
+- `/checkout/resultado`
+- `/pedidos`
+- `/pedidos/:id`
 - `/visitas`
 - `/historia`
 - `/regalos`
@@ -102,6 +110,7 @@ Ruta principal:
 Módulos disponibles hoy:
 
 - dashboard operativo
+- cola interna de pedidos
 - gestión de vinos
 - gestión de categorías
 - gestión de varietales
@@ -109,7 +118,42 @@ Módulos disponibles hoy:
 Objetivo del backoffice:
 
 - que alguien comercial, de marketing o de operaciones pueda editar el catálogo sin entrar al Django admin
-- priorizar una UX clara para tareas de negocio: precios, stock, imágenes, destacados y contenido de producto
+- priorizar una UX clara para tareas de negocio: pedidos, precios, stock, imágenes, destacados y contenido de producto
+
+## Checkout fase 1
+
+La fase 1 ya quedó aplicada con un enfoque simple y vendible:
+
+- checkout autenticado desde el storefront
+- creación real de órdenes en backend
+- redirección a Mercado Pago Checkout Pro
+- recepción de webhook de pago
+- actualización de `Payment` y `Order`
+- historial y detalle de pedidos para cliente
+- visibilidad de pedidos en backoffice
+
+### Decisiones técnicas de fase 1
+
+- se usa `Checkout Pro` en vez de `Bricks` para salir más rápido con un flujo real
+- el backend crea la orden antes de generar la preferencia de pago
+- el frontend nunca usa el `access token` de Mercado Pago
+- el webhook es la fuente de verdad para consolidar el estado del pago
+- la experiencia requiere usuario autenticado para asociar la orden al cliente
+
+### Flujo
+
+```mermaid
+flowchart TD
+    A["Carrito en frontend"] --> B["Checkout autenticado"]
+    B --> C["POST /api/v1/orders/orders/"]
+    C --> D["Orden pendiente de pago"]
+    D --> E["POST /api/v1/payments/create-preference/"]
+    E --> F["Redirect a Mercado Pago Checkout Pro"]
+    F --> G["Webhook /api/v1/payments/webhook/"]
+    G --> H["Actualizar Payment + Order"]
+    H --> I["Cliente ve resultado e historial"]
+    H --> J["Backoffice ve el pedido"]
+```
 
 ## Arquitectura
 
@@ -145,6 +189,8 @@ El backoffice custom consume una API interna separada del catálogo público.
 - `GET /api/v1/backoffice/wines/<uuid>/`
 - `PATCH /api/v1/backoffice/wines/<uuid>/`
 - `DELETE /api/v1/backoffice/wines/<uuid>/`
+- `GET /api/v1/backoffice/orders/`
+- `GET /api/v1/backoffice/orders/<uuid>/`
 
 ### Qué puede hacer hoy
 
@@ -155,6 +201,7 @@ El backoffice custom consume una API interna separada del catálogo público.
 - editar maridajes, notas, premios y metadata SEO
 - crear y ordenar categorías
 - crear varietales
+- revisar pedidos y ver su detalle operativo
 - ver KPIs básicos del catálogo
 
 ### Seguridad
@@ -187,6 +234,18 @@ El backoffice custom consume una API interna separada del catálogo público.
 - `POST /api/v1/catalog/wines/<slug>/reviews/`
 - `GET /api/v1/catalog/categories/`
 - `GET /api/v1/catalog/varietals/`
+
+### Órdenes
+
+- `GET /api/v1/orders/orders/`
+- `POST /api/v1/orders/orders/`
+- `GET /api/v1/orders/orders/<uuid>/`
+- `POST /api/v1/orders/orders/<uuid>/cancel/`
+
+### Pagos
+
+- `POST /api/v1/payments/create-preference/`
+- `POST /api/v1/payments/webhook/`
 
 ### Salud de la app
 

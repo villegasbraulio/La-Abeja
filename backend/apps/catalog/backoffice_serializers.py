@@ -8,6 +8,10 @@ from django.db import transaction
 from django.template.defaultfilters import slugify
 from rest_framework import serializers
 
+from apps.orders.models import Order
+from apps.orders.serializers import OrderSerializer
+from apps.payments.models import Payment
+
 from .models import Category, Varietal, Wine, WineImage
 
 
@@ -211,3 +215,83 @@ class BackofficeDashboardSerializer(serializers.Serializer):
     total_orders = serializers.IntegerField()
     pending_orders = serializers.IntegerField()
     low_stock_items = serializers.ListField(child=serializers.DictField())
+
+
+class BackofficeOrderListSerializer(serializers.ModelSerializer):
+    """Lightweight order serializer for the internal operations queue."""
+
+    customer_name = serializers.SerializerMethodField()
+    customer_email = serializers.EmailField(source="user.email", read_only=True)
+    customer_phone = serializers.CharField(source="user.phone", read_only=True)
+    item_count = serializers.SerializerMethodField()
+    payment_status = serializers.SerializerMethodField()
+    payment_status_label = serializers.SerializerMethodField()
+    status_label = serializers.CharField(source="get_status_display", read_only=True)
+    shipping_method_label = serializers.CharField(
+        source="get_shipping_method_display",
+        read_only=True,
+    )
+
+    class Meta:
+        model = Order
+        fields = [
+            "id",
+            "order_number",
+            "customer_name",
+            "customer_email",
+            "customer_phone",
+            "status",
+            "status_label",
+            "payment_status",
+            "payment_status_label",
+            "shipping_method",
+            "shipping_method_label",
+            "total",
+            "item_count",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_customer_name(self, obj: Order) -> str:
+        """Return a business-friendly customer display name."""
+        full_name = f"{obj.user.first_name} {obj.user.last_name}".strip()
+        return full_name or obj.user.email
+
+    def get_item_count(self, obj: Order) -> int:
+        """Return the total number of bottles in the order."""
+        return sum(item.quantity for item in obj.items.all())
+
+    def get_payment_status(self, obj: Order) -> str | None:
+        """Expose the linked payment status when it exists."""
+        try:
+            return obj.payment.status
+        except Payment.DoesNotExist:
+            return None
+
+    def get_payment_status_label(self, obj: Order) -> str | None:
+        """Return the payment status label for internal operators."""
+        try:
+            return Payment.Status(obj.payment.status).label
+        except (Payment.DoesNotExist, ValueError):
+            return None
+
+
+class BackofficeOrderDetailSerializer(OrderSerializer):
+    """Detailed order serializer for the custom backoffice panel."""
+
+    customer_name = serializers.SerializerMethodField()
+    customer_email = serializers.EmailField(source="user.email", read_only=True)
+    customer_phone = serializers.CharField(source="user.phone", read_only=True)
+
+    class Meta(OrderSerializer.Meta):
+        fields = [
+            "customer_name",
+            "customer_email",
+            "customer_phone",
+            *OrderSerializer.Meta.fields,
+        ]
+
+    def get_customer_name(self, obj: Order) -> str:
+        """Return the customer's full name or fallback to email."""
+        full_name = f"{obj.user.first_name} {obj.user.last_name}".strip()
+        return full_name or obj.user.email

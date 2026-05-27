@@ -57,7 +57,7 @@ export function BackofficeLayout() {
             </p>
             <h1 className="mt-3 font-serif text-4xl">Bodega La Abeja</h1>
             <p className="mt-3 leading-7 text-cream-100/75">
-              Gestion interna para catalogo, precios, stock e imagenes sin depender del admin de Django.
+              Gestion interna para catalogo, pedidos, precios, stock e imagenes sin depender del admin de Django.
             </p>
           </Link>
 

@@ -25,6 +25,7 @@ export function PageHero({
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
             className="text-sm font-semibold uppercase tracking-[0.32em] text-burgundy-600"
           >
             {eyebrow}
@@ -32,7 +33,7 @@ export function PageHero({
           <motion.h1
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08 }}
+            transition={{ delay: 0.12, duration: 0.72, ease: "easeOut" }}
             className="mt-4 max-w-4xl font-serif text-5xl leading-tight text-burgundy-950 md:text-6xl"
           >
             {title}
@@ -40,7 +41,7 @@ export function PageHero({
           <motion.p
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.16 }}
+            transition={{ delay: 0.24, duration: 0.72, ease: "easeOut" }}
             className="mt-6 max-w-2xl text-lg leading-8 text-burgundy-800"
           >
             {description}
@@ -51,7 +52,7 @@ export function PageHero({
           <motion.div
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.12 }}
+            transition={{ delay: 0.18, duration: 0.8, ease: "easeOut" }}
             className="rounded-[32px] border border-white/70 bg-white/80 p-6 shadow-velvet"
           >
             {aside}

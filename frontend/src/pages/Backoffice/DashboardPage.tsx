@@ -22,8 +22,11 @@ export function BackofficeDashboardPage() {
             </h3>
           </div>
           <div className="flex flex-wrap gap-3">
+            <Link to="/backoffice/pedidos">
+              <Button>Ver pedidos</Button>
+            </Link>
             <Link to="/backoffice/vinos">
-              <Button>Gestionar vinos</Button>
+              <Button variant="secondary">Gestionar vinos</Button>
             </Link>
             <Link to="/backoffice/categorias">
               <Button variant="ghost">Editar categorías</Button>

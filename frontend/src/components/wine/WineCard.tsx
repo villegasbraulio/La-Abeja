@@ -21,6 +21,7 @@ export function WineCard({ wine, variant = "grid" }: WineCardProps) {
         variant === "featured" && "md:col-span-2",
       )}
       whileHover={{ y: -6 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
       data-testid="wine-card"
     >
       <div className="relative aspect-[4/5] overflow-hidden bg-cream-100">
@@ -30,7 +31,7 @@ export function WineCard({ wine, variant = "grid" }: WineCardProps) {
             "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=900&q=80"
           }
           alt={wine.name}
-          className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
+          className="h-full w-full object-cover transition duration-1000 group-hover:scale-105"
         />
         <div className="absolute left-4 top-4 flex flex-col gap-2">
           {wine.is_limited_edition ? <Badge>Edición limitada</Badge> : null}
@@ -74,7 +75,7 @@ export function WineCard({ wine, variant = "grid" }: WineCardProps) {
             }
             disabled={!wine.is_in_stock}
             className={cn(
-              "rounded-full px-4 py-2 text-sm font-semibold transition",
+              "rounded-full px-4 py-2 text-sm font-semibold transition-all duration-300",
               wine.is_in_stock
                 ? "bg-burgundy-900 text-gold-300 hover:bg-burgundy-800"
                 : "cursor-not-allowed bg-burgundy-100 text-burgundy-400",

@@ -15,8 +15,13 @@ logger = structlog.get_logger(__name__)
 
 
 @receiver(pre_save, sender=Order)
-def cache_previous_order_status(_: type[Order], instance: Order, **kwargs: object) -> None:
+def cache_previous_order_status(
+    sender: type[Order],
+    instance: Order,
+    **kwargs: object,
+) -> None:
     """Keep track of the previous status before saving."""
+    _ = sender, kwargs
     if instance.pk:
         previous = Order.objects.filter(pk=instance.pk).values_list("status", flat=True).first()
         instance._previous_status = previous
@@ -25,8 +30,14 @@ def cache_previous_order_status(_: type[Order], instance: Order, **kwargs: objec
 
 
 @receiver(post_save, sender=Order)
-def order_post_save(_: type[Order], instance: Order, created: bool, **kwargs: object) -> None:
+def order_post_save(
+    sender: type[Order],
+    instance: Order,
+    created: bool,
+    **kwargs: object,
+) -> None:
     """Trigger stock and notification side effects."""
+    _ = sender, kwargs
     if created:
         for item in instance.items.select_related("wine").all():
             Wine.objects.filter(id=item.wine_id).update(stock=models.F("stock") - item.quantity)
