@@ -7,6 +7,8 @@ from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.authentication.tests.factories import UserFactory
+from apps.orders.tests.factories import OrderFactory, OrderItemFactory
+from apps.payments.tests.factories import PaymentFactory
 
 from .factories import CategoryFactory, VarietalFactory, WineFactory, WineImageFactory
 
@@ -213,3 +215,34 @@ def test_staff_can_update_and_delete_wine(staff_client: tuple[APIClient, object]
     assert patch_response.data["price"] == "9999.00"
     assert patch_response.data["images"][0]["url"] == "https://example.com/new-primary.jpg"
     assert delete_response.status_code == 204
+
+
+@pytest.mark.django_db
+def test_staff_can_list_orders(staff_client: tuple[APIClient, object]) -> None:
+    """Staff can inspect the internal order queue."""
+    client, _ = staff_client
+    order = OrderFactory()
+    OrderItemFactory(order=order, quantity=2)
+    PaymentFactory(order=order)
+
+    response = client.get("/api/v1/backoffice/orders/")
+
+    assert response.status_code == 200
+    assert response.data["results"][0]["order_number"] == order.order_number
+    assert response.data["results"][0]["item_count"] == 2
+
+
+@pytest.mark.django_db
+def test_staff_can_retrieve_order_detail(staff_client: tuple[APIClient, object]) -> None:
+    """Staff can open the detail view for a specific order."""
+    client, _ = staff_client
+    order = OrderFactory()
+    OrderItemFactory(order=order)
+    PaymentFactory(order=order)
+
+    response = client.get(f"/api/v1/backoffice/orders/{order.id}/")
+
+    assert response.status_code == 200
+    assert response.data["order_number"] == order.order_number
+    assert response.data["customer_email"] == order.user.email
+    assert response.data["payment"]["mp_preference_id"].startswith("pref_")

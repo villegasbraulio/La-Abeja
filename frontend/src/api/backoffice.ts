@@ -2,6 +2,8 @@ import { apiClient } from "./client";
 import type {
   BackofficeCategory,
   BackofficeDashboard,
+  BackofficeOrderDetail,
+  BackofficeOrderListItem,
   BackofficeVarietal,
   BackofficeWineDetail,
   BackofficeWineListItem,
@@ -116,6 +118,29 @@ export const backofficeApi = {
     },
     remove: async (wineId: string): Promise<void> => {
       await apiClient.delete(`/backoffice/wines/${wineId}/`);
+    },
+  },
+  orders: {
+    list: async (params?: {
+      search?: string;
+      status?: string | null;
+    }): Promise<PaginatedResponse<BackofficeOrderListItem>> => {
+      const searchParams = new URLSearchParams();
+      if (params?.search) {
+        searchParams.set("search", params.search);
+      }
+      if (params?.status) {
+        searchParams.set("status", params.status);
+      }
+      const suffix = searchParams.toString();
+      const response = await apiClient.get<PaginatedResponse<BackofficeOrderListItem>>(
+        `/backoffice/orders/${suffix ? `?${suffix}` : ""}`,
+      );
+      return response.data;
+    },
+    detail: async (orderId: string): Promise<BackofficeOrderDetail> => {
+      const response = await apiClient.get<BackofficeOrderDetail>(`/backoffice/orders/${orderId}/`);
+      return response.data;
     },
   },
 };

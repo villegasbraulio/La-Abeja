@@ -1,3 +1,5 @@
+import type { Order } from "./orders";
+
 export interface BackofficeDashboard {
   total_wines: number;
   active_wines: number;
@@ -123,4 +125,28 @@ export interface BackofficeWinePayload {
   is_active: boolean;
   is_limited_edition: boolean;
   images: BackofficeWineImage[];
+}
+
+export interface BackofficeOrderListItem {
+  id: string;
+  order_number: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  status: string;
+  status_label: string;
+  payment_status: string | null;
+  payment_status_label: string | null;
+  shipping_method: string;
+  shipping_method_label: string;
+  total: string;
+  item_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BackofficeOrderDetail extends Order {
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
 }

@@ -17,7 +17,7 @@ export function EditorialSection() {
           <Link
             key={card.title}
             to={card.href}
-            className="group rounded-[30px] border border-burgundy-100 bg-white p-6 shadow-velvet transition-transform hover:-translate-y-1"
+            className="group rounded-[30px] border border-burgundy-100 bg-white p-6 shadow-velvet transition-transform duration-300 hover:-translate-y-1"
           >
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
               {card.eyebrow}

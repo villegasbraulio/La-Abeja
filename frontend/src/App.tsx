@@ -5,14 +5,19 @@ import { BackofficeLayout } from "./pages/Backoffice/BackofficeLayout";
 import { CategoriesPage } from "./pages/Backoffice/CategoriesPage";
 import { BackofficeDashboardPage } from "./pages/Backoffice/DashboardPage";
 import { BackofficeLoginPage } from "./pages/Backoffice/LoginPage";
+import { BackofficeOrdersPage } from "./pages/Backoffice/OrdersPage";
 import { VarietalsPage } from "./pages/Backoffice/VarietalsPage";
 import { WinesPage } from "./pages/Backoffice/WinesPage";
 import { CartPage } from "./pages/Cart";
 import { CatalogPage } from "./pages/Catalog";
+import { CheckoutPage } from "./pages/Checkout";
+import { CheckoutResultPage } from "./pages/CheckoutResult";
 import { ContactPage } from "./pages/Contact";
 import { GiftsPage } from "./pages/Gifts";
 import { GuidePage } from "./pages/Guide";
 import { LandingPage } from "./pages/Landing";
+import { OrderDetailPage } from "./pages/OrderDetail";
+import { OrdersPage } from "./pages/Orders";
 import { ProductDetailPage } from "./pages/ProductDetail";
 import { VisitPage } from "./pages/Visit";
 
@@ -29,10 +34,15 @@ export default function App() {
         <Route path="/guia-de-compra" element={<GuidePage />} />
         <Route path="/contacto" element={<ContactPage />} />
         <Route path="/carrito" element={<CartPage />} />
+        <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/checkout/resultado" element={<CheckoutResultPage />} />
+        <Route path="/pedidos" element={<OrdersPage />} />
+        <Route path="/pedidos/:id" element={<OrderDetailPage />} />
       </Route>
       <Route path="/backoffice/login" element={<BackofficeLoginPage />} />
       <Route path="/backoffice" element={<BackofficeLayout />}>
         <Route index element={<BackofficeDashboardPage />} />
+        <Route path="pedidos" element={<BackofficeOrdersPage />} />
         <Route path="vinos" element={<WinesPage />} />
         <Route path="categorias" element={<CategoriesPage />} />
         <Route path="varietales" element={<VarietalsPage />} />

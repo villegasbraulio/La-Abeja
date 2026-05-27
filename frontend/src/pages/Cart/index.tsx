@@ -115,11 +115,13 @@ export function CartPage() {
               <span className="text-2xl font-bold text-burgundy-950">{subtotalFormatted}</span>
             </div>
             <p className="mt-4 text-sm leading-6 text-burgundy-700">
-              Este carrito es local y persistido en el navegador para la demo. El siguiente paso del
-              roadmap sigue siendo checkout, direcciones, pagos y ordenes reales.
+              El checkout fase 1 ya crea órdenes reales en backend y deriva el pago a Mercado Pago
+              con Checkout Pro.
             </p>
             <div className="mt-6 space-y-3">
-              <Button className="w-full">Continuar compra</Button>
+              <Link to="/checkout" className="block">
+                <Button className="w-full">Continuar compra</Button>
+              </Link>
               <Link to="/vinos" className="block">
                 <Button variant="ghost" className="w-full">
                   Seguir explorando vinos

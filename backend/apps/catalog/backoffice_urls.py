@@ -8,6 +8,8 @@ from .backoffice_views import (
     BackofficeCategoryDetailView,
     BackofficeCategoryListCreateView,
     BackofficeDashboardView,
+    BackofficeOrderDetailView,
+    BackofficeOrderListView,
     BackofficeVarietalDetailView,
     BackofficeVarietalListCreateView,
     BackofficeWineDetailView,
@@ -32,4 +34,6 @@ urlpatterns = [
     ),
     path("wines/", BackofficeWineListCreateView.as_view(), name="wine-list"),
     path("wines/<uuid:pk>/", BackofficeWineDetailView.as_view(), name="wine-detail"),
+    path("orders/", BackofficeOrderListView.as_view(), name="order-list"),
+    path("orders/<uuid:pk>/", BackofficeOrderDetailView.as_view(), name="order-detail"),
 ]
