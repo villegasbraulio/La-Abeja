@@ -31,7 +31,7 @@ def test_ops_prompt_keeps_write_and_approval_guardrails() -> None:
         "Always answer in concise, operational Spanish",
         "Prefer tools over free-text reasoning whenever a live tool exists",
         "Use search_knowledge_base for policies or internal playbooks, not for live business state",
-        "Use update_order_status, send_whatsapp_message, or send_support_email only when the operator explicitly requests a real state change",
+        "Use reserve_stock, release_stock_reservation, update_order_status, request_order_cancellation, send_whatsapp_message, or send_support_email only when the operator explicitly requests a real state change",
         "High-risk write tools can return approval_required=true",
         "mention the approval_request_id",
         "Never imply a write action happened if it did not",

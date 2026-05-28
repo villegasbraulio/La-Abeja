@@ -16,6 +16,7 @@ from .models import (
     KnowledgeSource,
     Lead,
     MemoryFact,
+    StockReservation,
     SupportTask,
     ToolExecution,
     WorkflowRun,
@@ -135,6 +136,15 @@ class LeadAdmin(admin.ModelAdmin):
     list_display = ("full_name", "email", "status", "source_channel", "created_at")
     list_filter = ("status", "source_channel")
     search_fields = ("full_name", "email", "phone", "company", "interest_summary")
+
+
+@admin.register(StockReservation)
+class StockReservationAdmin(admin.ModelAdmin):
+    """Admin configuration for AI-managed stock reservations."""
+
+    list_display = ("wine", "quantity", "status", "order", "customer", "created_at")
+    list_filter = ("status",)
+    search_fields = ("wine__name", "wine__sku", "order__order_number", "customer__email")
 
 
 @admin.register(ApprovalRequest)

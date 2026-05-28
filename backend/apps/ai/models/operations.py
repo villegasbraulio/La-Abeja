@@ -7,6 +7,7 @@ import uuid
 from django.conf import settings
 from django.db import models
 
+from apps.catalog.models import Wine
 from apps.orders.models import Order
 
 from .conversations import Conversation
@@ -22,6 +23,10 @@ class SupportTask(models.Model):
         ORDER_REVIEW = "order_review", "Order review"
         PAYMENT_REVIEW = "payment_review", "Payment review"
         LEAD_FOLLOW_UP = "lead_follow_up", "Lead follow-up"
+        CONVERSATION_ESCALATION = "conversation_escalation", "Conversation escalation"
+        RESTOCK = "restock", "Restock"
+        SHIPPING_CLAIM = "shipping_claim", "Shipping claim"
+        CANCELLATION_REVIEW = "cancellation_review", "Cancellation review"
 
     class Status(models.TextChoices):
         OPEN = "open", "Open"
@@ -202,3 +207,70 @@ class Lead(models.Model):
     def __str__(self) -> str:
         """Return a readable lead label."""
         return self.full_name
+
+
+class StockReservation(models.Model):
+    """Persist stock reservations executed or approved through the AI layer."""
+
+    class Status(models.TextChoices):
+        ACTIVE = "active", "Active"
+        PARTIALLY_RELEASED = "partially_released", "Partially released"
+        RELEASED = "released", "Released"
+        CANCELLED = "cancelled", "Cancelled"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    wine = models.ForeignKey(
+        Wine,
+        related_name="ai_stock_reservations",
+        on_delete=models.PROTECT,
+    )
+    quantity = models.PositiveIntegerField()
+    order = models.ForeignKey(
+        Order,
+        related_name="ai_stock_reservations",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    conversation = models.ForeignKey(
+        Conversation,
+        related_name="stock_reservations",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    customer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="ai_stock_reservations",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="created_stock_reservations",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    workflow_run = models.ForeignKey(
+        WorkflowRun,
+        related_name="stock_reservations",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+    )
+    status = models.CharField(max_length=30, choices=Status.choices, default=Status.ACTIVE)
+    reason = models.TextField(blank=True)
+    released_quantity = models.PositiveIntegerField(default=0)
+    released_at = models.DateTimeField(null=True, blank=True)
+    metadata = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        """Return a readable reservation label."""
+        return f"{self.wine.sku}:{self.quantity}:{self.status}"

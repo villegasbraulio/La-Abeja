@@ -5,12 +5,13 @@ from __future__ import annotations
 import pytest
 from rest_framework import status
 
-from apps.ai.models import AgentRun, ApprovalRequest, Conversation, InternalNote, ToolExecution, WorkflowRun
+from apps.ai.models import AgentRun, ApprovalRequest, Conversation, InternalNote, StockReservation, ToolExecution, WorkflowRun
 from apps.ai.tools.base import ToolContext
 from apps.ai.tools.registry import ToolRegistry
 from apps.authentication.tests.factories import UserFactory
 from apps.orders.models import Order
 from apps.orders.tests.factories import OrderFactory
+from apps.catalog.tests.factories import WineFactory
 
 
 @pytest.mark.django_db
@@ -183,3 +184,55 @@ def test_approving_same_request_twice_does_not_reexecute_tool(authenticated_clie
     assert first_response.status_code == status.HTTP_200_OK
     assert second_response.status_code == status.HTTP_200_OK
     assert ToolExecution.objects.filter(tool_name="update_order_status", run__agent_type=AgentRun.AgentType.WORKFLOW).count() == 1
+
+
+@pytest.mark.django_db
+def test_reserve_stock_tool_requires_approval_and_executes_on_approve(authenticated_client) -> None:
+    """Inventory reservations should stay gated until a staff user approves execution."""
+    client, user = authenticated_client
+    user.is_staff = True
+    user.save(update_fields=["is_staff"])
+    wine = WineFactory(stock=9, sku="LAB-RES-900")
+    conversation = Conversation.objects.create(mode=Conversation.Mode.OPS, customer=user)
+    run = AgentRun.objects.create(conversation=conversation, agent_type=AgentRun.AgentType.OPS)
+
+    result = ToolRegistry().execute(
+        tool_name="reserve_stock",
+        payload={"sku": wine.sku, "quantity": 3, "reason": "Reserva operativa"},
+        context=ToolContext(run=run, user_id=str(user.id), is_staff=True),
+    )
+    approval = ApprovalRequest.objects.get(id=result["approval_request_id"])
+
+    response = client.post(f"/api/v1/ai/approvals/{approval.id}/approve/", format="json")
+
+    wine.refresh_from_db()
+    assert response.status_code == status.HTTP_200_OK
+    assert result["approval_required"] is True
+    assert wine.stock == 6
+    assert StockReservation.objects.filter(wine=wine, quantity=3, status=StockReservation.Status.ACTIVE).exists()
+
+
+@pytest.mark.django_db
+def test_request_order_cancellation_is_blocked_then_cancels_after_approval(authenticated_client) -> None:
+    """Order cancellation requests should only mutate the order after approval."""
+    client, user = authenticated_client
+    user.is_staff = True
+    user.save(update_fields=["is_staff"])
+    customer = UserFactory(email="cancel-me@example.com")
+    order = OrderFactory(user=customer, order_number="LAB-2026-000505", status=Order.Status.PENDING_PAYMENT)
+    conversation = Conversation.objects.create(mode=Conversation.Mode.OPS, customer=user)
+    run = AgentRun.objects.create(conversation=conversation, agent_type=AgentRun.AgentType.OPS)
+
+    result = ToolRegistry().execute(
+        tool_name="request_order_cancellation",
+        payload={"order_number": order.order_number, "reason": "Cliente pidio anular la compra."},
+        context=ToolContext(run=run, user_id=str(user.id), is_staff=True),
+    )
+    approval = ApprovalRequest.objects.get(id=result["approval_request_id"])
+
+    response = client.post(f"/api/v1/ai/approvals/{approval.id}/approve/", {"note": "Cancelar"}, format="json")
+
+    order.refresh_from_db()
+    assert response.status_code == status.HTTP_200_OK
+    assert order.status == Order.Status.CANCELLED
+    assert InternalNote.objects.filter(order=order, note_type="order").exists()

@@ -145,26 +145,54 @@ class OpenAIToolCallingAgent:
             "recommend_wines_for_customer",
         ]
         if context.user_id is not None or context.is_staff:
-            names.extend(["get_order_by_number", "check_payment_issue"])
+            names.extend(
+                [
+                    "get_order_by_number",
+                    "search_orders",
+                    "get_customer_orders_summary",
+                    "generate_shipping_update",
+                    "sync_tracking_status",
+                    "check_payment_issue",
+                ]
+            )
         if context.is_staff:
             names.extend(
                 [
+                    "search_policies",
+                    "search_playbooks",
+                    "get_answerable_sources",
+                    "get_customer_360",
+                    "search_internal_notes",
                     "list_low_stock_items",
                     "list_pending_orders",
                     "create_support_task",
+                    "create_ticket_and_assign",
                     "update_support_task",
+                    "create_payment_followup",
                     "create_internal_note",
+                    "escalate_conversation_to_human",
                     "assign_order_issue",
+                    "create_shipping_claim",
                     "mark_order_for_review",
+                    "create_restock_task",
                     "create_lead_from_conversation",
                     "update_lead_status",
+                    "reserve_stock",
+                    "release_stock_reservation",
                     "update_order_status",
                     "send_whatsapp_message",
                     "send_support_email",
+                    "request_order_cancellation",
                     "get_sales_summary",
                     "get_sales_over_period",
                     "get_sales_by_varietal",
                     "get_sales_by_bottle",
+                    "get_top_skus",
+                    "get_repeat_customers_metrics",
+                    "get_conversion_funnel",
+                    "get_returns_and_incidents_metrics",
+                    "get_sales_by_channel",
+                    "get_margin_estimate_by_product",
                 ]
             )
         return names

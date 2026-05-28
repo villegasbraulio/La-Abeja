@@ -9,8 +9,14 @@ from apps.ai.services.audit_service import AuditService
 from apps.ai.services.approval_service import ApprovalService
 
 from .analytics_tools import (
+    get_conversion_funnel,
+    get_margin_estimate_by_product,
+    get_repeat_customers_metrics,
+    get_returns_and_incidents_metrics,
     get_sales_by_bottle,
+    get_sales_by_channel,
     get_sales_by_varietal,
+    get_top_skus,
     get_sales_over_period,
     get_sales_summary,
 )
@@ -32,7 +38,23 @@ from .business_tools import (
     update_support_task,
 )
 from .catalog_tools import get_stock_snapshot, search_catalog
-from .knowledge_tools import search_knowledge_base
+from .knowledge_tools import get_answerable_sources, search_knowledge_base, search_playbooks, search_policies
+from .operations_tools import (
+    create_payment_followup,
+    create_restock_task,
+    create_shipping_claim,
+    create_ticket_and_assign,
+    escalate_conversation_to_human,
+    generate_shipping_update,
+    get_customer_360,
+    get_customer_orders_summary,
+    release_stock_reservation,
+    request_order_cancellation,
+    reserve_stock,
+    search_internal_notes,
+    search_orders,
+    sync_tracking_status,
+)
 from .ops_tools import list_low_stock_items, list_pending_orders
 from .order_tools import get_order_by_number
 
@@ -58,6 +80,27 @@ class ToolRegistry:
                         "additionalProperties": False,
                     },
                     handler=get_order_by_number,
+                ),
+                ToolSpec(
+                    name="search_orders",
+                    description="Search orders by customer, status, free text, or date window.",
+                    risk_level=ToolExecution.RiskLevel.READ_ONLY,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string"},
+                            "customer_email": {"type": "string"},
+                            "phone": {"type": "string"},
+                            "status": {"type": "string"},
+                            "statuses": {"type": "array", "items": {"type": "string"}},
+                            "start_date": {"type": "string"},
+                            "end_date": {"type": "string"},
+                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
+                            "limit": {"type": "integer", "minimum": 1, "maximum": 25},
+                        },
+                        "additionalProperties": False,
+                    },
+                    handler=search_orders,
                 ),
                 ToolSpec(
                     name="search_catalog",
@@ -100,6 +143,51 @@ class ToolRegistry:
                         "additionalProperties": False,
                     },
                     handler=search_knowledge_base,
+                ),
+                ToolSpec(
+                    name="search_policies",
+                    description="Search policies such as shipping, pickup, payment, and return guidance.",
+                    risk_level=ToolExecution.RiskLevel.READ_ONLY,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string"},
+                            "limit": {"type": "integer", "minimum": 1, "maximum": 10},
+                        },
+                        "required": ["query"],
+                        "additionalProperties": False,
+                    },
+                    handler=search_policies,
+                ),
+                ToolSpec(
+                    name="search_playbooks",
+                    description="Search internal playbooks and SOP-style operational guidance.",
+                    risk_level=ToolExecution.RiskLevel.READ_ONLY,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string"},
+                            "limit": {"type": "integer", "minimum": 1, "maximum": 10},
+                        },
+                        "required": ["query"],
+                        "additionalProperties": False,
+                    },
+                    handler=search_playbooks,
+                ),
+                ToolSpec(
+                    name="get_answerable_sources",
+                    description="List the source documents that best support an answer for a query.",
+                    risk_level=ToolExecution.RiskLevel.READ_ONLY,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string"},
+                            "limit": {"type": "integer", "minimum": 1, "maximum": 10},
+                        },
+                        "required": ["query"],
+                        "additionalProperties": False,
+                    },
+                    handler=get_answerable_sources,
                 ),
                 ToolSpec(
                     name="list_low_stock_items",
@@ -188,6 +276,82 @@ class ToolRegistry:
                     handler=check_payment_issue,
                 ),
                 ToolSpec(
+                    name="get_customer_orders_summary",
+                    description="Return a concise order history summary for one customer.",
+                    risk_level=ToolExecution.RiskLevel.READ_ONLY,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "customer_email": {"type": "string"},
+                            "order_number": {"type": "string"},
+                            "conversation_id": {"type": "string"},
+                        },
+                        "additionalProperties": False,
+                    },
+                    handler=get_customer_orders_summary,
+                ),
+                ToolSpec(
+                    name="get_customer_360",
+                    description="Return a staff-facing 360 profile including orders, tasks, notes, and leads.",
+                    risk_level=ToolExecution.RiskLevel.READ_ONLY,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "customer_email": {"type": "string"},
+                            "order_number": {"type": "string"},
+                            "conversation_id": {"type": "string"},
+                        },
+                        "additionalProperties": False,
+                    },
+                    handler=get_customer_360,
+                ),
+                ToolSpec(
+                    name="search_internal_notes",
+                    description="Search internal notes by customer, order, conversation, type, or free text.",
+                    risk_level=ToolExecution.RiskLevel.READ_ONLY,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string"},
+                            "order_number": {"type": "string"},
+                            "customer_email": {"type": "string"},
+                            "conversation_id": {"type": "string"},
+                            "note_type": {"type": "string", "enum": ["general", "order", "customer", "support", "sales", "payment"]},
+                            "limit": {"type": "integer", "minimum": 1, "maximum": 25},
+                        },
+                        "additionalProperties": False,
+                    },
+                    handler=search_internal_notes,
+                ),
+                ToolSpec(
+                    name="generate_shipping_update",
+                    description="Generate a customer-facing shipping update without sending it.",
+                    risk_level=ToolExecution.RiskLevel.READ_ONLY,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "order_number": {"type": "string"},
+                        },
+                        "required": ["order_number"],
+                        "additionalProperties": False,
+                    },
+                    handler=generate_shipping_update,
+                ),
+                ToolSpec(
+                    name="sync_tracking_status",
+                    description="Return the best available tracking snapshot for an order and its current carrier hint.",
+                    risk_level=ToolExecution.RiskLevel.READ_ONLY,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "order_number": {"type": "string"},
+                        },
+                        "required": ["order_number"],
+                        "additionalProperties": False,
+                    },
+                    handler=sync_tracking_status,
+                ),
+                ToolSpec(
                     name="create_support_task",
                     description="Create an internal support or operations follow-up task.",
                     risk_level=ToolExecution.RiskLevel.LOW_RISK_WRITE,
@@ -223,6 +387,29 @@ class ToolRegistry:
                     handler=create_support_task,
                 ),
                 ToolSpec(
+                    name="create_ticket_and_assign",
+                    description="Create a ticket-style internal task with explicit ownership.",
+                    risk_level=ToolExecution.RiskLevel.LOW_RISK_WRITE,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "title": {"type": "string"},
+                            "summary": {"type": "string"},
+                            "ticket_type": {"type": "string"},
+                            "priority": {"type": "string", "enum": ["low", "medium", "high", "urgent"]},
+                            "order_number": {"type": "string"},
+                            "conversation_id": {"type": "string"},
+                            "customer_email": {"type": "string"},
+                            "assigned_to_email": {"type": "string"},
+                            "due_at": {"type": "string"},
+                            "due_in_days": {"type": "integer"},
+                        },
+                        "required": ["summary"],
+                        "additionalProperties": False,
+                    },
+                    handler=create_ticket_and_assign,
+                ),
+                ToolSpec(
                     name="create_internal_note",
                     description="Persist an internal note linked to a customer, conversation, or order.",
                     risk_level=ToolExecution.RiskLevel.LOW_RISK_WRITE,
@@ -242,6 +429,26 @@ class ToolRegistry:
                         "additionalProperties": False,
                     },
                     handler=create_internal_note,
+                ),
+                ToolSpec(
+                    name="escalate_conversation_to_human",
+                    description="Escalate a conversation to the human team and create a follow-up task.",
+                    risk_level=ToolExecution.RiskLevel.LOW_RISK_WRITE,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "conversation_id": {"type": "string"},
+                            "title": {"type": "string"},
+                            "reason": {"type": "string"},
+                            "priority": {"type": "string", "enum": ["low", "medium", "high", "urgent"]},
+                            "assigned_to_email": {"type": "string"},
+                            "due_in_days": {"type": "integer"},
+                            "customer_email": {"type": "string"},
+                        },
+                        "required": ["reason"],
+                        "additionalProperties": False,
+                    },
+                    handler=escalate_conversation_to_human,
                 ),
                 ToolSpec(
                     name="update_support_task",
@@ -270,6 +477,24 @@ class ToolRegistry:
                     handler=update_support_task,
                 ),
                 ToolSpec(
+                    name="create_payment_followup",
+                    description="Create a payment-review task and internal note from a payment issue.",
+                    risk_level=ToolExecution.RiskLevel.LOW_RISK_WRITE,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "order_number": {"type": "string"},
+                            "mp_payment_id": {"type": "string"},
+                            "summary": {"type": "string"},
+                            "customer_email": {"type": "string"},
+                            "assigned_to_email": {"type": "string"},
+                            "due_in_days": {"type": "integer"},
+                        },
+                        "additionalProperties": False,
+                    },
+                    handler=create_payment_followup,
+                ),
+                ToolSpec(
                     name="assign_order_issue",
                     description="Create an internal issue task for a problematic order.",
                     risk_level=ToolExecution.RiskLevel.LOW_RISK_WRITE,
@@ -291,6 +516,25 @@ class ToolRegistry:
                     handler=assign_order_issue,
                 ),
                 ToolSpec(
+                    name="create_shipping_claim",
+                    description="Create a shipping-claim task and internal note for a delayed or problematic order.",
+                    risk_level=ToolExecution.RiskLevel.LOW_RISK_WRITE,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "order_number": {"type": "string"},
+                            "claim_reason": {"type": "string"},
+                            "summary": {"type": "string"},
+                            "priority": {"type": "string", "enum": ["low", "medium", "high", "urgent"]},
+                            "assigned_to_email": {"type": "string"},
+                            "due_in_days": {"type": "integer"},
+                        },
+                        "required": ["order_number", "claim_reason", "summary"],
+                        "additionalProperties": False,
+                    },
+                    handler=create_shipping_claim,
+                ),
+                ToolSpec(
                     name="mark_order_for_review",
                     description="Mark an order for manual review by creating a high-priority internal task.",
                     risk_level=ToolExecution.RiskLevel.LOW_RISK_WRITE,
@@ -308,6 +552,25 @@ class ToolRegistry:
                         "additionalProperties": False,
                     },
                     handler=mark_order_for_review,
+                ),
+                ToolSpec(
+                    name="create_restock_task",
+                    description="Create a restock task for one low-stock wine.",
+                    risk_level=ToolExecution.RiskLevel.LOW_RISK_WRITE,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "sku": {"type": "string"},
+                            "slug": {"type": "string"},
+                            "auto_low_stock": {"type": "boolean"},
+                            "suggested_quantity": {"type": "integer"},
+                            "priority": {"type": "string", "enum": ["low", "medium", "high", "urgent"]},
+                            "assigned_to_email": {"type": "string"},
+                            "due_in_days": {"type": "integer"},
+                        },
+                        "additionalProperties": False,
+                    },
+                    handler=create_restock_task,
                 ),
                 ToolSpec(
                     name="create_lead_from_conversation",
@@ -350,6 +613,43 @@ class ToolRegistry:
                         "additionalProperties": False,
                     },
                     handler=update_lead_status,
+                ),
+                ToolSpec(
+                    name="reserve_stock",
+                    description="Reserve inventory for a wine by decrementing available stock and persisting a reservation record.",
+                    risk_level=ToolExecution.RiskLevel.HIGH_RISK_WRITE,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "sku": {"type": "string"},
+                            "slug": {"type": "string"},
+                            "quantity": {"type": "integer"},
+                            "order_number": {"type": "string"},
+                            "conversation_id": {"type": "string"},
+                            "customer_email": {"type": "string"},
+                            "reason": {"type": "string"},
+                        },
+                        "required": ["quantity"],
+                        "additionalProperties": False,
+                    },
+                    handler=reserve_stock,
+                    requires_approval=True,
+                ),
+                ToolSpec(
+                    name="release_stock_reservation",
+                    description="Release a full or partial stock reservation and restore inventory.",
+                    risk_level=ToolExecution.RiskLevel.HIGH_RISK_WRITE,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "reservation_id": {"type": "string"},
+                            "quantity": {"type": "integer"},
+                        },
+                        "required": ["reservation_id"],
+                        "additionalProperties": False,
+                    },
+                    handler=release_stock_reservation,
+                    requires_approval=True,
                 ),
                 ToolSpec(
                     name="update_order_status",
@@ -425,6 +725,22 @@ class ToolRegistry:
                     requires_approval=True,
                 ),
                 ToolSpec(
+                    name="request_order_cancellation",
+                    description="Cancel an order after approval, and create any needed financial follow-up task.",
+                    risk_level=ToolExecution.RiskLevel.HIGH_RISK_WRITE,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "order_number": {"type": "string"},
+                            "reason": {"type": "string"},
+                        },
+                        "required": ["order_number", "reason"],
+                        "additionalProperties": False,
+                    },
+                    handler=request_order_cancellation,
+                    requires_approval=True,
+                ),
+                ToolSpec(
                     name="get_sales_summary",
                     description="Return total sales, revenue, average order value, and sold bottles for a date window.",
                     risk_level=ToolExecution.RiskLevel.READ_ONLY,
@@ -486,6 +802,99 @@ class ToolRegistry:
                         "additionalProperties": False,
                     },
                     handler=get_sales_by_bottle,
+                ),
+                ToolSpec(
+                    name="get_top_skus",
+                    description="Return the best-performing SKUs by units, revenue, or order count.",
+                    risk_level=ToolExecution.RiskLevel.READ_ONLY,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "start_date": {"type": "string"},
+                            "end_date": {"type": "string"},
+                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
+                            "sort_by": {"type": "string", "enum": ["bottles_sold", "revenue", "order_count"]},
+                            "limit": {"type": "integer", "minimum": 1, "maximum": 25},
+                        },
+                        "additionalProperties": False,
+                    },
+                    handler=get_top_skus,
+                ),
+                ToolSpec(
+                    name="get_repeat_customers_metrics",
+                    description="Estimate repeat-customer and retention-style metrics from completed orders.",
+                    risk_level=ToolExecution.RiskLevel.READ_ONLY,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "start_date": {"type": "string"},
+                            "end_date": {"type": "string"},
+                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
+                        },
+                        "additionalProperties": False,
+                    },
+                    handler=get_repeat_customers_metrics,
+                ),
+                ToolSpec(
+                    name="get_conversion_funnel",
+                    description="Estimate a simple cart-to-order-to-paid funnel for a date window.",
+                    risk_level=ToolExecution.RiskLevel.READ_ONLY,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "start_date": {"type": "string"},
+                            "end_date": {"type": "string"},
+                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
+                        },
+                        "additionalProperties": False,
+                    },
+                    handler=get_conversion_funnel,
+                ),
+                ToolSpec(
+                    name="get_returns_and_incidents_metrics",
+                    description="Summarize refunds, cancellations, payment failures, and AI-generated incident workload.",
+                    risk_level=ToolExecution.RiskLevel.READ_ONLY,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "start_date": {"type": "string"},
+                            "end_date": {"type": "string"},
+                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
+                        },
+                        "additionalProperties": False,
+                    },
+                    handler=get_returns_and_incidents_metrics,
+                ),
+                ToolSpec(
+                    name="get_sales_by_channel",
+                    description="Aggregate completed orders by captured source channel.",
+                    risk_level=ToolExecution.RiskLevel.READ_ONLY,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "start_date": {"type": "string"},
+                            "end_date": {"type": "string"},
+                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
+                        },
+                        "additionalProperties": False,
+                    },
+                    handler=get_sales_by_channel,
+                ),
+                ToolSpec(
+                    name="get_margin_estimate_by_product",
+                    description="Estimate revenue, cost, and margin by sold product.",
+                    risk_level=ToolExecution.RiskLevel.READ_ONLY,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "start_date": {"type": "string"},
+                            "end_date": {"type": "string"},
+                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
+                            "limit": {"type": "integer", "minimum": 1, "maximum": 25},
+                        },
+                        "additionalProperties": False,
+                    },
+                    handler=get_margin_estimate_by_product,
                 ),
             ]
         }
