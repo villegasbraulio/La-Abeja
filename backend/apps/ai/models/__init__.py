@@ -3,6 +3,7 @@
 from .conversations import Conversation, ConversationFeedback, ConversationTurn
 from .knowledge import KnowledgeDocument, KnowledgeChunk, KnowledgeSource
 from .memory import MemoryFact
+from .operations import InternalNote, Lead, SupportTask
 from .runs import AgentRun, ToolExecution
 from .workflows import ApprovalRequest, WorkflowRun
 
@@ -12,10 +13,13 @@ __all__ = [
     "Conversation",
     "ConversationFeedback",
     "ConversationTurn",
+    "InternalNote",
     "KnowledgeChunk",
     "KnowledgeDocument",
     "KnowledgeSource",
+    "Lead",
     "MemoryFact",
+    "SupportTask",
     "ToolExecution",
     "WorkflowRun",
 ]

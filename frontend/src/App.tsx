@@ -1,12 +1,15 @@
 import { Route, Routes } from "react-router-dom";
 import { Layout } from "./components/layout/Layout";
 import { AboutPage } from "./pages/About";
+import { BackofficeApprovalsPage } from "./pages/Backoffice/ApprovalsPage";
 import { BackofficeLayout } from "./pages/Backoffice/BackofficeLayout";
 import { CategoriesPage } from "./pages/Backoffice/CategoriesPage";
 import { BackofficeCopilotPage } from "./pages/Backoffice/CopilotPage";
 import { BackofficeDashboardPage } from "./pages/Backoffice/DashboardPage";
+import { BackofficeLeadsPage } from "./pages/Backoffice/LeadsPage";
 import { BackofficeLoginPage } from "./pages/Backoffice/LoginPage";
 import { BackofficeOrdersPage } from "./pages/Backoffice/OrdersPage";
+import { BackofficeTasksPage } from "./pages/Backoffice/TasksPage";
 import { VarietalsPage } from "./pages/Backoffice/VarietalsPage";
 import { WinesPage } from "./pages/Backoffice/WinesPage";
 import { CartPage } from "./pages/Cart";
@@ -44,6 +47,10 @@ export default function App() {
       <Route path="/backoffice" element={<BackofficeLayout />}>
         <Route index element={<BackofficeDashboardPage />} />
         <Route path="copilot" element={<BackofficeCopilotPage />} />
+        <Route path="tareas-ai" element={<BackofficeTasksPage />} />
+        <Route path="leads-ai" element={<BackofficeLeadsPage />} />
+        <Route path="approvals-ai" element={<BackofficeApprovalsPage />} />
+        <Route path="pedidos" element={<BackofficeOrdersPage />} />
         <Route path="vinos" element={<WinesPage />} />
         <Route path="categorias" element={<CategoriesPage />} />
         <Route path="varietales" element={<VarietalsPage />} />

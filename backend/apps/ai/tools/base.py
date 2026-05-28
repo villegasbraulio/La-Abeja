@@ -31,4 +31,6 @@ class ToolSpec:
     name: str
     description: str
     risk_level: str
+    input_schema: dict[str, object]
     handler: ToolCallable
+    requires_approval: bool = False

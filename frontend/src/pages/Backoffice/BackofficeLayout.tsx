@@ -8,6 +8,10 @@ import { cn } from "../../lib/utils";
 const backofficeLinks = [
   { label: "Resumen", href: "/backoffice" },
   { label: "Copilot", href: "/backoffice/copilot" },
+  { label: "Tareas AI", href: "/backoffice/tareas-ai" },
+  { label: "Leads AI", href: "/backoffice/leads-ai" },
+  { label: "Approvals AI", href: "/backoffice/approvals-ai" },
+  { label: "Pedidos", href: "/backoffice/pedidos" },
   { label: "Vinos", href: "/backoffice/vinos" },
   { label: "Categorias", href: "/backoffice/categorias" },
   { label: "Varietales", href: "/backoffice/varietales" },

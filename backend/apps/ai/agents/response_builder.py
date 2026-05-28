@@ -68,3 +68,96 @@ class ResponseBuilder:
             )
         top = results[0]
         return str(top.get("content") or "").strip()
+
+    def build_payment_issue_response(self, result: dict[str, object]) -> str:
+        """Render a payment diagnostic response."""
+        if not result.get("found"):
+            return "No encontre un pago asociado con esos datos."
+        return (
+            f"El pedido {result.get('order_number')} tiene pago {result.get('payment_status')} "
+            f"y estado de pedido {result.get('order_status')}. "
+            f"Diagnostico: {result.get('diagnosis')}. "
+            f"Siguiente paso sugerido: {result.get('recommended_action')}"
+        ).strip()
+
+    def build_sales_summary_response(self, result: dict[str, object]) -> str:
+        """Render aggregate sales metrics."""
+        return (
+            f"Resumen de ventas para {result.get('period')}: "
+            f"{result.get('order_count')} pedidos, "
+            f"ARS {result.get('total_revenue')} facturados, "
+            f"{result.get('bottles_sold')} botellas vendidas, "
+            f"ticket promedio ARS {result.get('average_order_value')}."
+        )
+
+    def build_sales_over_period_response(self, results: list[dict[str, object]], grain: str) -> str:
+        """Render grouped sales metrics."""
+        if not results:
+            return "No hubo ventas cerradas para ese periodo."
+        lines = [
+            (
+                f"- {item['period']}: {item['order_count']} pedidos, "
+                f"ARS {item['total_revenue']}, {item['bottles_sold']} botellas"
+            )
+            for item in results
+        ]
+        return f"Ventas agrupadas por {grain}:\n" + "\n".join(lines)
+
+    def build_sales_by_varietal_response(self, results: list[dict[str, object]]) -> str:
+        """Render varietal sales rankings."""
+        if not results:
+            return "No encontre ventas por varietal para ese periodo."
+        lines = [
+            (
+                f"- {item['varietal']}: {item['bottles_sold']} botellas, "
+                f"ARS {item['revenue']}, {item['order_count']} pedidos"
+            )
+            for item in results
+        ]
+        return "Ventas por varietal:\n" + "\n".join(lines)
+
+    def build_sales_by_bottle_response(self, results: list[dict[str, object]]) -> str:
+        """Render bottle or SKU sales rankings."""
+        if not results:
+            return "No encontre ventas por etiqueta para ese periodo."
+        lines = [
+            (
+                f"- {item['wine_name']} ({item['sku']}): {item['bottles_sold']} botellas, "
+                f"ARS {item['revenue']}, {item['order_count']} pedidos"
+            )
+            for item in results
+        ]
+        return "Ventas por botella o etiqueta:\n" + "\n".join(lines)
+
+    def build_support_task_response(self, result: dict[str, object]) -> str:
+        """Render a task creation or update response."""
+        if result.get("approval_required"):
+            return (
+                "Prepare la accion y quedo pendiente de aprobacion humana. "
+                f"Approval {result.get('approval_request_id')}."
+            )
+        if result.get("created"):
+            return (
+                f"Listo. Cree la tarea {result.get('task_id')} "
+                f"con estado {result.get('status')} y prioridad {result.get('priority')}."
+            )
+        if result.get("updated"):
+            return (
+                f"Actualice la tarea {result.get('task_id')} "
+                f"y quedo en estado {result.get('status')}."
+            )
+        return "No pude completar la operacion sobre la tarea con los datos recibidos."
+
+    def build_order_status_update_response(self, result: dict[str, object]) -> str:
+        """Render a status-change or approval-needed response."""
+        if result.get("approval_required"):
+            return (
+                "Prepare el cambio de estado, pero requiere aprobacion humana antes de ejecutarse. "
+                f"Approval {result.get('approval_request_id')}."
+            )
+        if not result.get("updated"):
+            return "No pude actualizar el pedido con los datos recibidos."
+        return (
+            f"Actualice el pedido {result.get('order_number')} "
+            f"de {result.get('previous_status')} a {result.get('status')}."
+        )

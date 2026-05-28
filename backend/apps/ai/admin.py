@@ -10,10 +10,13 @@ from .models import (
     Conversation,
     ConversationFeedback,
     ConversationTurn,
+    InternalNote,
     KnowledgeChunk,
     KnowledgeDocument,
     KnowledgeSource,
+    Lead,
     MemoryFact,
+    SupportTask,
     ToolExecution,
     WorkflowRun,
 )
@@ -105,6 +108,33 @@ class WorkflowRunAdmin(admin.ModelAdmin):
     list_display = ("id", "workflow_type", "status", "actor_type", "created_at")
     list_filter = ("status", "actor_type", "workflow_type")
     search_fields = ("id", "workflow_type", "idempotency_key")
+
+
+@admin.register(SupportTask)
+class SupportTaskAdmin(admin.ModelAdmin):
+    """Admin configuration for AI-created support tasks."""
+
+    list_display = ("title", "task_type", "status", "priority", "assigned_to", "created_at")
+    list_filter = ("task_type", "status", "priority")
+    search_fields = ("title", "description", "order__order_number", "customer__email")
+
+
+@admin.register(InternalNote)
+class InternalNoteAdmin(admin.ModelAdmin):
+    """Admin configuration for internal notes."""
+
+    list_display = ("id", "note_type", "order", "customer", "created_at")
+    list_filter = ("note_type",)
+    search_fields = ("content", "order__order_number", "customer__email")
+
+
+@admin.register(Lead)
+class LeadAdmin(admin.ModelAdmin):
+    """Admin configuration for AI-created leads."""
+
+    list_display = ("full_name", "email", "status", "source_channel", "created_at")
+    list_filter = ("status", "source_channel")
+    search_fields = ("full_name", "email", "phone", "company", "interest_summary")
 
 
 @admin.register(ApprovalRequest)

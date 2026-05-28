@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from rest_framework import generics, permissions, status
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -18,11 +17,14 @@ from apps.ai.models import (
     ApprovalRequest,
     Conversation,
     ConversationFeedback,
+    Lead,
     KnowledgeDocument,
     KnowledgeSource,
+    SupportTask,
     ToolExecution,
     WorkflowRun,
 )
+from apps.ai.services.approval_service import ApprovalService
 from apps.ai.tasks.ingestion_tasks import sync_knowledge_source
 from apps.authentication.permissions import IsStaffUser
 
@@ -36,8 +38,12 @@ from .serializers import (
     ConversationMessageSerializer,
     ConversationSerializer,
     CopilotMessageSerializer,
+    LeadSerializer,
+    LeadUpdateSerializer,
     KnowledgeDocumentSerializer,
     KnowledgeSourceSerializer,
+    SupportTaskSerializer,
+    SupportTaskUpdateSerializer,
     ToolExecutionSerializer,
     WorkflowRunSerializer,
 )
@@ -167,6 +173,48 @@ class AICopilotMessageView(APIView):
         )
 
 
+class AICopilotOverviewView(APIView):
+    """Return the current AI operations overview for the backoffice."""
+
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def get(self, request: Request) -> Response:
+        """Return prompt suggestions, queue counts, and recent artifacts."""
+        del request
+        payload = {
+            "metrics": {
+                "open_tasks": SupportTask.objects.filter(
+                    status__in=[SupportTask.Status.OPEN, SupportTask.Status.IN_PROGRESS, SupportTask.Status.BLOCKED]
+                ).count(),
+                "new_leads": Lead.objects.filter(status=Lead.Status.NEW).count(),
+                "pending_approvals": ApprovalRequest.objects.filter(status=ApprovalRequest.Status.PENDING).count(),
+                "runs_needing_human": AgentRun.objects.filter(needs_human=True).count(),
+            },
+            "prompt_suggestions": [
+                "Mostrame el stock bajo",
+                "Decime las ventas de los últimos 30 días",
+                "Qué varietales venden más este mes?",
+                "Creá una tarea urgente para seguir el pedido LAB-2026-000145 por pago rechazado",
+                "Marcá el pedido LAB-2026-000145 como enviado con tracking AND-12345",
+                "Mandale un WhatsApp al cliente del pedido LAB-2026-000145 avisando que sale hoy",
+            ],
+            "recent_tasks": SupportTaskSerializer(
+                SupportTask.objects.select_related("order", "customer", "assigned_to", "workflow_run")[:5],
+                many=True,
+            ).data,
+            "recent_leads": LeadSerializer(
+                Lead.objects.select_related("customer", "conversation")[:5],
+                many=True,
+            ).data,
+            "pending_approvals": ApprovalRequestSerializer(
+                ApprovalRequest.objects.select_related("workflow_run", "approved_by")
+                .filter(status=ApprovalRequest.Status.PENDING)[:5],
+                many=True,
+            ).data,
+        }
+        return Response(payload)
+
+
 class AIRunDetailView(generics.RetrieveAPIView):
     """Expose audit details for a single run."""
 
@@ -187,21 +235,127 @@ class AIRunStepsView(generics.ListAPIView):
         return ToolExecution.objects.filter(run=run)
 
 
+class AITaskListView(generics.ListAPIView):
+    """List AI-generated support tasks for the backoffice."""
+
+    serializer_class = SupportTaskSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    pagination_class = None
+
+    def get_queryset(self):  # type: ignore[override]
+        """Filter tasks by status, task type, search, or conversation."""
+        queryset = SupportTask.objects.select_related("order", "customer", "assigned_to", "workflow_run")
+        status_filter = self.request.query_params.get("status")
+        task_type = self.request.query_params.get("task_type")
+        conversation_id = self.request.query_params.get("conversation_id")
+        search = (self.request.query_params.get("search") or "").strip()
+
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        if task_type:
+            queryset = queryset.filter(task_type=task_type)
+        if conversation_id:
+            queryset = queryset.filter(conversation_id=conversation_id)
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search)
+                | Q(description__icontains=search)
+                | Q(order__order_number__icontains=search)
+                | Q(customer__email__icontains=search)
+            )
+        return queryset
+
+
+class AITaskDetailView(generics.RetrieveUpdateAPIView):
+    """Retrieve or update an AI-generated task."""
+
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    queryset = SupportTask.objects.select_related("order", "customer", "assigned_to", "workflow_run")
+
+    def get_serializer_class(self):  # type: ignore[override]
+        """Use a lighter serializer for partial updates."""
+        if self.request.method in {"PATCH", "PUT"}:
+            return SupportTaskUpdateSerializer
+        return SupportTaskSerializer
+
+
+class AILeadListView(generics.ListAPIView):
+    """List AI-captured leads."""
+
+    serializer_class = LeadSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    pagination_class = None
+
+    def get_queryset(self):  # type: ignore[override]
+        """Filter leads by status, search, or conversation."""
+        queryset = Lead.objects.select_related("customer", "conversation")
+        status_filter = self.request.query_params.get("status")
+        conversation_id = self.request.query_params.get("conversation_id")
+        search = (self.request.query_params.get("search") or "").strip()
+
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        if conversation_id:
+            queryset = queryset.filter(conversation_id=conversation_id)
+        if search:
+            queryset = queryset.filter(
+                Q(full_name__icontains=search)
+                | Q(email__icontains=search)
+                | Q(phone__icontains=search)
+                | Q(company__icontains=search)
+                | Q(interest_summary__icontains=search)
+            )
+        return queryset
+
+
+class AILeadDetailView(generics.RetrieveUpdateAPIView):
+    """Retrieve or update an AI-captured lead."""
+
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    queryset = Lead.objects.select_related("customer", "conversation")
+
+    def get_serializer_class(self):  # type: ignore[override]
+        """Use the lighter serializer for updates."""
+        if self.request.method in {"PATCH", "PUT"}:
+            return LeadUpdateSerializer
+        return LeadSerializer
+
+
+class AIApprovalListView(generics.ListAPIView):
+    """List approval requests for the AI layer."""
+
+    serializer_class = ApprovalRequestSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    pagination_class = None
+
+    def get_queryset(self):  # type: ignore[override]
+        """Filter approvals by status or action name."""
+        queryset = ApprovalRequest.objects.select_related("workflow_run", "approved_by")
+        status_filter = self.request.query_params.get("status")
+        action_name = self.request.query_params.get("action_name")
+
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        if action_name:
+            queryset = queryset.filter(action_name=action_name)
+        return queryset
+
+
 class AIApprovalApproveView(APIView):
     """Approve a pending AI action."""
 
     permission_classes = [permissions.IsAuthenticated, IsStaffUser]
 
     def post(self, request: Request, pk: str) -> Response:
-        """Mark an approval request as approved."""
+        """Approve and execute a pending AI action."""
         approval = get_object_or_404(ApprovalRequest, pk=pk)
         serializer = ApprovalDecisionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        approval.status = ApprovalRequest.Status.APPROVED
-        approval.approved_by = request.user
-        approval.decision_note = serializer.validated_data.get("note", "")
-        approval.decided_at = timezone.now()
-        approval.save(update_fields=["status", "approved_by", "decision_note", "decided_at"])
+        approval = ApprovalService().approve(
+            approval=approval,
+            approved_by=request.user,
+            note=serializer.validated_data.get("note", ""),
+        )
         return Response(ApprovalRequestSerializer(approval).data)
 
 
@@ -211,15 +365,15 @@ class AIApprovalRejectView(APIView):
     permission_classes = [permissions.IsAuthenticated, IsStaffUser]
 
     def post(self, request: Request, pk: str) -> Response:
-        """Mark an approval request as rejected."""
+        """Reject a pending AI action and cancel its workflow."""
         approval = get_object_or_404(ApprovalRequest, pk=pk)
         serializer = ApprovalDecisionSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        approval.status = ApprovalRequest.Status.REJECTED
-        approval.approved_by = request.user
-        approval.decision_note = serializer.validated_data.get("note", "")
-        approval.decided_at = timezone.now()
-        approval.save(update_fields=["status", "approved_by", "decision_note", "decided_at"])
+        approval = ApprovalService().reject(
+            approval=approval,
+            approved_by=request.user,
+            note=serializer.validated_data.get("note", ""),
+        )
         return Response(ApprovalRequestSerializer(approval).data)
 
 
@@ -324,6 +478,11 @@ class AIMetricsSummaryView(APIView):
             "knowledge_sources": KnowledgeSource.objects.count(),
             "workflow_runs": WorkflowRun.objects.count(),
             "tool_executions": ToolExecution.objects.count(),
+            "open_tasks": SupportTask.objects.filter(
+                status__in=[SupportTask.Status.OPEN, SupportTask.Status.IN_PROGRESS, SupportTask.Status.BLOCKED]
+            ).count(),
+            "new_leads": Lead.objects.filter(status=Lead.Status.NEW).count(),
+            "pending_approvals": ApprovalRequest.objects.filter(status=ApprovalRequest.Status.PENDING).count(),
             "top_intents": list(
                 AgentRun.objects.exclude(intent="")
                 .values("intent")

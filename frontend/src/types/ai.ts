@@ -60,3 +60,73 @@ export interface AICopilotResponse {
   assistant_turn: AIConversationTurn;
   run: AIAgentRun;
 }
+
+export interface AITask {
+  id: string;
+  task_type: string;
+  title: string;
+  description: string;
+  status: string;
+  priority: string;
+  order: string | null;
+  order_number: string | null;
+  conversation: string | null;
+  customer_email: string | null;
+  customer_name: string | null;
+  assigned_to_email: string | null;
+  assigned_to_name: string | null;
+  workflow_run: string | null;
+  workflow_type: string | null;
+  due_at: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AILead {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string;
+  company: string;
+  source_channel: string;
+  status: string;
+  interest_summary: string;
+  desired_varietals: string[];
+  estimated_order_value: string | null;
+  conversation: string | null;
+  customer_email: string | null;
+  customer_name: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AIApproval {
+  id: string;
+  workflow_run: string;
+  workflow_type: string;
+  workflow_status: string | null;
+  workflow_result: Record<string, unknown>;
+  action_name: string;
+  action_payload: Record<string, unknown>;
+  status: string;
+  approved_by: string | null;
+  approved_by_email: string | null;
+  decision_note: string;
+  decided_at: string | null;
+  created_at: string;
+}
+
+export interface AICopilotOverview {
+  metrics: {
+    open_tasks: number;
+    new_leads: number;
+    pending_approvals: number;
+    runs_needing_human: number;
+  };
+  prompt_suggestions: string[];
+  recent_tasks: AITask[];
+  recent_leads: AILead[];
+  pending_approvals: AIApproval[];
+}
