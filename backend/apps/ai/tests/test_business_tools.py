@@ -327,6 +327,24 @@ def test_update_order_status_and_contact_tools_execute_side_effects(monkeypatch)
 
 
 @pytest.mark.django_db
+def test_business_tools_return_clear_errors_for_missing_or_invalid_inputs() -> None:
+    """Business tools should fail safely on bad payloads instead of mutating state."""
+    staff_context = _context()
+    customer_context = _context(is_staff=False)
+    invalid_order = OrderFactory(order_number="LAB-2026-000999")
+
+    assert create_support_task({}, staff_context)["error"] == "missing_title"
+    assert create_lead_from_conversation({}, staff_context)["error"] == "missing_full_name"
+    assert update_support_task({"task_id": "00000000-0000-0000-0000-000000000000"}, staff_context)["error"] == "task_not_found"
+    assert update_lead_status({"lead_id": "00000000-0000-0000-0000-000000000000"}, staff_context)["error"] == "lead_not_found"
+    assert update_order_status({"order_number": invalid_order.order_number, "new_status": "spaceship"}, staff_context)["error"] == "invalid_status"
+    assert send_whatsapp_message({"message": "hola"}, staff_context)["error"] == "missing_phone"
+    assert send_support_email({"message": "hola"}, staff_context)["error"] == "missing_email"
+    assert create_support_task({"title": "No permitido"}, customer_context)["error"] == "staff_required"
+    assert send_whatsapp_message({"phone": "+5492604000000", "message": "hola"}, customer_context)["error"] == "staff_required"
+
+
+@pytest.mark.django_db
 def test_sales_tools_aggregate_summary_and_breakdowns() -> None:
     """Sales tools should compute totals and grouped metrics from paid orders."""
     category = CategoryFactory()

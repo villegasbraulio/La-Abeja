@@ -158,3 +158,28 @@ def test_registry_blocks_high_risk_tool_and_marks_run_for_human() -> None:
     assert ApprovalRequest.objects.filter(id=result["approval_request_id"], action_name="send_whatsapp_message").exists()
     assert run.needs_human is True
     assert ToolExecution.objects.filter(run=run, status=ToolExecution.Status.BLOCKED, tool_name="send_whatsapp_message").exists()
+
+
+@pytest.mark.django_db
+def test_approving_same_request_twice_does_not_reexecute_tool(authenticated_client) -> None:
+    """Repeated approval calls should be idempotent after the first execution."""
+    client, user = authenticated_client
+    user.is_staff = True
+    user.save(update_fields=["is_staff"])
+    customer = UserFactory(email="repeat@example.com")
+    order = OrderFactory(user=customer, order_number="LAB-2026-000188", status=Order.Status.READY_TO_SHIP)
+    conversation = Conversation.objects.create(mode=Conversation.Mode.OPS, customer=user)
+    run = AgentRun.objects.create(conversation=conversation, agent_type=AgentRun.AgentType.OPS)
+    result = ToolRegistry().execute(
+        tool_name="update_order_status",
+        payload={"order_number": order.order_number, "new_status": "shipped", "tracking_number": "AND-188"},
+        context=ToolContext(run=run, user_id=str(user.id), is_staff=True),
+    )
+    approval = ApprovalRequest.objects.get(id=result["approval_request_id"])
+
+    first_response = client.post(f"/api/v1/ai/approvals/{approval.id}/approve/", format="json")
+    second_response = client.post(f"/api/v1/ai/approvals/{approval.id}/approve/", format="json")
+
+    assert first_response.status_code == status.HTTP_200_OK
+    assert second_response.status_code == status.HTTP_200_OK
+    assert ToolExecution.objects.filter(tool_name="update_order_status", run__agent_type=AgentRun.AgentType.WORKFLOW).count() == 1

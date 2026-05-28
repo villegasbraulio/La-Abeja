@@ -1,4 +1,4 @@
-.PHONY: dev dev-bg down backend-test frontend-test lint format migrate makemigrations seed seed-ai reindex-ai
+.PHONY: dev dev-bg down backend-test frontend-test lint format migrate makemigrations seed seed-ai reindex-ai evals-ai
 
 dev:
 	docker compose up --build
@@ -23,6 +23,9 @@ seed-ai:
 
 reindex-ai:
 	docker compose exec backend python manage.py reindex_ai_knowledge
+
+evals-ai:
+	docker compose exec backend python manage.py run_ai_evals
 
 backend-test:
 	docker compose exec backend pytest -q
