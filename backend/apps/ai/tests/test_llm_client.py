@@ -33,8 +33,15 @@ class _FakeResponsesAPI:
 class _FakeOpenAIClient:
     """Minimal fake OpenAI client with a fake responses namespace."""
 
-    def __init__(self, *, api_key: str, output_text: str = "", should_raise: bool = False) -> None:
-        del api_key
+    def __init__(
+        self,
+        *,
+        api_key: str,
+        base_url: str | None = None,
+        output_text: str = "",
+        should_raise: bool = False,
+    ) -> None:
+        del api_key, base_url
         self.responses = _FakeResponsesAPI(output_text=output_text, should_raise=should_raise)
 
 
@@ -111,7 +118,12 @@ def test_llm_client_returns_fallback_on_empty_output(settings, monkeypatch) -> N
     monkeypatch.setitem(
         sys.modules,
         "openai",
-        SimpleNamespace(OpenAI=lambda *, api_key: _FakeOpenAIClient(api_key=api_key, output_text="   ")),
+        SimpleNamespace(
+            OpenAI=lambda *, api_key: _FakeOpenAIClient(
+                api_key=api_key,
+                output_text="   ",
+            )
+        ),
     )
 
     result = LLMClient().generate_grounded_response(
@@ -134,7 +146,10 @@ def test_llm_client_returns_model_text_when_openai_succeeds(settings, monkeypatc
         sys.modules,
         "openai",
         SimpleNamespace(
-            OpenAI=lambda *, api_key: _FakeOpenAIClient(api_key=api_key, output_text="Respuesta remota")
+            OpenAI=lambda *, api_key: _FakeOpenAIClient(
+                api_key=api_key,
+                output_text="Respuesta remota",
+            )
         ),
     )
 
@@ -148,3 +163,39 @@ def test_llm_client_returns_model_text_when_openai_succeeds(settings, monkeypatc
     assert result.text == "Respuesta remota"
     assert result.model == "gpt-test"
     assert result.used_llm is True
+
+
+def test_llm_client_supports_groq_with_openai_compatible_sdk(settings, monkeypatch) -> None:
+    """Groq should be reachable through the same OpenAI SDK with a custom base URL."""
+    settings.AI_USE_LLM = True
+    settings.AI_LLM_PROVIDER = "groq"
+    settings.GROQ_API_KEY = "groq-test-key"
+    settings.GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+    settings.AI_CHAT_MODEL = "openai/gpt-oss-20b"
+    captured: dict[str, str | None] = {}
+
+    def fake_openai_factory(*, api_key: str, base_url: str | None = None) -> _FakeOpenAIClient:
+        captured["api_key"] = api_key
+        captured["base_url"] = base_url
+        return _FakeOpenAIClient(
+            api_key=api_key,
+            base_url=base_url,
+            output_text="Respuesta desde Groq",
+        )
+
+    monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=fake_openai_factory))
+
+    result = LLMClient().generate_grounded_response(
+        system_prompt="system",
+        user_message="hola",
+        evidence=["doc"],
+        fallback_text="fallback",
+    )
+
+    assert result.text == "Respuesta desde Groq"
+    assert result.model == "openai/gpt-oss-20b"
+    assert result.used_llm is True
+    assert captured == {
+        "api_key": "groq-test-key",
+        "base_url": "https://api.groq.com/openai/v1",
+    }

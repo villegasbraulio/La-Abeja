@@ -10,7 +10,7 @@ from django.utils import timezone
 
 from apps.ai.agents.prompt_manager import PromptManager
 from apps.ai.agents.response_builder import ResponseBuilder
-from apps.ai.agents.tool_calling_agent import OpenAIToolCallingAgent
+from apps.ai.agents.tool_calling_agent import ToolCallingAgent
 from apps.ai.models import AgentRun, Conversation, ConversationTurn
 from apps.ai.services.llm_client import LLMClient
 from apps.ai.tools.base import ToolContext
@@ -38,7 +38,7 @@ class AIOrchestrator:
         self.prompt_manager = PromptManager()
         self.response_builder = ResponseBuilder()
         self.llm_client = LLMClient()
-        self.tool_calling_agent = OpenAIToolCallingAgent()
+        self.tool_calling_agent = ToolCallingAgent()
 
     @transaction.atomic
     def handle_message(

@@ -1,10 +1,10 @@
-"""Optional OpenAI-backed response generator with deterministic fallback."""
+"""Optional provider-backed response generator with deterministic fallback."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from django.conf import settings
+from apps.ai.providers import LLMProvider, LLMProviderFactory
 
 
 @dataclass(slots=True)
@@ -17,7 +17,11 @@ class LLMResponse:
 
 
 class LLMClient:
-    """Generate grounded text responses if OpenAI is configured."""
+    """Generate grounded text responses if an LLM provider is configured."""
+
+    def __init__(self, provider: LLMProvider | None = None) -> None:
+        """Build the configured provider strategy lazily."""
+        self.provider = provider or LLMProviderFactory.create()
 
     def generate_grounded_response(
         self,
@@ -27,38 +31,12 @@ class LLMClient:
         evidence: list[str],
         fallback_text: str,
     ) -> LLMResponse:
-        """Use OpenAI when available, otherwise return the fallback text."""
-        if not settings.AI_USE_LLM or not settings.OPENAI_API_KEY:
+        """Use the configured provider when available, otherwise return the fallback text."""
+        response = self.provider.generate_grounded_response(
+            system_prompt=system_prompt,
+            user_message=user_message,
+            evidence=evidence,
+        )
+        if response is None:
             return LLMResponse(text=fallback_text, model="deterministic-fallback", used_llm=False)
-
-        try:
-            from openai import OpenAI
-        except ImportError:
-            return LLMResponse(text=fallback_text, model="deterministic-fallback", used_llm=False)
-
-        try:
-            client = OpenAI(api_key=settings.OPENAI_API_KEY)
-            response = client.responses.create(
-                model=settings.AI_CHAT_MODEL,
-                input=[
-                    {"role": "system", "content": system_prompt},
-                    {
-                        "role": "user",
-                        "content": (
-                            f"User message:\n{user_message}\n\n"
-                            f"Grounding evidence:\n- " + "\n- ".join(evidence)
-                        ),
-                    },
-                ],
-            )
-            output_text = getattr(response, "output_text", "").strip()
-            if output_text:
-                return LLMResponse(
-                    text=output_text,
-                    model=settings.AI_CHAT_MODEL,
-                    used_llm=True,
-                )
-        except Exception:
-            return LLMResponse(text=fallback_text, model="deterministic-fallback", used_llm=False)
-
-        return LLMResponse(text=fallback_text, model="deterministic-fallback", used_llm=False)
+        return LLMResponse(text=response.text, model=response.model, used_llm=True)

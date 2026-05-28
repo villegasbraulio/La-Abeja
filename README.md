@@ -1,82 +1,209 @@
 # Bodega La Abeja
 
-Showcase premium de e-commerce vitivinícola y automatizaciones para una bodega de San Rafael, Mendoza.
+E-commerce vitivinicola + backoffice AI-first para una bodega de San Rafael, Mendoza.
 
-El proyecto está pensado como portfolio de alto nivel: combina un storefront editorial, un catálogo administrable, un backoffice custom para operación interna y una base backend preparada para crecer hacia reservas, automatizaciones y operaciones más complejas.
+Este proyecto ya no es solo un storefront con carrito y CRUD de catalogo. Evoluciono hacia una arquitectura de agente operativo con RAG, tool-calling, aprobaciones humanas, auditoria de ejecuciones, workflows internos y una UI de copilot para operaciones comerciales.
 
-## Estado actual
+Si despues queres reutilizar este README para actualizar un CV o pedirle a otro modelo que te ayude a redactarlo, el angulo correcto es este:
 
-Hoy el repositorio ya incluye un producto navegable y usable para demo:
+- producto real con dominio de negocio concreto
+- capa AI conectada a entidades vivas del negocio
+- RAG con ingestion, chunking, embeddings y retrieval hibrido
+- agent runtime con tools, approvals, audit trail y evals
+- integracion entre backend AI, backoffice operativo y workflows de negocio
 
-- storefront público en React con landing, catálogo, ficha de vino, carrito y páginas editoriales
-- autenticación JWT con perfil y flujo base de sesión
-- backoffice custom para gestionar catálogo y pedidos sin depender del Django admin
-- backend Django REST con catálogo, auth, checkout fase 1 y API interna para operación
-- automatizaciones iniciales de carrito abandonado y descuentos de cumpleaños
-- tests y tooling de calidad para backend y frontend
+## Resumen ejecutivo
 
-No todo el roadmap original está cerrado todavía.
+La base del sistema combina:
 
-Lo que ya está implementado:
+- storefront premium en React con catalogo, landing editorial, fichas de vino, carrito y checkout fase 1
+- backend Django REST para auth, catalogo, ordenes, pagos, automatizaciones y operaciones internas
+- backoffice custom para equipos de negocio, marketing y operaciones
+- capa AI que actua como support agent y operations copilot usando conocimiento recuperado, tools contra datos reales y guardrails para acciones riesgosas
 
-- catálogo público
-- ficha de producto
-- carrito visual/persistido
-- login JWT
-- checkout real fase 1 con creación de órdenes
-- integración con Mercado Pago Checkout Pro
-- webhook de pagos y sincronización de estado
+## Lo mas valioso del proyecto hoy
+
+- checkout real fase 1 con creacion de ordenes y Mercado Pago Checkout Pro
+- webhook de pagos y sincronizacion de `Payment` + `Order`
 - historial de pedidos del cliente
-- backoffice custom
-- visibilidad de pedidos en backoffice
-- seeds demo
-- automatizaciones iniciales
+- backoffice custom para catalogo y pedidos
+- copilot interno con tools sobre pedidos, catalogo, pagos, metricas y notas internas
+- base de conocimiento con documentos publicos e internos
+- retrieval lexico + semantico con fallback elegante cuando embeddings no estan disponibles
+- aprobaciones humanas para writes riesgosos
+- trazabilidad de runs, tools y workflows
+- evals deterministicas para regresiones del agente
 
-Lo que sigue siendo roadmap:
+## Capa AI-first
 
-- reservas completas
-- endurecimiento productivo de pagos, envíos y notificaciones
-- workers y servicios externos operando en producción
-- evolución a Checkout Bricks si se busca una UX de pago totalmente embebida
+La capa AI del proyecto esta pensada como una implementacion seria de producto, no como un chat aislado.
 
-## Stack
+### 1. Runtime de agente
 
-### Backend
+El backend incluye una app dedicada `backend/apps/ai/` con:
 
-- Python 3.12
-- Django
-- Django REST Framework
-- Simple JWT
-- django-filter
-- structlog
-- Celery
-- Redis
+- `AIOrchestrator` para persistir turnos, detectar intent, invocar tools y consolidar la respuesta final
+- `ToolCallingAgent` para ejecutar un loop de tools con proveedor configurable
+- `LLMProviderFactory` y providers OpenAI-compatible para desacoplar proveedor, modelo y transporte
+- `ResponseBuilder` y prompts separados para soporte y operaciones
 
-### Frontend
+Esto permite alternar entre proveedores como OpenAI y Groq sin reescribir la logica del agente.
 
-- React 18
-- TypeScript strict
-- Vite
-- Tailwind CSS
-- React Query
-- Zustand
-- Framer Motion
+### 2. Tool-calling conectado al negocio
 
-### Calidad y DX
+La app AI no opera sobre mocks. Ejecuta tools sobre entidades reales del dominio:
 
-- pytest
-- Vitest
-- ESLint
-- Ruff
-- mypy
-- Docker Compose
-- GitHub Actions
+- catalogo
+- ordenes
+- pagos
+- stock
+- notas internas
+- leads
+- tareas operativas
+- reservas de stock
+- metricas comerciales
+- comunicaciones por email / WhatsApp
 
-## Experiencia del producto
+Ejemplos de capacidades ya implementadas:
 
-### Storefront público
+- buscar pedidos por numero, cliente, telefono o fecha
+- inspeccionar incidencias de pago
+- listar stock bajo
+- consultar ventas por periodo o por varietal
+- crear tareas internas de seguimiento
+- crear leads a partir de conversaciones
+- generar updates de envio
+- preparar cambios de estado de pedidos
+- escalar conversaciones a humanos
 
-Rutas principales disponibles:
+### 3. Human-in-the-loop y aprobaciones
+
+Las acciones con side effects relevantes no se ejecutan ciegamente.
+
+El sistema modela:
+
+- `ToolExecution` con `risk_level`, `status`, payloads y latencia
+- `ApprovalRequest` para aprobaciones pendientes
+- `WorkflowRun` para trackear la ejecucion completa del flujo
+- `AgentRun.needs_human` para marcar corridas que requieren intervencion
+
+Eso habilita un flujo claro:
+
+1. el agente entiende la intencion
+2. decide si necesita tool
+3. si el tool es riesgoso, deja la accion bloqueada
+4. un operador aprueba o rechaza
+5. el workflow queda auditado end-to-end
+
+### 4. RAG y base de conocimiento
+
+La app AI implementa un pipeline propio de conocimiento:
+
+- `KnowledgeSource`
+- `KnowledgeDocument`
+- `KnowledgeChunk`
+- `KnowledgeIngestionService`
+- `KnowledgeRetriever`
+- `VectorStore`
+
+Capacidades reales:
+
+- ingestion idempotente por `source + external_id`
+- chunking de documentos
+- embeddings para cada chunk
+- canales `public` e `internal`
+- retrieval lexico
+- retrieval semantico opcional con `pgvector`
+- fusion de resultados lexico + semantico
+- citas por chunk/documento en las respuestas
+
+Comportamiento importante:
+
+- si hay embeddings y `pgvector`, el retrieval suma busqueda semantica
+- si no hay embeddings remotos o no hay `pgvector`, el sistema sigue funcionando con busqueda lexica
+- el soporte al cliente consulta conocimiento publico
+- el copilot interno puede consultar conocimiento interno tambien
+
+### 5. Observabilidad del agente
+
+Cada corrida deja evidencia estructurada:
+
+- texto del mensaje
+- intent detectado
+- modelo utilizado
+- confidence
+- citas
+- metadata de ejecucion
+- tools ejecutadas
+- tools bloqueadas
+- errores
+- timestamps
+
+Eso es muy valioso para:
+
+- debugging
+- evaluacion de prompts
+- incident review
+- explainability operativa
+- evolucion del producto AI con feedback real
+
+### 6. Evals deterministicas
+
+No se depende solo de "probar a mano".
+
+El proyecto incluye:
+
+- `EvalRunner`
+- comando `run_ai_evals`
+- casos deterministas para grounding, order lookup, low stock, ventas y approvals
+
+Esto es exactamente el tipo de capa que suele esperarse en equipos AI Engineer maduros:
+
+- regression testing del agente
+- chequeo de intents
+- chequeo de tools esperadas
+- chequeo de citas
+- chequeo de flags como `needs_human`
+
+## Arquitectura AI
+
+```mermaid
+flowchart TD
+    A["Storefront / Backoffice UI"] --> B["Django REST API"]
+    B --> C["AI Orchestrator"]
+    C --> D["LLM Provider Layer"]
+    C --> E["Tool Registry"]
+    C --> F["Knowledge Retriever"]
+    F --> G["Knowledge Documents / Chunks"]
+    F --> H["Embeddings + pgvector (optional)"]
+    E --> I["Orders / Payments / Catalog / CRM-like artifacts"]
+    E --> J["Notifications and operational side effects"]
+    C --> K["AgentRun / ToolExecution audit trail"]
+    E --> L["ApprovalService / WorkflowRun / ApprovalRequest"]
+```
+
+## Arquitectura general
+
+```mermaid
+flowchart TD
+    A["Frontend publico (React + Vite)"] --> B["API Django REST"]
+    C["Backoffice custom (React + Vite)"] --> B
+    B --> D["Catalog / Orders / Payments / Auth"]
+    B --> E["AI app: copilot, RAG, tools, workflows"]
+    D --> F["PostgreSQL / SQLite"]
+    E --> F
+    E --> G["Celery + Redis"]
+    G --> H["Automations / ingestion hooks / background jobs"]
+    D --> I["Mercado Pago"]
+    E --> J["OpenAI / Groq"]
+    E --> K["Email / WhatsApp / SMS wrappers"]
+```
+
+## Superficies del producto
+
+### Storefront publico
+
+Rutas principales:
 
 - `/`
 - `/vinos`
@@ -94,12 +221,12 @@ Rutas principales disponibles:
 
 Incluye:
 
-- landing con narrativa de marca
-- catálogo filtrable
-- cards de vino con precio, stock, imagen y badges
-- ficha detallada con notas de cata, premios y contenido editorial
-- carrito persistido en frontend
-- navegación y layout de marca consistentes
+- landing editorial y narrativa de marca
+- catalogo filtrable
+- fichas de vino con notas de cata, premios y contenido
+- carrito persistido
+- checkout autenticado
+- historial y detalle de pedidos
 
 ### Backoffice custom
 
@@ -107,178 +234,148 @@ Ruta principal:
 
 - `/backoffice/login`
 
-Módulos disponibles hoy:
+Modulos visibles hoy:
 
 - dashboard operativo
-- cola interna de pedidos
-- gestión de vinos
-- gestión de categorías
-- gestión de varietales
+- gestion de vinos
+- gestion de categorias
+- gestion de varietales
+- cola de pedidos
+- copilot de operaciones
+- tareas AI
+- leads AI
+- approvals AI
 
-Objetivo del backoffice:
+## Stack
 
-- que alguien comercial, de marketing o de operaciones pueda editar el catálogo sin entrar al Django admin
-- priorizar una UX clara para tareas de negocio: pedidos, precios, stock, imágenes, destacados y contenido de producto
+### Backend
+
+- Python 3.12
+- Django
+- Django REST Framework
+- Simple JWT
+- django-filter
+- Celery
+- Redis
+- structlog
+
+### Frontend
+
+- React 18
+- TypeScript strict
+- Vite
+- Tailwind CSS
+- React Query
+- Zustand
+- Framer Motion
+
+### Capa AI
+
+- abstraccion multi-provider para LLMs OpenAI-compatible
+- OpenAI y Groq como proveedores conversacionales
+- RAG propio sobre tablas Django
+- embeddings remotos
+- `pgvector` opcional para retrieval semantico
+- tool-calling local
+- approval gates
+- eval runner determinista
+
+### Calidad y DX
+
+- pytest
+- Vitest
+- ESLint
+- Ruff
+- mypy
+- Docker Compose
+- GitHub Actions
+
+## Endpoints AI
+
+La API AI ya expone una superficie bastante completa.
+
+### Chat y copilot
+
+- `POST /api/v1/ai/chat/sessions/`
+- `GET /api/v1/ai/chat/sessions/<uuid>/`
+- `POST /api/v1/ai/chat/sessions/<uuid>/messages/`
+- `GET /api/v1/ai/chat/sessions/<uuid>/events/`
+- `POST /api/v1/ai/chat/sessions/<uuid>/feedback/`
+- `POST /api/v1/ai/copilot/messages/`
+- `GET /api/v1/ai/copilot/overview/`
+
+### Auditoria de runs
+
+- `GET /api/v1/ai/runs/<uuid>/`
+- `GET /api/v1/ai/runs/<uuid>/steps/`
+
+### Artefactos operativos creados por AI
+
+- `GET /api/v1/ai/tasks/`
+- `PATCH /api/v1/ai/tasks/<uuid>/`
+- `GET /api/v1/ai/leads/`
+- `PATCH /api/v1/ai/leads/<uuid>/`
+- `GET /api/v1/ai/approvals/`
+- `POST /api/v1/ai/approvals/<uuid>/approve/`
+- `POST /api/v1/ai/approvals/<uuid>/reject/`
+
+### Knowledge ops
+
+- `GET /api/v1/ai/knowledge/sources/`
+- `POST /api/v1/ai/knowledge/sources/`
+- `POST /api/v1/ai/knowledge/sources/<id>/sync/`
+- `GET /api/v1/ai/knowledge/documents/`
+- `POST /api/v1/ai/knowledge/reindex/`
+
+### Workflows y metricas
+
+- `POST /api/v1/ai/workflows/lead-triage/run/`
+- `POST /api/v1/ai/workflows/order-exception/run/`
+- `POST /api/v1/ai/workflows/abandoned-cart/run/`
+- `GET /api/v1/ai/workflows/runs/<uuid>/`
+- `GET /api/v1/ai/metrics/summary/`
 
 ## Checkout fase 1
 
-La fase 1 ya quedó aplicada con un enfoque simple y vendible:
+La fase 1 del checkout ya esta implementada y es demostrable:
 
-- checkout autenticado desde el storefront
-- creación real de órdenes en backend
-- redirección a Mercado Pago Checkout Pro
-- recepción de webhook de pago
-- actualización de `Payment` y `Order`
-- historial y detalle de pedidos para cliente
-- visibilidad de pedidos en backoffice
+- checkout autenticado
+- creacion real de orden en backend
+- generacion de preferencia en Mercado Pago Checkout Pro
+- recepcion de webhook
+- sincronizacion de estado de `Payment` y `Order`
+- detalle e historial para cliente
+- visibilidad operativa en backoffice
 
-### Decisiones técnicas de fase 1
-
-- se usa `Checkout Pro` en vez de `Bricks` para salir más rápido con un flujo real
-- el backend crea la orden antes de generar la preferencia de pago
-- el frontend nunca usa el `access token` de Mercado Pago
-- el webhook es la fuente de verdad para consolidar el estado del pago
-- la experiencia requiere usuario autenticado para asociar la orden al cliente
-
-### Flujo
+Flujo:
 
 ```mermaid
 flowchart TD
     A["Carrito en frontend"] --> B["Checkout autenticado"]
     B --> C["POST /api/v1/orders/orders/"]
-    C --> D["Orden pendiente de pago"]
+    C --> D["Orden pending_payment"]
     D --> E["POST /api/v1/payments/create-preference/"]
     E --> F["Redirect a Mercado Pago Checkout Pro"]
     F --> G["Webhook /api/v1/payments/webhook/"]
-    G --> H["Actualizar Payment + Order"]
-    H --> I["Cliente ve resultado e historial"]
-    H --> J["Backoffice ve el pedido"]
+    G --> H["Sync Payment + Order"]
+    H --> I["Historial del cliente"]
+    H --> J["Backoffice operativo"]
 ```
 
-## Arquitectura
-
-```mermaid
-flowchart TD
-    A["Frontend público (React + Vite)"] --> B["API Django REST"]
-    C["Backoffice custom (React + Vite)"] --> B
-    B --> D["PostgreSQL / SQLite"]
-    B --> E["Celery + Redis"]
-    E --> F["Automatizaciones"]
-    F --> G["Email / WhatsApp / SMS wrappers"]
-```
-
-## Backoffice custom
-
-El backoffice custom consume una API interna separada del catálogo público.
-
-### Endpoints internos disponibles
-
-- `GET /api/v1/backoffice/dashboard/`
-- `GET /api/v1/backoffice/categories/`
-- `POST /api/v1/backoffice/categories/`
-- `GET /api/v1/backoffice/categories/<id>/`
-- `PATCH /api/v1/backoffice/categories/<id>/`
-- `DELETE /api/v1/backoffice/categories/<id>/`
-- `GET /api/v1/backoffice/varietals/`
-- `POST /api/v1/backoffice/varietals/`
-- `GET /api/v1/backoffice/varietals/<id>/`
-- `PATCH /api/v1/backoffice/varietals/<id>/`
-- `DELETE /api/v1/backoffice/varietals/<id>/`
-- `GET /api/v1/backoffice/wines/`
-- `POST /api/v1/backoffice/wines/`
-- `GET /api/v1/backoffice/wines/<uuid>/`
-- `PATCH /api/v1/backoffice/wines/<uuid>/`
-- `DELETE /api/v1/backoffice/wines/<uuid>/`
-- `GET /api/v1/backoffice/orders/`
-- `GET /api/v1/backoffice/orders/<uuid>/`
-
-### Qué puede hacer hoy
-
-- crear vinos
-- editar nombre, slug, SKU, precios y stock
-- cambiar estado publicado/destacado/edición limitada
-- gestionar imágenes por URL
-- editar maridajes, notas, premios y metadata SEO
-- crear y ordenar categorías
-- crear varietales
-- revisar pedidos y ver su detalle operativo
-- ver KPIs básicos del catálogo
-
-### Seguridad
-
-- autenticación JWT
-- acceso restringido a usuarios `staff`
-- validaciones server-side con DRF
-- logging estructurado con `structlog`
-
-## API pública disponible
-
-### Auth
-
-- `POST /api/v1/auth/register/`
-- `POST /api/v1/auth/login/`
-- `POST /api/v1/auth/logout/`
-- `POST /api/v1/auth/token/refresh/`
-- `POST /api/v1/auth/password/reset/`
-- `POST /api/v1/auth/password/reset/confirm/`
-- `POST /api/v1/auth/password/change/`
-- `GET /api/v1/auth/profile/`
-- `PATCH /api/v1/auth/profile/`
-
-### Catálogo
-
-- `GET /api/v1/catalog/wines/`
-- `GET /api/v1/catalog/wines/featured/`
-- `GET /api/v1/catalog/wines/<slug>/`
-- `GET /api/v1/catalog/wines/<slug>/reviews/`
-- `POST /api/v1/catalog/wines/<slug>/reviews/`
-- `GET /api/v1/catalog/categories/`
-- `GET /api/v1/catalog/varietals/`
-
-### Órdenes
-
-- `GET /api/v1/orders/orders/`
-- `POST /api/v1/orders/orders/`
-- `GET /api/v1/orders/orders/<uuid>/`
-- `POST /api/v1/orders/orders/<uuid>/cancel/`
-
-### Pagos
-
-- `POST /api/v1/payments/create-preference/`
-- `POST /api/v1/payments/webhook/`
-
-### Salud de la app
-
-- `GET /health/`
-
-## Automatizaciones implementadas hoy
+## Automatizaciones
 
 ### Carrito abandonado
 
-Busca carritos inactivos por más de una hora y envía un email de recuperación si tienen productos y todavía no fueron marcados como recordados.
+- busca carritos inactivos
+- verifica que tengan productos
+- envia email de recuperacion
+- marca el recordatorio como enviado
 
-```mermaid
-flowchart TD
-    A["Celery Beat"] --> B["Buscar carritos inactivos > 1h"]
-    B --> C{"Tiene productos?"}
-    C -- "No" --> D["Ignorar"]
-    C -- "Sí" --> E["Enviar email de carrito abandonado"]
-    E --> F["Marcar abandon_reminder_sent=True"]
-```
+### Cumpleanos / promo
 
-### Descuento de cumpleaños
-
-Busca usuarios suscriptos que cumplen años ese día, crea un código único y dispara un email con beneficio.
-
-```mermaid
-flowchart TD
-    A["Tarea diaria"] --> B["Buscar usuarios con cumpleaños hoy"]
-    B --> C{"Suscripto y activo?"}
-    C -- "No" --> D["Ignorar"]
-    C -- "Sí" --> E["Crear promo code único"]
-    E --> F["Enviar email con descuento"]
-    F --> G["Guardar año de envío"]
-```
+- busca usuarios suscriptos con cumple ese dia
+- genera promo code unico
+- dispara email con beneficio
 
 ## Estructura del repositorio
 
@@ -286,6 +383,7 @@ flowchart TD
 bodega-la-abeja/
 ├── backend/
 │   ├── apps/
+│   │   ├── ai/
 │   │   ├── authentication/
 │   │   ├── automations/
 │   │   ├── catalog/
@@ -313,15 +411,15 @@ bodega-la-abeja/
 └── .env.example
 ```
 
-## Cómo levantarlo sin Docker
+## Como levantarlo sin Docker
 
-### 1. Clonar y preparar variables de entorno
+### 1. Variables de entorno
 
 ```bash
 cp .env.example .env
 ```
 
-Variables importantes para la demo:
+Variables importantes para demo base:
 
 - `DEMO_ADMIN_EMAIL`
 - `DEMO_ADMIN_PASSWORD`
@@ -329,21 +427,59 @@ Variables importantes para la demo:
 - `FRONTEND_URL`
 - `BACKEND_URL`
 
-### 2. Backend
+### 2. Providers LLM
 
-Desde la raíz del repo:
+El runtime conversacional ya acepta aliases utiles para OpenAI y Groq.
+
+#### OpenAI
+
+```bash
+AI_LLM_PROVIDER=openai
+OPENAI_API_KEY=tu_api_key
+AI_CHAT_MODEL=gpt-4.1
+```
+
+#### Groq
+
+```bash
+AI_LLM_PROVIDER=groq
+GROQ_API_KEY=tu_api_key
+GROQ_BASE_URL=https://api.groq.com/openai/v1
+AI_CHAT_MODEL=openai/gpt-oss-20b
+```
+
+Tambien se aceptan estos aliases para Groq:
+
+- `GROQ_API_BASE_URL` como alternativa a `GROQ_BASE_URL`
+- `GROQ_MODEL_NAME` como alternativa a `AI_CHAT_MODEL`
+
+Ejemplo:
+
+```bash
+AI_LLM_PROVIDER=groq
+GROQ_API_BASE_URL=https://api.groq.com/openai/v1
+GROQ_MODEL_NAME=llama-3.3-70b-versatile
+GROQ_API_KEY=tu_api_key
+```
+
+Nota importante:
+
+- chat y tool-calling pueden correr con Groq
+- embeddings siguen usando `OPENAI_API_KEY` hoy
+- si no hay embeddings remotos, el knowledge retrieval sigue funcionando con busqueda lexica
+
+### 3. Backend
 
 ```bash
 .venv/bin/pip install -r backend/requirements/development.txt
 cd backend
 ../.venv/bin/python manage.py migrate
 ../.venv/bin/python manage.py seed_demo_data
+../.venv/bin/python manage.py seed_ai_knowledge
 ../.venv/bin/python manage.py runserver 127.0.0.1:8000
 ```
 
-### 3. Frontend
-
-En otra terminal:
+### 4. Frontend
 
 ```bash
 cd frontend
@@ -351,14 +487,14 @@ npm install
 npm run dev -- --host 127.0.0.1 --port 3000
 ```
 
-### 4. URLs locales
+### 5. URLs locales
 
 - storefront: [http://127.0.0.1:3000](http://127.0.0.1:3000)
 - backoffice: [http://127.0.0.1:3000/backoffice/login](http://127.0.0.1:3000/backoffice/login)
 - backend API: [http://127.0.0.1:8000](http://127.0.0.1:8000)
 - healthcheck: [http://127.0.0.1:8000/health/](http://127.0.0.1:8000/health/)
 
-## Cómo levantarlo con Docker
+## Docker
 
 ```bash
 cp .env.example .env
@@ -369,15 +505,40 @@ make seed
 
 ## Acceso demo
 
-Si corrés `seed_demo_data` con las variables por defecto de [`.env.example`](/Users/braulio/La-Abeja/.env.example), el acceso demo queda así:
+Si corres `seed_demo_data` con los defaults de [`.env.example`](/Users/braulio/La-Abeja/.env.example):
 
 - email: `admin@bodegalaabeja.com.ar`
-- contraseña: `LaAbejaAdmin2026!`
+- contrasena: `LaAbejaAdmin2026!`
 
-Importante:
+## Comandos utiles para AI
 
-- estas credenciales son sólo para desarrollo y demo
-- en un entorno real conviene reemplazarlas por usuarios creados manualmente o por variables privadas
+### Seed de conocimiento
+
+```bash
+cd backend
+../.venv/bin/python manage.py seed_ai_knowledge
+```
+
+### Reindex de chunks + embeddings
+
+```bash
+cd backend
+../.venv/bin/python manage.py reindex_ai_knowledge
+```
+
+### Evals del agente
+
+```bash
+cd backend
+../.venv/bin/python manage.py run_ai_evals
+```
+
+Filtrar casos:
+
+```bash
+cd backend
+../.venv/bin/python manage.py run_ai_evals --case ops_low_stock_snapshot
+```
 
 ## Testing y calidad
 
@@ -398,66 +559,64 @@ npm run lint
 npm run test -- --run
 ```
 
-## Decisiones técnicas relevantes
+## Que demuestra para roles AI Engineer / AI-first
 
-- TypeScript en modo estricto para el frontend
-- DRF con serializers tipados y separación clara entre catálogo público y backoffice
-- Zustand persistido para sesión y carrito
-- React Query para sincronización de datos
-- `structlog` para logging estructurado
-- Celery para automatizaciones desacopladas
-- seed demo reproducible para portfolio y ventas
+Este proyecto ya demuestra varias competencias tipicas de un perfil AI Engineer moderno:
 
-## Qué mostrar en una demo comercial
+- diseno de una capa de agentes conectada a sistemas reales del negocio
+- abstraccion de providers para cambiar modelo o vendor sin rehacer el runtime
+- implementacion de RAG con ingestion, chunking, embeddings y retrieval hibrido
+- tool-calling local con lectura y escritura sobre entidades reales
+- human-in-the-loop para acciones con riesgo
+- observabilidad de runs, tools, latencias, citas y metadata
+- evals deterministicas para regresiones del agente
+- integracion del agente con una UI operativa usable por negocio
+- trabajo sobre un dominio real donde AI no solo responde, sino que coordina y deja artefactos persistidos
 
-Si querés presentar este proyecto a una bodega, el recorrido recomendado hoy es:
+Traducido a lenguaje de hiring:
 
-1. landing pública y narrativa de marca
-2. catálogo filtrable
-3. ficha de vino
-4. carrito
-5. login al backoffice
-6. edición de un vino en vivo
-7. dashboard y gestión de categorías/varietales
-8. explicación de automatizaciones ya preparadas
+- agent orchestration
+- retrieval engineering
+- LLM integration
+- tool use safety
+- workflow design
+- evaluation and reliability
+- AI product engineering
 
 ## Limitaciones actuales
 
-- el carrito todavía no cierra una compra real
-- el checkout no está conectado a pagos reales
-- las imágenes del backoffice se cargan por URL, no por uploader propio
-- reservas, pagos y órdenes todavía no están cerrados end-to-end
-- el Django admin sigue existiendo como herramienta técnica, pero el flujo pensado para negocio es el backoffice custom
+El proyecto ya es fuerte como demo tecnica, pero sigue teniendo limites reales:
+
+- la sincronizacion de knowledge sources externos todavia esta en una etapa inicial
+- embeddings siguen acoplados a OpenAI
+- parte de los workflows AI estan orientados a demo y no a operacion productiva a gran escala
+- falta endurecimiento productivo de observabilidad, retries y operaciones externas
+- reservas completas siguen siendo roadmap
 
 ## Roadmap sugerido
 
-### Fase 1
+### AI / producto
 
-- checkout real
-- creación de órdenes
-- estado de pedidos
-- integración con Mercado Pago
+- conectores reales para knowledge sync desde CMS, docs o PDFs
+- memoria mas rica por cliente y cuenta
+- mejores dashboards de calidad del agente
+- mas evals automaticas y datasets de regresion
+- versionado mas fuerte de prompts y tools
 
-### Fase 2
+### Commerce / operations
 
-- panel de pedidos dentro del backoffice
-- carga de imágenes por uploader
-- gestión de promociones
-- acciones masivas sobre catálogo
-
-### Fase 3
-
-- reservas completas
-- dashboards de automatizaciones
-- métricas comerciales
-- deploy productivo con workers y servicios externos
+- evolucion del checkout
+- uploaders de imagenes en backoffice
+- acciones masivas sobre catalogo
+- maduracion operativa de pagos, envios y notificaciones
+- workers y servicios externos listos para produccion
 
 ## Licencia y uso
 
-Proyecto creado como portfolio / showcase técnico. Antes de usarlo en producción conviene completar:
+Proyecto creado como portfolio / showcase tecnico. Antes de usarlo en produccion conviene completar:
 
-- checkout y pagos reales
-- observabilidad
 - hardening de seguridad
-- flujo operativo de órdenes
+- observabilidad mas profunda
 - despliegue y backups
+- operacion real de servicios externos
+- cierre de flujos pendientes de negocio

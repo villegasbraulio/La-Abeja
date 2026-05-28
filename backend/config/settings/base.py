@@ -16,6 +16,15 @@ def get_list_env(name: str, default: str) -> list[str]:
     """Return a normalized list from a comma-separated environment variable."""
     return [item.strip() for item in os.getenv(name, default).split(",") if item.strip()]
 
+
+def get_first_env(*names: str, default: str = "") -> str:
+    """Return the first non-empty environment variable among the provided names."""
+    for name in names:
+        value = os.getenv(name, "").strip()
+        if value:
+            return value
+    return default
+
 SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-development-secret-key-change-me")
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 ALLOWED_HOSTS = get_list_env("ALLOWED_HOSTS", "localhost,127.0.0.1")
@@ -159,9 +168,26 @@ ENABLE_WHATSAPP_NOTIFICATIONS = (
 ENABLE_SMS_NOTIFICATIONS = os.getenv("ENABLE_SMS_NOTIFICATIONS", "False").lower() == "true"
 LOW_STOCK_ALERT_ENABLED = os.getenv("LOW_STOCK_ALERT_ENABLED", "True").lower() == "true"
 
+AI_LLM_PROVIDER = os.getenv("AI_LLM_PROVIDER", "openai").lower()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-AI_CHAT_MODEL = os.getenv("AI_CHAT_MODEL", "gpt-4.1")
-AI_REASONING_MODEL = os.getenv("AI_REASONING_MODEL", "gpt-5.1")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_BASE_URL = get_first_env(
+    "GROQ_BASE_URL",
+    "GROQ_API_BASE_URL",
+    default="https://api.groq.com/openai/v1",
+)
+DEFAULT_AI_CHAT_MODEL = "openai/gpt-oss-20b" if AI_LLM_PROVIDER == "groq" else "gpt-4.1"
+DEFAULT_AI_REASONING_MODEL = (
+    "openai/gpt-oss-120b" if AI_LLM_PROVIDER == "groq" else "gpt-5.1"
+)
+AI_CHAT_MODEL = (
+    get_first_env("AI_CHAT_MODEL", "GROQ_MODEL_NAME")
+    if AI_LLM_PROVIDER == "groq"
+    else get_first_env("AI_CHAT_MODEL")
+) or DEFAULT_AI_CHAT_MODEL
+AI_REASONING_MODEL = (
+    os.getenv("AI_REASONING_MODEL", DEFAULT_AI_REASONING_MODEL) or DEFAULT_AI_REASONING_MODEL
+)
 AI_EMBEDDING_MODEL = os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-large")
 AI_MAX_KNOWLEDGE_RESULTS = int(os.getenv("AI_MAX_KNOWLEDGE_RESULTS", "6"))
 AI_USE_LLM = os.getenv("AI_USE_LLM", "True").lower() == "true"
