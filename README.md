@@ -583,6 +583,36 @@ Traducido a lenguaje de hiring:
 - evaluation and reliability
 - AI product engineering
 
+## Brief reutilizable para CV o LinkedIn
+
+Si despues queres pasar este README a otro modelo para actualizar tu perfil, este es el posicionamiento mas util:
+
+### Version corta
+
+Desarrolle una plataforma e-commerce y backoffice AI-first para una bodega, integrando una capa de agentes con RAG hibrido, tool-calling sobre entidades reales del negocio, aprobaciones humanas para acciones riesgosas, auditoria completa de ejecuciones y evals deterministicas para confiabilidad. La arquitectura desacopla proveedor, modelo y runtime conversacional, y conecta la UX operativa con workflows persistidos para ventas, soporte y operaciones internas.
+
+### Keywords de perfil
+
+- AI Engineer
+- AI-first product engineer
+- agent orchestration
+- retrieval engineering
+- RAG
+- tool-calling
+- human-in-the-loop systems
+- eval-driven LLM development
+- AI operations
+- workflow automation
+- Django + React + LLM integration
+
+### En una entrevista conviene enfatizar
+
+- que no es un chatbot aislado, sino una capa AI conectada al sistema transaccional
+- que el agente lee y escribe sobre entidades reales con guardrails y approvals
+- que el RAG tiene ingestion, chunking, embeddings y fallback lexico si la capa semantica no esta disponible
+- que el runtime es multi-provider y hoy puede correr con OpenAI o Groq
+- que la solucion incluye evaluacion, audit trail y superficies operativas usables por negocio
+
 ## Limitaciones actuales
 
 El proyecto ya es fuerte como demo tecnica, pero sigue teniendo limites reales:
