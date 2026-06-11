@@ -37,6 +37,7 @@ class EmbeddingService:
             response = client.embeddings.create(
                 model=settings.AI_EMBEDDING_MODEL,
                 input=cleaned,
+                dimensions=settings.AI_PGVECTOR_DIMENSIONS,
             )
         except Exception:
             return None

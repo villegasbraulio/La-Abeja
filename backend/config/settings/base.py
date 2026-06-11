@@ -223,7 +223,8 @@ AI_MAX_KNOWLEDGE_RESULTS = int(os.getenv("AI_MAX_KNOWLEDGE_RESULTS", "6"))
 AI_USE_LLM = os.getenv("AI_USE_LLM", "True").lower() == "true"
 AI_USE_TOOL_CALLING = os.getenv("AI_USE_TOOL_CALLING", "True").lower() == "true"
 AI_ENABLE_PGVECTOR = os.getenv("AI_ENABLE_PGVECTOR", "True").lower() == "true"
-AI_EMBEDDING_DIMENSIONS = int(os.getenv("AI_EMBEDDING_DIMENSIONS", "3072"))
+AI_EMBEDDING_DIMENSIONS = int(os.getenv("AI_EMBEDDING_DIMENSIONS", "1536"))
+AI_PGVECTOR_DIMENSIONS = min(AI_EMBEDDING_DIMENSIONS, 1536)
 
 LOGGING = {
     "version": 1,

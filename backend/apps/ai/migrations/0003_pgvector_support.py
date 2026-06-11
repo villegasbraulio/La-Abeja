@@ -11,13 +11,15 @@ def create_pgvector_support(apps, schema_editor) -> None:
     del apps
     if not settings.AI_ENABLE_PGVECTOR or schema_editor.connection.vendor != "postgresql":
         return
+    dimensions = min(int(getattr(settings, "AI_EMBEDDING_DIMENSIONS", 1536)), 1536)
     with schema_editor.connection.cursor() as cursor:
         cursor.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+        cursor.execute("DROP TABLE IF EXISTS ai_knowledgechunk_embedding;")
         cursor.execute(
-            """
+            f"""
             CREATE TABLE IF NOT EXISTS ai_knowledgechunk_embedding (
                 chunk_id bigint PRIMARY KEY REFERENCES ai_knowledgechunk(id) ON DELETE CASCADE,
-                embedding vector(3072) NOT NULL
+                embedding vector({dimensions}) NOT NULL
             );
             """
         )
