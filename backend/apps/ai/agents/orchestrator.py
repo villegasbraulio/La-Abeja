@@ -19,6 +19,8 @@ from apps.ai.tools.registry import ToolRegistry
 ORDER_NUMBER_RE = re.compile(r"LAB-\d{4}-\d{3,}", re.IGNORECASE)
 EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+", re.IGNORECASE)
 TRACKING_RE = re.compile(r"tracking(?:\s+numero)?[:\s]+([A-Z0-9-]+)", re.IGNORECASE)
+SKU_RE = re.compile(r"(?:sku|etiqueta)[:\s]+([A-Z0-9-]{4,})", re.IGNORECASE)
+QUANTITY_RE = re.compile(r"(\d+)\s+(?:unidad(?:es)?|botella(?:s)?)", re.IGNORECASE)
 
 
 @dataclass(slots=True)
@@ -124,11 +126,46 @@ class AIOrchestrator:
             conversation.save(update_fields=["summary", "updated_at"])
             return OrchestratorResult(assistant_turn=assistant_turn, run=run)
 
-        if intent == "create_support_task":
+        if intent == "search_orders":
+            result = self.tool_registry.execute(tool_name="search_orders", payload=payload, context=context)
+            fallback_text = self.response_builder.build_search_orders_response(result.get("results", []))
+            evidence = ["tool:search_orders"]
+            citations: list[dict[str, object]] = []
+        elif intent == "customer_360":
+            result = self.tool_registry.execute(tool_name="get_customer_360", payload=payload, context=context)
+            fallback_text = self.response_builder.build_customer_360_response(result)
+            evidence = [f"tool:get_customer_360:{result.get('customer', {}).get('email', '')}"]
+            citations = []
+        elif intent == "customer_orders_summary":
+            result = self.tool_registry.execute(tool_name="get_customer_orders_summary", payload=payload, context=context)
+            fallback_text = self.response_builder.build_customer_orders_summary_response(result)
+            evidence = [f"tool:get_customer_orders_summary:{result.get('customer_email', '')}"]
+            citations = []
+        elif intent == "create_support_task":
             result = self.tool_registry.execute(tool_name="create_support_task", payload=payload, context=context)
             fallback_text = self.response_builder.build_support_task_response(result)
             evidence = [f"tool:create_support_task:{result.get('task_id', '')}"]
-            citations: list[dict[str, object]] = []
+            citations = []
+        elif intent == "create_payment_followup":
+            result = self.tool_registry.execute(tool_name="create_payment_followup", payload=payload, context=context)
+            fallback_text = self.response_builder.build_payment_followup_response(result)
+            evidence = [f"tool:create_payment_followup:{result.get('task_id', '')}"]
+            citations = []
+        elif intent == "create_shipping_claim":
+            result = self.tool_registry.execute(tool_name="create_shipping_claim", payload=payload, context=context)
+            fallback_text = self.response_builder.build_shipping_claim_response(result)
+            evidence = [f"tool:create_shipping_claim:{result.get('task_id', '')}"]
+            citations = []
+        elif intent == "reserve_stock":
+            result = self.tool_registry.execute(tool_name="reserve_stock", payload=payload, context=context)
+            fallback_text = self.response_builder.build_stock_reservation_response(result)
+            evidence = [f"tool:reserve_stock:{result.get('reservation_id', '')}"]
+            citations = []
+        elif intent == "request_order_cancellation":
+            result = self.tool_registry.execute(tool_name="request_order_cancellation", payload=payload, context=context)
+            fallback_text = self.response_builder.build_order_cancellation_response(result)
+            evidence = [f"tool:request_order_cancellation:{result.get('order_number', '')}"]
+            citations = []
         elif intent == "update_order_status":
             result = self.tool_registry.execute(tool_name="update_order_status", payload=payload, context=context)
             fallback_text = self.response_builder.build_order_status_update_response(result)
@@ -153,6 +190,11 @@ class AIOrchestrator:
             result = self.tool_registry.execute(tool_name="check_payment_issue", payload=payload, context=context)
             fallback_text = self.response_builder.build_payment_issue_response(result)
             evidence = [f"tool:check_payment_issue:{result.get('order_number', '')}"]
+            citations = []
+        elif intent == "shipping_update":
+            result = self.tool_registry.execute(tool_name="generate_shipping_update", payload=payload, context=context)
+            fallback_text = self.response_builder.build_shipping_update_response(result)
+            evidence = [f"tool:generate_shipping_update:{result.get('order_number', '')}"]
             citations = []
         elif intent == "sales_summary":
             result = self.tool_registry.execute(tool_name="get_sales_summary", payload=payload, context=context)
@@ -247,13 +289,34 @@ class AIOrchestrator:
         normalized = message.lower()
         order_match = ORDER_NUMBER_RE.search(message)
         if is_staff:
+            order_search_payload = self._detect_order_search_payload(message=message, normalized=normalized)
+            if order_search_payload is not None:
+                return "search_orders", order_search_payload
+            customer_360_payload = self._detect_customer_context_payload(message=message, normalized=normalized)
+            if customer_360_payload is not None:
+                intent = "customer_360" if "360" in normalized or "perfil" in normalized else "customer_orders_summary"
+                return intent, customer_360_payload
+            reserve_stock_payload = self._detect_reserve_stock_payload(message=message, normalized=normalized)
+            if reserve_stock_payload is not None:
+                return "reserve_stock", reserve_stock_payload
+            cancellation_payload = self._detect_order_cancellation_payload(message=message, normalized=normalized)
+            if cancellation_payload is not None:
+                return "request_order_cancellation", cancellation_payload
             order_write_payload = self._detect_order_status_write_payload(message=message, normalized=normalized)
             if order_write_payload is not None:
                 return "update_order_status", order_write_payload
+            payment_followup_payload = self._detect_payment_followup_payload(message=message, normalized=normalized)
+            if payment_followup_payload is not None:
+                return "create_payment_followup", payment_followup_payload
+            shipping_claim_payload = self._detect_shipping_claim_payload(message=message, normalized=normalized)
+            if shipping_claim_payload is not None:
+                return "create_shipping_claim", shipping_claim_payload
             task_payload = self._detect_task_creation_payload(message=message, normalized=normalized)
             if task_payload is not None:
                 return "create_support_task", task_payload
         if order_match:
+            if any(keyword in normalized for keyword in ["tracking", "envio", "despacho", "en camino"]):
+                return "shipping_update", {"order_number": order_match.group(0).upper()}
             if "pago" in normalized or "payment" in normalized:
                 return "payment_issue", {"order_number": order_match.group(0).upper()}
             return "order_status", {"order_number": order_match.group(0).upper()}
@@ -369,6 +432,165 @@ class AIOrchestrator:
         }
         if order_match is not None:
             payload["order_number"] = order_match.group(0).upper()
+        if email_match is not None:
+            payload["customer_email"] = email_match.group(0).lower()
+        return payload
+
+    def _detect_order_search_payload(
+        self,
+        *,
+        message: str,
+        normalized: str,
+    ) -> dict[str, object] | None:
+        """Detect guided order-search prompts for staff operators."""
+        search_triggers = [
+            "busca pedidos",
+            "buscá pedidos",
+            "mostrame pedidos",
+            "mostrar pedidos",
+            "pedidos con",
+            "pedidos de",
+            "pedidos del cliente",
+        ]
+        if not any(trigger in normalized for trigger in search_triggers):
+            return None
+
+        payload: dict[str, object] = {"limit": 10}
+        email_match = EMAIL_RE.search(message)
+        if email_match is not None:
+            payload["customer_email"] = email_match.group(0).lower()
+
+        if "rechaz" in normalized or "fallid" in normalized:
+            payload["statuses"] = ["payment_failed"]
+        elif "cancel" in normalized:
+            payload["statuses"] = ["cancelled"]
+        elif "enviado" in normalized or "despachado" in normalized:
+            payload["statuses"] = ["shipped"]
+        elif "entregado" in normalized:
+            payload["statuses"] = ["delivered"]
+        elif "pagado" in normalized:
+            payload["statuses"] = ["paid"]
+
+        if "semana" in normalized:
+            payload["period"] = "last_7_days"
+        elif "mes pasado" in normalized:
+            payload["period"] = "previous_month"
+        elif "este mes" in normalized:
+            payload["period"] = "current_month"
+        elif "hoy" in normalized:
+            today = timezone.localdate().isoformat()
+            payload["start_date"] = today
+            payload["end_date"] = today
+
+        return payload
+
+    def _detect_customer_context_payload(
+        self,
+        *,
+        message: str,
+        normalized: str,
+    ) -> dict[str, object] | None:
+        """Detect customer-summary or 360 prompts."""
+        customer_triggers = [
+            "360 del cliente",
+            "customer 360",
+            "perfil del cliente",
+            "resumen del cliente",
+            "historial del cliente",
+        ]
+        if not any(trigger in normalized for trigger in customer_triggers):
+            return None
+
+        email_match = EMAIL_RE.search(message)
+        order_match = ORDER_NUMBER_RE.search(message)
+        payload: dict[str, object] = {}
+        if email_match is not None:
+            payload["customer_email"] = email_match.group(0).lower()
+        if order_match is not None:
+            payload["order_number"] = order_match.group(0).upper()
+        return payload if payload else None
+
+    def _detect_payment_followup_payload(
+        self,
+        *,
+        message: str,
+        normalized: str,
+    ) -> dict[str, object] | None:
+        """Detect prompts that ask to create a payment follow-up task."""
+        if not any(trigger in normalized for trigger in ["seguimiento de pago", "followup de pago", "revisa el pago", "segui el pago"]):
+            return None
+        order_match = ORDER_NUMBER_RE.search(message)
+        if order_match is None:
+            return None
+        payload: dict[str, object] = {"order_number": order_match.group(0).upper()}
+        email_match = EMAIL_RE.search(message)
+        if email_match is not None:
+            payload["customer_email"] = email_match.group(0).lower()
+        return payload
+
+    def _detect_shipping_claim_payload(
+        self,
+        *,
+        message: str,
+        normalized: str,
+    ) -> dict[str, object] | None:
+        """Detect prompts to create shipping or logistics claims."""
+        if not any(trigger in normalized for trigger in ["reclamo logist", "reclamo de envio", "shipping claim", "demora de envio"]):
+            return None
+        order_match = ORDER_NUMBER_RE.search(message)
+        if order_match is None:
+            return None
+        claim_reason = "demora_envio"
+        if "tracking" in normalized:
+            claim_reason = "tracking_missing"
+        elif "extravi" in normalized:
+            claim_reason = "shipment_lost"
+        return {
+            "order_number": order_match.group(0).upper(),
+            "claim_reason": claim_reason,
+            "summary": message,
+        }
+
+    def _detect_order_cancellation_payload(
+        self,
+        *,
+        message: str,
+        normalized: str,
+    ) -> dict[str, object] | None:
+        """Detect explicit requests to cancel an order."""
+        order_match = ORDER_NUMBER_RE.search(message)
+        if order_match is None:
+            return None
+        if not any(trigger in normalized for trigger in ["pedi cancel", "pedí cancel", "cancela el pedido", "cancelá el pedido", "anula el pedido", "anulá el pedido"]):
+            return None
+        return {
+            "order_number": order_match.group(0).upper(),
+            "reason": message,
+        }
+
+    def _detect_reserve_stock_payload(
+        self,
+        *,
+        message: str,
+        normalized: str,
+    ) -> dict[str, object] | None:
+        """Detect explicit stock-reservation prompts."""
+        if not any(trigger in normalized for trigger in ["reserv", "separ", "bloquea stock"]):
+            return None
+        sku_match = SKU_RE.search(message)
+        quantity_match = QUANTITY_RE.search(message)
+        if sku_match is None or quantity_match is None:
+            return None
+
+        payload: dict[str, object] = {
+            "sku": sku_match.group(1).upper(),
+            "quantity": int(quantity_match.group(1)),
+            "reason": message,
+        }
+        order_match = ORDER_NUMBER_RE.search(message)
+        if order_match is not None:
+            payload["order_number"] = order_match.group(0).upper()
+        email_match = EMAIL_RE.search(message)
         if email_match is not None:
             payload["customer_email"] = email_match.group(0).lower()
         return payload

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "../../components/ui/Button";
 import { useCart } from "../../hooks/useCart";
+import { applyWineImageFallback, wineImageSrc } from "../../lib/assets";
 import { formatARS } from "../../lib/utils";
 
 export function CartPage() {
@@ -49,11 +50,9 @@ export function CartPage() {
               className="grid gap-4 rounded-[28px] border border-burgundy-100 bg-white p-5 shadow-velvet sm:grid-cols-[140px_1fr]"
             >
               <img
-                src={
-                  item.primaryImage ??
-                  "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=900&q=80"
-                }
+                src={wineImageSrc(item.primaryImage)}
                 alt={item.name}
+                onError={applyWineImageFallback}
                 className="h-36 w-full rounded-[20px] object-cover"
               />
               <div className="flex flex-col justify-between gap-4">

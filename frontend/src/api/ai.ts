@@ -1,5 +1,12 @@
 import { apiClient } from "./client";
-import type { AIApproval, AICopilotOverview, AICopilotResponse, AILead, AITask } from "../types/ai";
+import type {
+  AIApproval,
+  AICopilotOverview,
+  AICopilotResponse,
+  AILead,
+  AIStockReservation,
+  AITask,
+} from "../types/ai";
 
 export const aiApi = {
   copilotMessage: async (payload: {
@@ -50,6 +57,25 @@ export const aiApi = {
       return response.data;
     },
   },
+  stockReservations: {
+    list: async (params?: {
+      status?: string;
+      search?: string;
+    }): Promise<AIStockReservation[]> => {
+      const searchParams = new URLSearchParams();
+      if (params?.status) {
+        searchParams.set("status", params.status);
+      }
+      if (params?.search) {
+        searchParams.set("search", params.search);
+      }
+      const suffix = searchParams.toString();
+      const response = await apiClient.get<AIStockReservation[]>(
+        `/ai/stock-reservations/${suffix ? `?${suffix}` : ""}`,
+      );
+      return response.data;
+    },
+  },
   leads: {
     list: async (params?: {
       status?: string;
@@ -95,6 +121,10 @@ export const aiApi = {
       const response = await apiClient.get<AIApproval[]>(
         `/ai/approvals/${suffix ? `?${suffix}` : ""}`,
       );
+      return response.data;
+    },
+    detail: async (approvalId: string): Promise<AIApproval> => {
+      const response = await apiClient.get<AIApproval>(`/ai/approvals/${approvalId}/`);
       return response.data;
     },
     approve: async (approvalId: string, note?: string): Promise<AIApproval> => {

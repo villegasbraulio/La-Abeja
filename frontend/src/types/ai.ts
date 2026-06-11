@@ -102,6 +102,29 @@ export interface AILead {
   updated_at: string;
 }
 
+export interface AIStockReservation {
+  id: string;
+  wine: string;
+  wine_name: string;
+  wine_sku: string;
+  quantity: number;
+  released_quantity: number;
+  remaining_quantity: number;
+  status: string;
+  reason: string;
+  order: string | null;
+  order_number: string | null;
+  conversation: string | null;
+  customer_email: string | null;
+  customer_name: string | null;
+  workflow_run: string | null;
+  workflow_type: string | null;
+  released_at: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AIApproval {
   id: string;
   workflow_run: string;
@@ -124,9 +147,13 @@ export interface AICopilotOverview {
     new_leads: number;
     pending_approvals: number;
     runs_needing_human: number;
+    active_stock_reservations: number;
+    pending_cancellation_approvals: number;
   };
   prompt_suggestions: string[];
   recent_tasks: AITask[];
   recent_leads: AILead[];
+  recent_stock_reservations: AIStockReservation[];
   pending_approvals: AIApproval[];
+  pending_cancellation_approvals: AIApproval[];
 }

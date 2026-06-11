@@ -7,9 +7,10 @@ from decimal import Decimal
 import pytest
 from rest_framework import status
 
-from apps.ai.models import ApprovalRequest, Conversation, KnowledgeSource, Lead, SupportTask, WorkflowRun
+from apps.ai.models import ApprovalRequest, Conversation, KnowledgeSource, Lead, StockReservation, SupportTask, WorkflowRun
 from apps.ai.rag.ingest import KnowledgeIngestionService
 from apps.authentication.tests.factories import UserFactory
+from apps.catalog.tests.factories import WineFactory
 from apps.orders.models import Order
 from apps.orders.tests.factories import OrderFactory
 
@@ -168,15 +169,33 @@ def test_staff_can_fetch_copilot_overview_with_recent_artifacts(authenticated_cl
         action_name="send_refund",
         action_payload={"order_number": "LAB-2026-000991"},
     )
+    wine = WineFactory(sku="LAB-OVERVIEW-1")
+    StockReservation.objects.create(
+        wine=wine,
+        quantity=4,
+        customer=user,
+        created_by=user,
+        workflow_run=workflow,
+        status=StockReservation.Status.ACTIVE,
+    )
+    ApprovalRequest.objects.create(
+        workflow_run=workflow,
+        action_name="request_order_cancellation",
+        action_payload={"order_number": "LAB-2026-000145"},
+    )
 
     response = client.get("/api/v1/ai/copilot/overview/")
 
     assert response.status_code == status.HTTP_200_OK
     assert response.data["metrics"]["open_tasks"] == 1
     assert response.data["metrics"]["new_leads"] == 1
-    assert response.data["metrics"]["pending_approvals"] == 1
+    assert response.data["metrics"]["pending_approvals"] == 2
+    assert response.data["metrics"]["active_stock_reservations"] == 1
+    assert response.data["metrics"]["pending_cancellation_approvals"] == 1
     assert len(response.data["prompt_suggestions"]) >= 3
     assert response.data["recent_tasks"][0]["title"] == "Revisar despacho frenado"
+    assert response.data["recent_stock_reservations"][0]["wine_sku"] == "LAB-OVERVIEW-1"
+    assert response.data["pending_cancellation_approvals"][0]["action_name"] == "request_order_cancellation"
 
 
 @pytest.mark.django_db
@@ -252,3 +271,57 @@ def test_staff_can_list_approval_queue(authenticated_client) -> None:
     assert response.status_code == status.HTTP_200_OK
     assert response.data[0]["action_name"] == "refund_order"
     assert response.data[0]["workflow_type"] == "refund_flow"
+
+
+@pytest.mark.django_db
+def test_staff_can_fetch_single_approval_detail(authenticated_client) -> None:
+    """Staff users should be able to inspect one approval inline from the Copilot."""
+    client, user = authenticated_client
+    user.is_staff = True
+    user.save(update_fields=["is_staff"])
+
+    workflow = WorkflowRun.objects.create(
+        workflow_type="tool_approval",
+        status=WorkflowRun.Status.PENDING,
+        actor_type="agent",
+        input_payload={},
+        result_payload={},
+        idempotency_key="workflow-approval-detail",
+    )
+    approval = ApprovalRequest.objects.create(
+        workflow_run=workflow,
+        action_name="reserve_stock",
+        action_payload={"sku": "LAB-RES-900", "quantity": 3},
+    )
+
+    response = client.get(f"/api/v1/ai/approvals/{approval.id}/")
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data["id"] == str(approval.id)
+    assert response.data["action_name"] == "reserve_stock"
+    assert response.data["workflow_type"] == "tool_approval"
+
+
+@pytest.mark.django_db
+def test_staff_can_list_stock_reservations(authenticated_client) -> None:
+    """Staff users should be able to inspect AI-managed stock reservations."""
+    client, user = authenticated_client
+    user.is_staff = True
+    user.save(update_fields=["is_staff"])
+    wine = WineFactory(sku="LAB-RES-API")
+    reservation = StockReservation.objects.create(
+        wine=wine,
+        quantity=5,
+        released_quantity=2,
+        customer=user,
+        created_by=user,
+        status=StockReservation.Status.PARTIALLY_RELEASED,
+        reason="Reserva de contingencia",
+    )
+
+    response = client.get("/api/v1/ai/stock-reservations/?status=partially_released&search=contingencia")
+
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data[0]["id"] == str(reservation.id)
+    assert response.data[0]["wine_sku"] == "LAB-RES-API"
+    assert response.data[0]["remaining_quantity"] == 3

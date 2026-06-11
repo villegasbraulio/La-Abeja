@@ -15,6 +15,37 @@ from .factories import OrderFactory, OrderItemFactory
 class TestOrderCheckoutEndpoints:
     """Coverage for order creation and retrieval."""
 
+    def test_checkout_can_quote_shipping_options(self, api_client) -> None:
+        """Shipping options should come from the backend quote endpoint."""
+        first_wine = WineFactory(price=Decimal("4500.00"), stock=10)
+        second_wine = WineFactory(price=Decimal("6200.00"), stock=8)
+
+        response = api_client.post(
+            "/api/v1/orders/shipping-quotes/",
+            {
+                "items": [
+                    {"wine_id": str(first_wine.id), "quantity": 2},
+                    {"wine_id": str(second_wine.id), "quantity": 1},
+                ],
+                "shipping_address": {
+                    "city": "San Rafael",
+                    "province": "Mendoza",
+                    "postal_code": "5600",
+                    "country": "Argentina",
+                },
+            },
+            format="json",
+        )
+
+        assert response.status_code == 200
+        assert len(response.data["quotes"]) == 3
+        assert response.data["quotes"][0]["shipping_method"] == "standard"
+        assert response.data["quotes"][0]["shipping_cost"] == "3993.60"
+        assert response.data["quotes"][1]["shipping_method"] == "express"
+        assert response.data["quotes"][1]["shipping_cost"] == "6336.00"
+        assert response.data["quotes"][2]["shipping_method"] == "pickup"
+        assert response.data["quotes"][2]["shipping_cost"] == "0.00"
+
     def test_authenticated_user_can_create_order(self, authenticated_client) -> None:
         """Checkout should create an order from local cart items."""
         client, _ = authenticated_client
@@ -47,8 +78,10 @@ class TestOrderCheckoutEndpoints:
 
         assert response.status_code == 201
         assert response.data["status"] == "pending_payment"
-        assert response.data["shipping_cost"] == "6500.00"
-        assert response.data["total"] == "21700.00"
+        assert response.data["shipping_cost"] == "6336.00"
+        assert response.data["total"] == "21536.00"
+        assert response.data["shipping_quote"]["provider"] == "manual"
+        assert response.data["shipping_quote"]["service_level"] == "express"
         assert len(response.data["items"]) == 2
 
     def test_checkout_rejects_insufficient_stock(self, authenticated_client) -> None:

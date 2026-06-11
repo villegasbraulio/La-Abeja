@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { backofficeApi } from "../../api/backoffice";
 import { Button } from "../../components/ui/Button";
+import { applyWineImageFallback, resolveAssetUrl } from "../../lib/assets";
 import { cn, formatARS, formatDate, slugify } from "../../lib/utils";
 import type {
   BackofficeCategory,
@@ -318,8 +319,16 @@ function WineThumbnail({
   name: string;
   className?: string;
 }) {
-  if (src) {
-    return <img src={src} alt={name} className={cn("object-cover", className)} />;
+  const resolvedSrc = resolveAssetUrl(src);
+  if (resolvedSrc) {
+    return (
+      <img
+        src={resolvedSrc}
+        alt={name}
+        onError={applyWineImageFallback}
+        className={cn("object-cover", className)}
+      />
+    );
   }
 
   return (

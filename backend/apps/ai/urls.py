@@ -6,6 +6,7 @@ from django.urls import path
 
 from .api.views import (
     AIApprovalApproveView,
+    AIApprovalDetailView,
     AIApprovalListView,
     AIApprovalRejectView,
     AIChatSessionCreateView,
@@ -24,6 +25,7 @@ from .api.views import (
     AIMetricsSummaryView,
     AIRunDetailView,
     AIRunStepsView,
+    AIStockReservationListView,
     AITaskDetailView,
     AITaskListView,
     AIWorkflowAbandonedCartRunView,
@@ -58,9 +60,11 @@ urlpatterns = [
     path("runs/<uuid:pk>/steps/", AIRunStepsView.as_view(), name="run-steps"),
     path("tasks/", AITaskListView.as_view(), name="task-list"),
     path("tasks/<uuid:pk>/", AITaskDetailView.as_view(), name="task-detail"),
+    path("stock-reservations/", AIStockReservationListView.as_view(), name="stock-reservation-list"),
     path("leads/", AILeadListView.as_view(), name="lead-list"),
     path("leads/<uuid:pk>/", AILeadDetailView.as_view(), name="lead-detail"),
     path("approvals/", AIApprovalListView.as_view(), name="approval-list"),
+    path("approvals/<uuid:pk>/", AIApprovalDetailView.as_view(), name="approval-detail"),
     path("approvals/<uuid:pk>/approve/", AIApprovalApproveView.as_view(), name="approval-approve"),
     path("approvals/<uuid:pk>/reject/", AIApprovalRejectView.as_view(), name="approval-reject"),
     path(

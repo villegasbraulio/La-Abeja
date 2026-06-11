@@ -76,6 +76,7 @@ def test_staff_can_approve_pending_ai_action(authenticated_client) -> None:
 
     order.refresh_from_db()
     approval.refresh_from_db()
+    approval.workflow_run.refresh_from_db()
     assert response.status_code == status.HTTP_200_OK
     assert approval.status == ApprovalRequest.Status.APPROVED
     assert approval.approved_by_id == user.id
@@ -83,6 +84,10 @@ def test_staff_can_approve_pending_ai_action(authenticated_client) -> None:
     assert approval.workflow_run.status == WorkflowRun.Status.COMPLETED
     assert order.status == Order.Status.SHIPPED
     assert order.tracking_number == "AND-145"
+    suggestion = approval.workflow_run.result_payload["post_approval_suggestion"]
+    assert suggestion["title"] == "Avisar despacho al cliente"
+    assert "tracking AND-145" in suggestion["suggested_message"]
+    assert order.order_number in suggestion["suggested_prompt"]
     assert ToolExecution.objects.filter(run__agent_type=AgentRun.AgentType.WORKFLOW, tool_name="update_order_status").exists()
     assert InternalNote.objects.filter(order=order, note_type="order").exists()
 
@@ -209,6 +214,10 @@ def test_reserve_stock_tool_requires_approval_and_executes_on_approve(authentica
     assert response.status_code == status.HTTP_200_OK
     assert result["approval_required"] is True
     assert wine.stock == 6
+    suggestion = ApprovalRequest.objects.get(id=approval.id).workflow_run.result_payload["post_approval_suggestion"]
+    assert suggestion["title"] == "Confirmar reserva operativa"
+    assert "3 unidad(es)" in suggestion["suggested_prompt"]
+    assert "6 unidades disponibles" in suggestion["suggested_message"]
     assert StockReservation.objects.filter(wine=wine, quantity=3, status=StockReservation.Status.ACTIVE).exists()
 
 
@@ -235,4 +244,7 @@ def test_request_order_cancellation_is_blocked_then_cancels_after_approval(authe
     order.refresh_from_db()
     assert response.status_code == status.HTTP_200_OK
     assert order.status == Order.Status.CANCELLED
+    suggestion = ApprovalRequest.objects.get(id=approval.id).workflow_run.result_payload["post_approval_suggestion"]
+    assert suggestion["title"] == "Confirmar cancelación al cliente"
+    assert order.order_number in suggestion["suggested_message"]
     assert InternalNote.objects.filter(order=order, note_type="order").exists()

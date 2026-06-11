@@ -1,0 +1,78 @@
+services:
+  - type: web
+    name: la-abeja-backend
+    runtime: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements/production.txt && python manage.py collectstatic --noinput
+    preDeployCommand: python manage.py migrate
+    initialDeployHook: python manage.py seed_demo_data && python manage.py seed_ai_knowledge
+    startCommand: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
+    healthCheckPath: /health/
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.3
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      - key: DEBUG
+        value: "False"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: .onrender.com
+      - key: DEMO_ADMIN_EMAIL
+        value: admin@bodegalaabeja.com.ar
+      - key: DEMO_ADMIN_PASSWORD
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: BACKEND_URL
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: la-abeja-db
+          property: connectionString
+      - key: REDIS_HOST
+        fromService:
+          type: keyvalue
+          name: la-abeja-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: keyvalue
+          name: la-abeja-redis
+          property: port
+      - key: AI_LLM_PROVIDER
+        value: openai
+      - key: AI_CHAT_MODEL
+        value: gpt-4.1
+      - key: AI_EMBEDDING_MODEL
+        value: text-embedding-3-large
+      - key: AI_ENABLE_PGVECTOR
+        value: "True"
+      - key: AI_EMBEDDING_DIMENSIONS
+        value: "3072"
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: MERCADOPAGO_ACCESS_TOKEN
+        sync: false
+      - key: MERCADOPAGO_PUBLIC_KEY
+        sync: false
+      - key: MERCADOPAGO_WEBHOOK_SECRET
+        sync: false
+
+  - type: keyvalue
+    name: la-abeja-redis
+    plan: free
+    ipAllowList: []
+    maxmemoryPolicy: allkeys-lru
+
+databases:
+  - name: la-abeja-db
+    databaseName: la_abeja
+    user: la_abeja
+    plan: basic-256mb

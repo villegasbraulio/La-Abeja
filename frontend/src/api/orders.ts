@@ -1,5 +1,10 @@
 import { apiClient } from "./client";
-import type { Order, OrderCreatePayload } from "../types/orders";
+import type {
+  Order,
+  OrderCreatePayload,
+  ShippingQuoteRequestPayload,
+  ShippingQuoteResponse,
+} from "../types/orders";
 
 interface PaginatedResponse<T> {
   count: number;
@@ -9,6 +14,10 @@ interface PaginatedResponse<T> {
 }
 
 export const ordersApi = {
+  quoteShipping: async (payload: ShippingQuoteRequestPayload): Promise<ShippingQuoteResponse> => {
+    const response = await apiClient.post<ShippingQuoteResponse>("/orders/shipping-quotes/", payload);
+    return response.data;
+  },
   list: async (): Promise<PaginatedResponse<Order>> => {
     const response = await apiClient.get<PaginatedResponse<Order>>("/orders/orders/");
     return response.data;

@@ -18,6 +18,10 @@ const taskTypeLabels: Record<string, string> = {
   order_review: "Revisión manual",
   payment_review: "Revisión de pago",
   lead_follow_up: "Seguimiento comercial",
+  conversation_escalation: "Escalación humana",
+  restock: "Reposición",
+  shipping_claim: "Reclamo logístico",
+  cancellation_review: "Revisión de cancelación",
 };
 
 const priorityLabels: Record<string, string> = {

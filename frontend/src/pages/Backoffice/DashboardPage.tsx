@@ -31,6 +31,12 @@ export function BackofficeDashboardPage() {
             <Link to="/backoffice/tareas-ai">
               <Button variant="ghost">Tareas AI</Button>
             </Link>
+            <Link to="/backoffice/reservas-stock-ai">
+              <Button variant="ghost">Reservas AI</Button>
+            </Link>
+            <Link to="/backoffice/cancelaciones-ai">
+              <Button variant="ghost">Cancelaciones AI</Button>
+            </Link>
             <Link to="/backoffice/vinos">
               <Button variant="ghost">Gestionar vinos</Button>
             </Link>

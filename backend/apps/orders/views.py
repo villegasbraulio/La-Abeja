@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 from apps.authentication.models import CustomUser
 
 from .models import Order
-from .serializers import OrderCreateSerializer, OrderSerializer
+from .serializers import OrderCreateSerializer, OrderSerializer, ShippingQuoteRequestSerializer
 from .state_machine import can_transition
 
 logger = structlog.get_logger(__name__)
@@ -63,6 +63,22 @@ class OrderDetailView(generics.RetrieveAPIView):
             Order.objects.filter(user=user)
             .select_related("user")
             .prefetch_related("items__wine__images")
+        )
+
+
+class ShippingQuoteView(APIView):
+    """Quote shipping methods for the current cart and destination."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request: Request) -> Response:
+        """Return backend-calculated shipping options for checkout."""
+        serializer = ShippingQuoteRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(
+            {
+                "quotes": serializer.get_quotes(),
+            }
         )
 
 

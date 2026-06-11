@@ -20,6 +20,7 @@ from apps.ai.models import (
     Lead,
     KnowledgeDocument,
     KnowledgeSource,
+    StockReservation,
     SupportTask,
     ToolExecution,
     WorkflowRun,
@@ -42,6 +43,7 @@ from .serializers import (
     LeadUpdateSerializer,
     KnowledgeDocumentSerializer,
     KnowledgeSourceSerializer,
+    StockReservationSerializer,
     SupportTaskSerializer,
     SupportTaskUpdateSerializer,
     ToolExecutionSerializer,
@@ -189,14 +191,24 @@ class AICopilotOverviewView(APIView):
                 "new_leads": Lead.objects.filter(status=Lead.Status.NEW).count(),
                 "pending_approvals": ApprovalRequest.objects.filter(status=ApprovalRequest.Status.PENDING).count(),
                 "runs_needing_human": AgentRun.objects.filter(needs_human=True).count(),
+                "active_stock_reservations": StockReservation.objects.filter(
+                    status__in=[StockReservation.Status.ACTIVE, StockReservation.Status.PARTIALLY_RELEASED]
+                ).count(),
+                "pending_cancellation_approvals": ApprovalRequest.objects.filter(
+                    status=ApprovalRequest.Status.PENDING,
+                    action_name="request_order_cancellation",
+                ).count(),
             },
             "prompt_suggestions": [
                 "Mostrame el stock bajo",
                 "Decime las ventas de los últimos 30 días",
                 "Qué varietales venden más este mes?",
-                "Creá una tarea urgente para seguir el pedido LAB-2026-000145 por pago rechazado",
-                "Marcá el pedido LAB-2026-000145 como enviado con tracking AND-12345",
-                "Mandale un WhatsApp al cliente del pedido LAB-2026-000145 avisando que sale hoy",
+                "Buscá pedidos con pago rechazado de los últimos 7 días",
+                "Traeme el 360 del cliente ana@example.com",
+                "Creá un seguimiento de pago para LAB-2026-000145",
+                "Abrí un reclamo logístico para LAB-2026-000145 porque no hay movimiento del tracking",
+                "Reservá 3 unidades del SKU LAB-RES-900 para LAB-2026-000145",
+                "Pedí cancelación del pedido LAB-2026-000145 por solicitud del cliente",
             ],
             "recent_tasks": SupportTaskSerializer(
                 SupportTask.objects.select_related("order", "customer", "assigned_to", "workflow_run")[:5],
@@ -206,9 +218,21 @@ class AICopilotOverviewView(APIView):
                 Lead.objects.select_related("customer", "conversation")[:5],
                 many=True,
             ).data,
+            "recent_stock_reservations": StockReservationSerializer(
+                StockReservation.objects.select_related("wine", "order", "customer", "workflow_run")[:5],
+                many=True,
+            ).data,
             "pending_approvals": ApprovalRequestSerializer(
                 ApprovalRequest.objects.select_related("workflow_run", "approved_by")
                 .filter(status=ApprovalRequest.Status.PENDING)[:5],
+                many=True,
+            ).data,
+            "pending_cancellation_approvals": ApprovalRequestSerializer(
+                ApprovalRequest.objects.select_related("workflow_run", "approved_by")
+                .filter(
+                    status=ApprovalRequest.Status.PENDING,
+                    action_name="request_order_cancellation",
+                )[:5],
                 many=True,
             ).data,
         }
@@ -339,6 +363,40 @@ class AIApprovalListView(generics.ListAPIView):
         if action_name:
             queryset = queryset.filter(action_name=action_name)
         return queryset
+
+
+class AIStockReservationListView(generics.ListAPIView):
+    """List AI-managed stock reservations for the backoffice."""
+
+    serializer_class = StockReservationSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    pagination_class = None
+
+    def get_queryset(self):  # type: ignore[override]
+        """Filter reservations by status or search terms."""
+        queryset = StockReservation.objects.select_related("wine", "order", "customer", "workflow_run")
+        status_filter = self.request.query_params.get("status")
+        search = (self.request.query_params.get("search") or "").strip()
+
+        if status_filter:
+            queryset = queryset.filter(status=status_filter)
+        if search:
+            queryset = queryset.filter(
+                Q(wine__name__icontains=search)
+                | Q(wine__sku__icontains=search)
+                | Q(order__order_number__icontains=search)
+                | Q(customer__email__icontains=search)
+                | Q(reason__icontains=search)
+            )
+        return queryset
+
+
+class AIApprovalDetailView(generics.RetrieveAPIView):
+    """Retrieve a single approval request with workflow context."""
+
+    serializer_class = ApprovalRequestSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    queryset = ApprovalRequest.objects.select_related("workflow_run", "approved_by")
 
 
 class AIApprovalApproveView(APIView):

@@ -7,6 +7,12 @@ import { Button } from "../../components/ui/Button";
 import { WineCard } from "../../components/wine/WineCard";
 import { StarRating } from "../../components/wine/StarRating";
 import { useCart } from "../../hooks/useCart";
+import {
+  FALLBACK_WINE_IMAGE,
+  applyWineImageFallback,
+  resolveAssetUrl,
+  wineImageSrc,
+} from "../../lib/assets";
 import { formatARS } from "../../lib/utils";
 
 export function ProductDetailPage() {
@@ -36,7 +42,7 @@ export function ProductDetailPage() {
       data.images[0]?.url ??
       null;
 
-    setSelectedImage(primaryImage);
+    setSelectedImage(resolveAssetUrl(primaryImage));
   }, [data]);
 
   if (isLoading) {
@@ -67,9 +73,7 @@ export function ProductDetailPage() {
       : [
           {
             id: 0,
-            url:
-              data.primary_image ??
-              "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=900&q=80",
+            url: data.primary_image ?? FALLBACK_WINE_IMAGE,
             alt_text: data.name,
             is_primary: true,
             order: 0,
@@ -95,8 +99,9 @@ export function ProductDetailPage() {
           <div className="space-y-5">
             <div className="overflow-hidden rounded-[32px] border border-white/70 bg-white p-4 shadow-velvet">
               <img
-                src={selectedImage ?? gallery[0].url}
+                src={selectedImage ?? wineImageSrc(gallery[0].url)}
                 alt={data.name}
+                onError={applyWineImageFallback}
                 className="h-full min-h-[560px] w-full rounded-[24px] object-cover"
               />
             </div>
@@ -107,11 +112,12 @@ export function ProductDetailPage() {
                   key={image.id}
                   type="button"
                   className="overflow-hidden rounded-[22px] border border-burgundy-100 bg-white p-2 shadow-velvet"
-                  onClick={() => setSelectedImage(image.url)}
+                  onClick={() => setSelectedImage(wineImageSrc(image.url))}
                 >
                   <img
-                    src={image.url}
+                    src={wineImageSrc(image.url)}
                     alt={image.alt_text}
+                    onError={applyWineImageFallback}
                     className="h-24 w-full rounded-[16px] object-cover"
                   />
                 </button>

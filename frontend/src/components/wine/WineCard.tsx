@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useCart } from "../../hooks/useCart";
+import { applyWineImageFallback, wineImageSrc } from "../../lib/assets";
 import { cn, formatARS } from "../../lib/utils";
 import type { WineListItem } from "../../types/catalog";
 import { Badge } from "../ui/Badge";
@@ -26,11 +27,9 @@ export function WineCard({ wine, variant = "grid" }: WineCardProps) {
     >
       <div className="relative aspect-[4/5] overflow-hidden bg-cream-100">
         <img
-          src={
-            wine.primary_image ??
-            "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=900&q=80"
-          }
+          src={wineImageSrc(wine.primary_image)}
           alt={wine.name}
+          onError={applyWineImageFallback}
           className="h-full w-full object-cover transition duration-1000 group-hover:scale-105"
         />
         <div className="absolute left-4 top-4 flex flex-col gap-2">

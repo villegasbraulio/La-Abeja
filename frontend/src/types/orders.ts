@@ -17,11 +17,37 @@ export interface CheckoutShippingAddressPayload {
   phone: string;
 }
 
+export interface ShippingQuoteAddressPayload {
+  city: string;
+  province: string;
+  postal_code: string;
+  country?: string;
+}
+
 export interface OrderCreatePayload {
   items: CheckoutItemPayload[];
   shipping_method: ShippingMethod;
   shipping_address: CheckoutShippingAddressPayload;
   notes?: string;
+}
+
+export interface ShippingQuoteRequestPayload {
+  items: CheckoutItemPayload[];
+  shipping_address: ShippingQuoteAddressPayload;
+}
+
+export interface ShippingQuote {
+  shipping_method: ShippingMethod;
+  label: string;
+  description: string;
+  shipping_cost: string;
+  provider: string;
+  service_level: string;
+  estimated_delivery: string | null;
+}
+
+export interface ShippingQuoteResponse {
+  quotes: ShippingQuote[];
 }
 
 export interface OrderItem {
@@ -61,6 +87,7 @@ export interface Order {
   shipping_method: ShippingMethod;
   shipping_method_label: string;
   shipping_address: CheckoutShippingAddressPayload;
+  shipping_quote: ShippingQuote | null;
   tracking_number: string;
   estimated_delivery: string | null;
   notes: string;

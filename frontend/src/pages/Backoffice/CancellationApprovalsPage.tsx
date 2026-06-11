@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { aiApi } from "../../api/ai";
 import { Button } from "../../components/ui/Button";
@@ -6,20 +7,21 @@ import { formatDate } from "../../lib/utils";
 
 const approvalStatusOptions = [
   { label: "Pendientes", value: "pending" },
-  { label: "Aprobados", value: "approved" },
-  { label: "Rechazados", value: "rejected" },
+  { label: "Aprobadas", value: "approved" },
+  { label: "Rechazadas", value: "rejected" },
 ] as const;
 
-export function BackofficeApprovalsPage() {
+export function BackofficeCancellationApprovalsPage() {
   const [statusFilter, setStatusFilter] = useState("pending");
   const [selectedApprovalId, setSelectedApprovalId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const approvalsQuery = useQuery({
-    queryKey: ["ai-approvals", statusFilter],
+    queryKey: ["ai-cancellation-approvals", statusFilter],
     queryFn: () =>
       aiApi.approvals.list({
         status: statusFilter || undefined,
+        action_name: "request_order_cancellation",
       }),
   });
 
@@ -43,9 +45,9 @@ export function BackofficeApprovalsPage() {
     mutationFn: (approvalId: string) => aiApi.approvals.approve(approvalId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["ai-approvals"] });
+      void queryClient.invalidateQueries({ queryKey: ["ai-cancellation-approvals"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-copilot-overview"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-tasks"] });
-      void queryClient.invalidateQueries({ queryKey: ["ai-leads"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-stock-reservations"] });
     },
   });
@@ -54,9 +56,9 @@ export function BackofficeApprovalsPage() {
     mutationFn: (approvalId: string) => aiApi.approvals.reject(approvalId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["ai-approvals"] });
+      void queryClient.invalidateQueries({ queryKey: ["ai-cancellation-approvals"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-copilot-overview"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-tasks"] });
-      void queryClient.invalidateQueries({ queryKey: ["ai-leads"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-stock-reservations"] });
     },
   });
@@ -75,15 +77,24 @@ export function BackofficeApprovalsPage() {
     rejectMutation.mutate(selectedApprovalId);
   }
 
+  const selectedOrderNumber = String(selectedApproval?.action_payload.order_number ?? "");
+
   return (
     <div className="space-y-8">
       <section className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
-        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
-          Approvals AI
-        </p>
-        <h3 className="mt-3 font-serif text-4xl text-burgundy-950">
-          Cola de decisiones humanas para cualquier workflow que el agente no deba cerrar solo.
-        </h3>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
+              Cancelaciones AI
+            </p>
+            <h3 className="mt-3 font-serif text-4xl text-burgundy-950">
+              Cola específica para pedidos que el Copilot preparó para cancelar y todavía requieren decisión humana.
+            </h3>
+          </div>
+          <Link to="/backoffice/approvals-ai">
+            <Button variant="secondary">Ver approvals generales</Button>
+          </Link>
+        </div>
       </section>
 
       <section className="rounded-[28px] border border-burgundy-100 bg-white p-5 shadow-velvet">
@@ -105,10 +116,10 @@ export function BackofficeApprovalsPage() {
 
       <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <section className="space-y-4">
-          {approvalsQuery.isLoading ? <p className="text-burgundy-700">Cargando approvals...</p> : null}
+          {approvalsQuery.isLoading ? <p className="text-burgundy-700">Cargando cancelaciones...</p> : null}
           {approvalsQuery.isError ? (
             <div className="rounded-[24px] border border-burgundy-200 bg-white p-6 text-burgundy-800 shadow-velvet">
-              No pudimos cargar la cola de approvals por ahora.
+              No pudimos cargar las cancelaciones pendientes por ahora.
             </div>
           ) : null}
           {approvals.map((approval) => (
@@ -125,7 +136,9 @@ export function BackofficeApprovalsPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-current/70">
                 {approval.workflow_type}
               </p>
-              <h4 className="mt-2 font-serif text-2xl">{approval.action_name}</h4>
+              <h4 className="mt-2 font-serif text-2xl">
+                {String(approval.action_payload.order_number ?? "Sin pedido")}
+              </h4>
               <div className="mt-3 flex flex-wrap gap-3 text-sm text-current/70">
                 <span>{approval.status}</span>
                 <span>{formatDate(approval.created_at)}</span>
@@ -134,28 +147,28 @@ export function BackofficeApprovalsPage() {
           ))}
           {!approvalsQuery.isLoading && approvals.length === 0 ? (
             <div className="rounded-[24px] border border-burgundy-100 bg-white p-6 text-burgundy-800 shadow-velvet">
-              No hay approvals para ese estado.
+              No hay cancelaciones para ese estado.
             </div>
           ) : null}
         </section>
 
         <section className="rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
           {!selectedApproval ? (
-            <p className="text-burgundy-700">Seleccioná una solicitud para revisar su detalle.</p>
+            <p className="text-burgundy-700">Seleccioná una cancelación para revisar el detalle.</p>
           ) : null}
           {selectedApproval ? (
             <div className="space-y-6">
               <div className="border-b border-burgundy-100 pb-6">
                 <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
-                  {selectedApproval.workflow_type}
+                  Cancelación preparada
                 </p>
                 <h3 className="mt-2 font-serif text-4xl text-burgundy-950">
-                  {selectedApproval.action_name}
+                  {selectedOrderNumber || "Pedido sin referencia"}
                 </h3>
                 <p className="mt-3 text-sm text-burgundy-700">
                   Estado: {selectedApproval.status}
                   {selectedApproval.workflow_status ? ` · workflow ${selectedApproval.workflow_status}` : ""}
-                  {selectedApproval.approved_by_email ? ` · decidido por ${selectedApproval.approved_by_email}` : ""}
+                  {selectedApproval.approved_by_email ? ` · decidió ${selectedApproval.approved_by_email}` : ""}
                 </p>
               </div>
 
@@ -193,7 +206,7 @@ export function BackofficeApprovalsPage() {
               {selectedApproval.status === "pending" ? (
                 <div className="flex flex-wrap gap-3">
                   <Button onClick={handleApprove} disabled={approveMutation.isPending || rejectMutation.isPending}>
-                    Aprobar y ejecutar
+                    Aprobar cancelación
                   </Button>
                   <Button
                     variant="secondary"

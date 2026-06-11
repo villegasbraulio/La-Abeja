@@ -11,6 +11,8 @@ const backofficeLinks = [
   { label: "Tareas AI", href: "/backoffice/tareas-ai" },
   { label: "Leads AI", href: "/backoffice/leads-ai" },
   { label: "Approvals AI", href: "/backoffice/approvals-ai" },
+  { label: "Reservas AI", href: "/backoffice/reservas-stock-ai" },
+  { label: "Cancelaciones AI", href: "/backoffice/cancelaciones-ai" },
   { label: "Pedidos", href: "/backoffice/pedidos" },
   { label: "Vinos", href: "/backoffice/vinos" },
   { label: "Categorias", href: "/backoffice/categorias" },

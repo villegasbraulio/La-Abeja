@@ -10,6 +10,7 @@ from django.utils import timezone
 
 from apps.ai.models import AgentRun, ApprovalRequest, Conversation, WorkflowRun
 from apps.ai.tools.base import ToolContext, ToolSpec
+from apps.orders.models import Order
 
 user_model = get_user_model()
 
@@ -112,17 +113,26 @@ class ApprovalService:
             run.needs_human = False
             run.save(update_fields=["status", "response_text", "needs_human", "updated_at"])
 
+            post_approval_suggestion = self._build_post_approval_suggestion(
+                tool_name=tool_name,
+                payload=tool_payload,
+                result=result,
+            )
             workflow.status = WorkflowRun.Status.COMPLETED
             workflow.result_payload = {
                 "tool_name": tool_name,
                 "tool_result": result,
                 "executed_run_id": str(run.id),
             }
+            if post_approval_suggestion:
+                workflow.result_payload["post_approval_suggestion"] = post_approval_suggestion
             workflow.save(update_fields=["status", "result_payload", "updated_at"])
 
             action_payload["execution_status"] = "succeeded"
             action_payload["execution_result"] = result
             action_payload["executed_run_id"] = str(run.id)
+            if post_approval_suggestion:
+                action_payload["post_approval_suggestion"] = post_approval_suggestion
         except Exception as exc:
             run.status = AgentRun.Status.FAILED
             run.response_text = str(exc)
@@ -195,6 +205,173 @@ class ApprovalService:
         if payload.get("message"):
             bits.append(f"mensaje: {str(payload['message'])[:100]}")
         return f"{spec.description} {' | '.join(bits)}".strip()
+
+    def _build_post_approval_suggestion(
+        self,
+        *,
+        tool_name: str,
+        payload: dict[str, object],
+        result: dict[str, object],
+    ) -> dict[str, object] | None:
+        """Return a deterministic next-step suggestion after a risky action succeeds."""
+        if tool_name == "update_order_status":
+            return self._build_order_status_suggestion(payload=payload, result=result)
+        if tool_name == "request_order_cancellation":
+            return self._build_cancellation_suggestion(payload=payload, result=result)
+        if tool_name == "reserve_stock":
+            return self._build_reservation_suggestion(payload=payload, result=result)
+        return None
+
+    def _build_order_status_suggestion(
+        self,
+        *,
+        payload: dict[str, object],
+        result: dict[str, object],
+    ) -> dict[str, object] | None:
+        """Create the recommended follow-up after a status change."""
+        order_number = str(result.get("order_number") or payload.get("order_number") or "").strip()
+        status_value = str(result.get("status") or payload.get("new_status") or "").strip()
+        tracking_number = str(result.get("tracking_number") or payload.get("tracking_number") or "").strip()
+        estimated_delivery = str(
+            result.get("estimated_delivery") or payload.get("estimated_delivery") or ""
+        ).strip()
+
+        if not order_number or not status_value:
+            return None
+
+        tracking_fragment = f" con tracking {tracking_number}" if tracking_number else ""
+        delivery_fragment = (
+            f" y entrega estimada {estimated_delivery}" if estimated_delivery else ""
+        )
+
+        if status_value == Order.Status.SHIPPED:
+            return {
+                "kind": "customer_message",
+                "title": "Avisar despacho al cliente",
+                "summary": (
+                    f"El pedido {order_number} ya quedó despachado. Conviene avisarle al cliente"
+                    " con el tracking y la fecha estimada."
+                ),
+                "suggested_message": (
+                    f"Hola, tu pedido {order_number} ya fue despachado{tracking_fragment}"
+                    f"{delivery_fragment}. Si necesitás ayuda con la entrega, respondé este mensaje."
+                ),
+                "suggested_prompt": (
+                    f"Mandale un WhatsApp al cliente del pedido {order_number} avisando que ya fue"
+                    f" despachado{tracking_fragment}{delivery_fragment}."
+                ),
+            }
+        if status_value == Order.Status.DELIVERED:
+            return {
+                "kind": "customer_message",
+                "title": "Confirmar entrega",
+                "summary": (
+                    f"El pedido {order_number} ya figura entregado. Podés confirmar la entrega"
+                    " y abrir espacio para feedback o incidencia."
+                ),
+                "suggested_message": (
+                    f"Hola, vemos el pedido {order_number} como entregado. Queríamos confirmar"
+                    " que haya llegado bien y quedamos atentos si necesitás algo más."
+                ),
+                "suggested_prompt": (
+                    f"Mandale un WhatsApp al cliente del pedido {order_number} para confirmar que"
+                    " recibió bien la entrega."
+                ),
+            }
+        if status_value == Order.Status.READY_TO_SHIP:
+            return {
+                "kind": "internal_follow_up",
+                "title": "Coordinar salida o retiro",
+                "summary": (
+                    f"El pedido {order_number} ya está listo para salir. Conviene definir si se"
+                    " despacha hoy o si hay que coordinar retiro."
+                ),
+                "suggested_message": (
+                    f"Pedido {order_number} listo para enviar o coordinar retiro. Revisar"
+                    " ventana operativa y confirmar próximo movimiento."
+                ),
+                "suggested_prompt": (
+                    f"Creá una nota interna para el pedido {order_number} indicando que quedó listo"
+                    " para despacho o coordinación de retiro."
+                ),
+            }
+        if status_value == Order.Status.CANCELLED:
+            return self._build_cancellation_suggestion(payload=payload, result=result)
+        return None
+
+    def _build_cancellation_suggestion(
+        self,
+        *,
+        payload: dict[str, object],
+        result: dict[str, object],
+    ) -> dict[str, object] | None:
+        """Create the recommended follow-up after a cancellation."""
+        order_number = str(result.get("order_number") or payload.get("order_number") or "").strip()
+        if not order_number:
+            return None
+
+        payment_followup_task_id = str(result.get("payment_followup_task_id") or "").strip()
+        finance_fragment = (
+            f" Además quedó creada la tarea {payment_followup_task_id} para revisar el"
+            " reembolso o la devolución."
+            if payment_followup_task_id
+            else ""
+        )
+        return {
+            "kind": "customer_message",
+            "title": "Confirmar cancelación al cliente",
+            "summary": (
+                f"La cancelación del pedido {order_number} ya se ejecutó. Conviene notificar al"
+                f" cliente y explicarle el siguiente paso financiero si aplica.{finance_fragment}"
+            ),
+            "suggested_message": (
+                f"Hola, confirmamos la cancelación del pedido {order_number} según tu solicitud."
+                " Si hubo un pago aprobado, nuestro equipo va a revisar el siguiente paso"
+                " administrativo y te vamos a mantener al tanto."
+            ),
+            "suggested_prompt": (
+                f"Mandale un WhatsApp al cliente del pedido {order_number} confirmando la"
+                " cancelación y aclarando que, si hubo un pago aprobado, vamos a revisar el"
+                " siguiente paso administrativo."
+            ),
+        }
+
+    def _build_reservation_suggestion(
+        self,
+        *,
+        payload: dict[str, object],
+        result: dict[str, object],
+    ) -> dict[str, object] | None:
+        """Create the recommended follow-up after a stock reservation."""
+        quantity = result.get("quantity") or payload.get("quantity")
+        sku = str(result.get("sku") or payload.get("sku") or "").strip()
+        wine_name = str(result.get("wine_name") or "").strip()
+        order_number = str(result.get("order_number") or payload.get("order_number") or "").strip()
+        remaining_stock = result.get("remaining_stock")
+        if not sku or quantity in (None, ""):
+            return None
+
+        wine_reference = wine_name or sku
+        order_fragment = f" para el pedido {order_number}" if order_number else ""
+        remaining_fragment = (
+            f" Quedaron {remaining_stock} unidades disponibles." if remaining_stock is not None else ""
+        )
+        return {
+            "kind": "internal_follow_up",
+            "title": "Confirmar reserva operativa",
+            "summary": (
+                f"La reserva de {quantity} unidad(es) de {wine_reference}{order_fragment} ya está"
+                f" activa.{remaining_fragment}"
+            ),
+            "suggested_message": (
+                f"Reserva activa: {quantity} unidad(es) de {wine_reference}{order_fragment}."
+                f"{remaining_fragment}"
+            ),
+            "suggested_prompt": (
+                f"Creá una nota interna confirmando que quedaron reservadas {quantity} unidad(es)"
+                f" de {wine_reference}{order_fragment}.{remaining_fragment}"
+            ),
+        }
 
     def _resolve_conversation(self, action_payload: dict[str, object]) -> Conversation | None:
         """Resolve the original conversation when available."""

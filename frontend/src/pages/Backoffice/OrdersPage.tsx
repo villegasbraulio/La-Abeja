@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { backofficeApi } from "../../api/backoffice";
 import { Button } from "../../components/ui/Button";
+import { applyWineImageFallback, wineImageSrc } from "../../lib/assets";
 import { formatARS, formatDate } from "../../lib/utils";
 
 const statusOptions = [
@@ -201,11 +202,9 @@ export function BackofficeOrdersPage() {
                   >
                     <div className="flex items-center gap-4">
                       <img
-                        src={
-                          item.primary_image ??
-                          "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=900&q=80"
-                        }
+                        src={wineImageSrc(item.primary_image)}
                         alt={item.wine_name}
+                        onError={applyWineImageFallback}
                         className="h-20 w-16 rounded-2xl object-cover"
                       />
                       <div>

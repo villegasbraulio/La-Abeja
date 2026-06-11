@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { ordersApi } from "../../api/orders";
 import { paymentsApi } from "../../api/payments";
 import { Button } from "../../components/ui/Button";
+import { applyWineImageFallback, wineImageSrc } from "../../lib/assets";
 import { formatARS, formatDate } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
 
@@ -109,11 +110,9 @@ export function OrderDetailPage() {
               className="grid gap-4 rounded-[28px] border border-burgundy-100 bg-white p-5 shadow-velvet sm:grid-cols-[140px_1fr]"
             >
               <img
-                src={
-                  item.primary_image ??
-                  "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=900&q=80"
-                }
+                src={wineImageSrc(item.primary_image)}
                 alt={item.wine_name}
+                onError={applyWineImageFallback}
                 className="h-36 w-full rounded-[20px] object-cover"
               />
               <div className="flex flex-col justify-between gap-4">

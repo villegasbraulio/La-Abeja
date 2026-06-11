@@ -29,6 +29,8 @@ class MercadoPagoClient:
 
     def create_preference(self, order: Order) -> dict[str, Any]:
         """Create a Checkout Pro preference for a specific order."""
+        payer_name, payer_surname = self._resolve_payer_name(order)
+        shipping_snapshot = self._get_shipping_snapshot(order)
         payload = {
             "items": [
                 {
@@ -42,8 +44,8 @@ class MercadoPagoClient:
                 for item in order.items.all()
             ],
             "payer": {
-                "name": order.user.first_name,
-                "surname": order.user.last_name,
+                "name": payer_name,
+                "surname": payer_surname,
                 "email": order.user.email,
             },
             "external_reference": str(order.id),
@@ -70,6 +72,11 @@ class MercadoPagoClient:
             "metadata": {
                 "order_id": str(order.id),
                 "order_number": order.order_number,
+                "shipping_method": order.shipping_method,
+                "shipping_provider": shipping_snapshot.get("provider", ""),
+                "shipping_service_level": shipping_snapshot.get("service_level", ""),
+                "shipping_city": str(order.shipping_address.get("city", "")),
+                "shipping_province": str(order.shipping_address.get("province", "")),
             },
             "payment_methods": {
                 "installments": 6,
@@ -130,3 +137,25 @@ class MercadoPagoClient:
             raise MercadoPagoAPIError(
                 "Mercado Pago devolvió una respuesta inválida."
             ) from exc
+
+    def _resolve_payer_name(self, order: Order) -> tuple[str, str]:
+        """Prefer customer account data and fall back to the shipping recipient."""
+        first_name = (order.user.first_name or "").strip()
+        last_name = (order.user.last_name or "").strip()
+        if first_name or last_name:
+            return first_name, last_name
+
+        recipient_name = str(order.shipping_address.get("recipient_name", "")).strip()
+        if not recipient_name:
+            return "Cliente", "La Abeja"
+        name_parts = recipient_name.split(maxsplit=1)
+        if len(name_parts) == 1:
+            return name_parts[0], ""
+        return name_parts[0], name_parts[1]
+
+    def _get_shipping_snapshot(self, order: Order) -> dict[str, Any]:
+        """Return the quote metadata stored at checkout time when available."""
+        snapshot = order.shipping_address.get("_shipping_quote")
+        if isinstance(snapshot, dict):
+            return snapshot
+        return {}

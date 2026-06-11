@@ -161,3 +161,108 @@ class ResponseBuilder:
             f"Actualice el pedido {result.get('order_number')} "
             f"de {result.get('previous_status')} a {result.get('status')}."
         )
+
+    def build_search_orders_response(self, results: list[dict[str, object]]) -> str:
+        """Render a list of matching orders."""
+        if not results:
+            return "No encontre pedidos que coincidan con esos filtros."
+        lines = [
+            (
+                f"- {item['order_number']} · {item['customer_name']} · "
+                f"{item['status_label']} · pago {item.get('payment_status') or 'sin dato'} · "
+                f"ARS {item['total']}"
+            )
+            for item in results
+        ]
+        return "Encontre estos pedidos:\n" + "\n".join(lines)
+
+    def build_customer_360_response(self, result: dict[str, object]) -> str:
+        """Render a concise customer 360 summary."""
+        if not result.get("found"):
+            return "No encontre un cliente con esos datos."
+        customer = result.get("customer") or {}
+        summary = result.get("summary") or {}
+        return (
+            f"{customer.get('full_name') or customer.get('email')} tiene "
+            f"{summary.get('order_count', 0)} pedidos, "
+            f"{summary.get('open_task_count', 0)} tareas abiertas y "
+            f"{summary.get('note_count', 0)} notas internas. "
+            f"Ultimo pedido: {summary.get('last_order_number') or 'sin pedidos'} "
+            f"en estado {summary.get('last_order_status') or 'sin dato'}."
+        )
+
+    def build_customer_orders_summary_response(self, result: dict[str, object]) -> str:
+        """Render a concise customer order-history summary."""
+        if not result.get("found"):
+            return "No encontre historial de pedidos para ese cliente."
+        return (
+            f"{result.get('customer_name') or result.get('customer_email')} tiene "
+            f"{result.get('order_count', 0)} pedidos, "
+            f"{result.get('completed_order_count', 0)} cerrados y "
+            f"ARS {result.get('total_revenue')} facturados en total."
+        )
+
+    def build_shipping_update_response(self, result: dict[str, object]) -> str:
+        """Render a draft shipping update summary."""
+        if not result.get("generated"):
+            return "No pude preparar una actualizacion de envio con los datos recibidos."
+        return (
+            f"Prepare una actualizacion para {result.get('order_number')} "
+            f"en estado {result.get('status_label')}. "
+            f"Borrador sugerido: {result.get('draft_text')}"
+        )
+
+    def build_payment_followup_response(self, result: dict[str, object]) -> str:
+        """Render a payment follow-up creation response."""
+        if result.get("created"):
+            return (
+                f"Listo. Cree el seguimiento de pago {result.get('task_id')} "
+                f"con diagnostico {result.get('diagnosis')}."
+            )
+        if result.get("error") == "payment_not_found":
+            return "No encontre un pago o pedido valido para generar el seguimiento."
+        return "No pude crear el seguimiento de pago con los datos recibidos."
+
+    def build_shipping_claim_response(self, result: dict[str, object]) -> str:
+        """Render a shipping claim creation response."""
+        if result.get("created"):
+            return (
+                f"Listo. Cree el reclamo logistico para {result.get('order_number')} "
+                f"y quedo asociado a la tarea {result.get('task_id')}."
+            )
+        return "No pude crear el reclamo logistico con los datos recibidos."
+
+    def build_stock_reservation_response(self, result: dict[str, object]) -> str:
+        """Render reserve/release stock tool responses."""
+        if result.get("approval_required"):
+            return (
+                "Prepare la operacion de stock, pero requiere aprobacion humana antes de ejecutarse. "
+                f"Approval {result.get('approval_request_id')}."
+            )
+        if result.get("reserved"):
+            return (
+                f"Reserve {result.get('quantity')} unidades de {result.get('wine_name')} "
+                f"y quedaron {result.get('remaining_stock')} en stock."
+            )
+        if result.get("released"):
+            return (
+                f"Libere {result.get('released_quantity')} unidades de la reserva {result.get('reservation_id')} "
+                f"y el stock actual quedo en {result.get('current_stock')}."
+            )
+        return "No pude completar la operacion de stock con los datos recibidos."
+
+    def build_order_cancellation_response(self, result: dict[str, object]) -> str:
+        """Render order-cancellation or approval-needed responses."""
+        if result.get("approval_required"):
+            return (
+                "Prepare la cancelacion del pedido, pero requiere aprobacion humana antes de ejecutarse. "
+                f"Approval {result.get('approval_request_id')}."
+            )
+        if result.get("cancelled"):
+            followup = result.get("payment_followup_task_id")
+            suffix = f" Ademas deje la tarea {followup} para revisar el impacto financiero." if followup else ""
+            return (
+                f"El pedido {result.get('order_number')} quedo cancelado "
+                f"(antes estaba en {result.get('previous_status')}).{suffix}"
+            )
+        return "No pude preparar o ejecutar la cancelacion del pedido."

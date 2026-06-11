@@ -1,36 +1,19 @@
-"""Serializers for order checkout and retrieval."""
+"""Serializers for order checkout, shipping quotes, and retrieval."""
 
 from __future__ import annotations
 
-from datetime import date, timedelta
 from decimal import Decimal
 from typing import cast
 from uuid import UUID
 
 from django.db import transaction
-from django.utils import timezone
 from rest_framework import serializers
 
 from apps.catalog.models import Wine
 from apps.payments.models import Payment
 
 from .models import Order, OrderItem
-
-SHIPPING_COSTS: dict[str, Decimal] = {
-    Order.ShippingMethod.STANDARD: Decimal("3500.00"),
-    Order.ShippingMethod.EXPRESS: Decimal("6500.00"),
-    Order.ShippingMethod.PICKUP: Decimal("0.00"),
-}
-
-
-def estimate_delivery_date(shipping_method: str) -> date | None:
-    """Return an estimated delivery date for the selected shipping method."""
-    today = timezone.localdate()
-    if shipping_method == Order.ShippingMethod.STANDARD:
-        return today + timedelta(days=7)
-    if shipping_method == Order.ShippingMethod.EXPRESS:
-        return today + timedelta(days=3)
-    return None
+from .shipping import CheckoutShippingService, ShippingQuote, ShippingQuoteError
 
 
 class CheckoutItemSerializer(serializers.Serializer):
@@ -52,6 +35,57 @@ class CheckoutShippingAddressSerializer(serializers.Serializer):
     postal_code = serializers.CharField(max_length=20)
     country = serializers.CharField(max_length=100, required=False, default="Argentina")
     phone = serializers.CharField(max_length=20)
+
+
+class ShippingQuoteAddressSerializer(serializers.Serializer):
+    """Validate destination data needed to quote a checkout shipment."""
+
+    city = serializers.CharField(max_length=100)
+    province = serializers.CharField(max_length=100)
+    postal_code = serializers.CharField(max_length=20)
+    country = serializers.CharField(max_length=100, required=False, default="Argentina")
+
+
+class ShippingQuoteSerializer(serializers.Serializer):
+    """Serialize a shipping quote returned by the checkout backend."""
+
+    shipping_method = serializers.CharField()
+    label = serializers.CharField()
+    description = serializers.CharField()
+    shipping_cost = serializers.DecimalField(max_digits=8, decimal_places=2)
+    provider = serializers.CharField()
+    service_level = serializers.CharField()
+    estimated_delivery = serializers.DateField(allow_null=True)
+
+
+class ShippingQuoteRequestSerializer(serializers.Serializer):
+    """Quote available shipping methods for the current checkout cart."""
+
+    items = CheckoutItemSerializer(many=True, allow_empty=False)
+    shipping_address = ShippingQuoteAddressSerializer()
+
+    def validate_items(
+        self, items: list[dict[str, object]]
+    ) -> list[dict[str, object]]:
+        """Reject duplicated wines when the quote is calculated."""
+        wine_ids = [str(item["wine_id"]) for item in items]
+        if len(wine_ids) != len(set(wine_ids)):
+            raise serializers.ValidationError(
+                "No se puede repetir el mismo vino en la cotización del checkout."
+            )
+        return items
+
+    def get_quotes(self) -> list[dict[str, object]]:
+        """Return serialized quotes for the current cart and destination."""
+        checkout_items = cast(list[dict[str, object]], self.validated_data["items"])
+        shipping_address = cast(dict[str, object], self.validated_data["shipping_address"])
+        quantities_by_wine_id, wines = _load_checkout_wines(checkout_items)
+        quotes = CheckoutShippingService().quote(
+            wines=wines,
+            quantities_by_wine_id=quantities_by_wine_id,
+            shipping_address=shipping_address,
+        )
+        return ShippingQuoteSerializer(quotes, many=True).data
 
 
 class OrderCreateSerializer(serializers.Serializer):
@@ -80,20 +114,10 @@ class OrderCreateSerializer(serializers.Serializer):
         user = request.user
         checkout_items = cast(list[dict[str, object]], validated_data["items"])
         shipping_method = str(validated_data["shipping_method"])
-        shipping_address = cast(dict[str, object], validated_data["shipping_address"])
+        shipping_address = dict(cast(dict[str, object], validated_data["shipping_address"]))
         notes = cast(str, validated_data.get("notes", ""))
-
-        wine_ids = [item["wine_id"] for item in checkout_items]
-        wines = (
-            Wine.objects.select_related("category", "varietal")
-            .filter(id__in=wine_ids, is_active=True)
-        )
+        quantities_by_wine_id, wines = _load_checkout_wines(checkout_items)
         wine_map = {wine.id: wine for wine in wines}
-
-        if len(wine_map) != len(wine_ids):
-            raise serializers.ValidationError(
-                {"items": "Uno o más vinos no existen o no están disponibles."}
-            )
 
         subtotal = Decimal("0.00")
         order_items: list[OrderItem] = []
@@ -123,8 +147,19 @@ class OrderCreateSerializer(serializers.Serializer):
                 )
             )
 
-        shipping_cost = SHIPPING_COSTS[str(shipping_method)]
+        try:
+            shipping_quote = CheckoutShippingService().quote_for_method(
+                wines=wines,
+                quantities_by_wine_id=quantities_by_wine_id,
+                shipping_address=shipping_address,
+                shipping_method=shipping_method,
+            )
+        except ShippingQuoteError as exc:
+            raise serializers.ValidationError({"shipping_method": str(exc)}) from exc
+
+        shipping_cost = shipping_quote.shipping_cost
         total = subtotal + shipping_cost
+        shipping_address["_shipping_quote"] = _build_shipping_snapshot(shipping_quote)
 
         order = Order.objects.create(
             user=user,
@@ -136,7 +171,7 @@ class OrderCreateSerializer(serializers.Serializer):
             shipping_address=shipping_address,
             promo_code_used="",
             notes=str(notes),
-            estimated_delivery=estimate_delivery_date(str(shipping_method)),
+            estimated_delivery=shipping_quote.estimated_delivery,
         )
         for order_item in order_items:
             order_item.order = order
@@ -190,11 +225,23 @@ class PaymentSummarySerializer(serializers.Serializer):
     updated_at = serializers.DateTimeField()
 
 
+class OrderShippingQuoteSerializer(serializers.Serializer):
+    """Expose the checkout shipping snapshot saved with the order."""
+
+    provider = serializers.CharField()
+    service_level = serializers.CharField()
+    label = serializers.CharField()
+    description = serializers.CharField()
+    shipping_cost = serializers.DecimalField(max_digits=8, decimal_places=2)
+    estimated_delivery = serializers.DateField(allow_null=True)
+
+
 class OrderSerializer(serializers.ModelSerializer):
     """Serialize orders for list and detail screens."""
 
     items = OrderItemSerializer(many=True, read_only=True)
     payment = serializers.SerializerMethodField()
+    shipping_quote = serializers.SerializerMethodField()
     status_label = serializers.CharField(source="get_status_display", read_only=True)
     shipping_method_label = serializers.CharField(
         source="get_shipping_method_display",
@@ -215,6 +262,7 @@ class OrderSerializer(serializers.ModelSerializer):
             "shipping_method",
             "shipping_method_label",
             "shipping_address",
+            "shipping_quote",
             "tracking_number",
             "estimated_delivery",
             "notes",
@@ -231,3 +279,49 @@ class OrderSerializer(serializers.ModelSerializer):
         except Payment.DoesNotExist:
             return None
         return PaymentSummarySerializer(payment).data
+
+    def get_shipping_quote(self, obj: Order) -> dict[str, object] | None:
+        """Return the shipping quote snapshot persisted at checkout time."""
+        shipping_quote = obj.shipping_address.get("_shipping_quote")
+        if not isinstance(shipping_quote, dict):
+            return None
+        serializer = OrderShippingQuoteSerializer(data=shipping_quote)
+        if serializer.is_valid(raise_exception=False):
+            return serializer.data
+        return shipping_quote
+
+
+def _load_checkout_wines(
+    checkout_items: list[dict[str, object]],
+) -> tuple[dict[UUID, int], list[Wine]]:
+    """Load the active wines required by a checkout payload."""
+    wine_ids = [cast(UUID, item["wine_id"]) for item in checkout_items]
+    wines = list(
+        Wine.objects.select_related("category", "varietal")
+        .filter(id__in=wine_ids, is_active=True)
+    )
+    wine_map = {wine.id: wine for wine in wines}
+    if len(wine_map) != len(wine_ids):
+        raise serializers.ValidationError(
+            {"items": "Uno o más vinos no existen o no están disponibles."}
+        )
+    quantities_by_wine_id = {
+        cast(UUID, item["wine_id"]): cast(int, item["quantity"]) for item in checkout_items
+    }
+    return quantities_by_wine_id, wines
+
+
+def _build_shipping_snapshot(shipping_quote: ShippingQuote) -> dict[str, object]:
+    """Return a JSON-safe quote snapshot to embed in the order address."""
+    return {
+        "provider": shipping_quote.provider,
+        "service_level": shipping_quote.service_level,
+        "label": shipping_quote.label,
+        "description": shipping_quote.description,
+        "shipping_cost": str(shipping_quote.shipping_cost),
+        "estimated_delivery": (
+            shipping_quote.estimated_delivery.isoformat()
+            if shipping_quote.estimated_delivery
+            else None
+        ),
+    }

@@ -1,6 +1,7 @@
 import { ArrowRight, ShoppingBag, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useCart } from "../../hooks/useCart";
+import { applyWineImageFallback, wineImageSrc } from "../../lib/assets";
 import { formatARS } from "../../lib/utils";
 import { Button } from "../ui/Button";
 import { cn } from "../../lib/utils";
@@ -98,11 +99,9 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 >
                   <div className="flex gap-4">
                     <img
-                      src={
-                        item.primaryImage ??
-                        "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=900&q=80"
-                      }
+                      src={wineImageSrc(item.primaryImage)}
                       alt={item.name}
+                      onError={applyWineImageFallback}
                       className="h-24 w-20 rounded-[18px] object-cover"
                     />
                     <div className="min-w-0 flex-1">

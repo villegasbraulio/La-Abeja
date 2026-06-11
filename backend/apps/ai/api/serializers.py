@@ -13,6 +13,7 @@ from apps.ai.models import (
     Lead,
     KnowledgeDocument,
     KnowledgeSource,
+    StockReservation,
     SupportTask,
     ToolExecution,
     WorkflowRun,
@@ -343,3 +344,44 @@ class LeadUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lead
         fields = ["status", "interest_summary", "estimated_order_value"]
+
+
+class StockReservationSerializer(serializers.ModelSerializer):
+    """Serialize AI-managed stock reservations."""
+
+    wine_name = serializers.CharField(source="wine.name", read_only=True)
+    wine_sku = serializers.CharField(source="wine.sku", read_only=True)
+    order_number = serializers.CharField(source="order.order_number", read_only=True, allow_null=True)
+    customer_email = serializers.EmailField(source="customer.email", read_only=True, allow_null=True)
+    customer_name = serializers.CharField(source="customer.full_name", read_only=True, allow_null=True)
+    workflow_type = serializers.CharField(source="workflow_run.workflow_type", read_only=True, allow_null=True)
+    remaining_quantity = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StockReservation
+        fields = [
+            "id",
+            "wine",
+            "wine_name",
+            "wine_sku",
+            "quantity",
+            "released_quantity",
+            "remaining_quantity",
+            "status",
+            "reason",
+            "order",
+            "order_number",
+            "conversation",
+            "customer_email",
+            "customer_name",
+            "workflow_run",
+            "workflow_type",
+            "released_at",
+            "metadata",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_remaining_quantity(self, obj: StockReservation) -> int:
+        """Return the still-reserved quantity for the reservation."""
+        return max(int(obj.quantity) - int(obj.released_quantity), 0)

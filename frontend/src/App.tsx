@@ -3,12 +3,14 @@ import { Layout } from "./components/layout/Layout";
 import { AboutPage } from "./pages/About";
 import { BackofficeApprovalsPage } from "./pages/Backoffice/ApprovalsPage";
 import { BackofficeLayout } from "./pages/Backoffice/BackofficeLayout";
+import { BackofficeCancellationApprovalsPage } from "./pages/Backoffice/CancellationApprovalsPage";
 import { CategoriesPage } from "./pages/Backoffice/CategoriesPage";
 import { BackofficeCopilotPage } from "./pages/Backoffice/CopilotPage";
 import { BackofficeDashboardPage } from "./pages/Backoffice/DashboardPage";
 import { BackofficeLeadsPage } from "./pages/Backoffice/LeadsPage";
 import { BackofficeLoginPage } from "./pages/Backoffice/LoginPage";
 import { BackofficeOrdersPage } from "./pages/Backoffice/OrdersPage";
+import { BackofficeStockReservationsPage } from "./pages/Backoffice/StockReservationsPage";
 import { BackofficeTasksPage } from "./pages/Backoffice/TasksPage";
 import { VarietalsPage } from "./pages/Backoffice/VarietalsPage";
 import { WinesPage } from "./pages/Backoffice/WinesPage";
@@ -50,6 +52,8 @@ export default function App() {
         <Route path="tareas-ai" element={<BackofficeTasksPage />} />
         <Route path="leads-ai" element={<BackofficeLeadsPage />} />
         <Route path="approvals-ai" element={<BackofficeApprovalsPage />} />
+        <Route path="reservas-stock-ai" element={<BackofficeStockReservationsPage />} />
+        <Route path="cancelaciones-ai" element={<BackofficeCancellationApprovalsPage />} />
         <Route path="pedidos" element={<BackofficeOrdersPage />} />
         <Route path="vinos" element={<WinesPage />} />
         <Route path="categorias" element={<CategoriesPage />} />

@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1200" viewBox="0 0 900 1200" role="img" aria-labelledby="title desc">
+  <title id="title">Wine bottle placeholder</title>
+  <desc id="desc">A stylized wine bottle placeholder for La Abeja product images.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f7efe1"/>
+      <stop offset="0.55" stop-color="#efe0c4"/>
+      <stop offset="1" stop-color="#d6b978"/>
+    </linearGradient>
+    <linearGradient id="bottle" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#421017"/>
+      <stop offset="1" stop-color="#14080a"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="1200" fill="url(#background)"/>
+  <path d="M0 930c160-82 330-94 510-38 135 42 260 35 390-28v336H0Z" fill="#722f37" opacity="0.18"/>
+  <g transform="translate(320 150)">
+    <path d="M100 0h120v170c0 58 48 92 48 165v530c0 54-44 98-98 98h-20c-54 0-98-44-98-98V335c0-73 48-107 48-165Z" fill="url(#bottle)"/>
+    <rect x="88" y="390" width="144" height="250" rx="16" fill="#f7efe1"/>
+    <rect x="112" y="420" width="96" height="28" rx="14" fill="#c8a96e"/>
+    <rect x="112" y="472" width="96" height="12" rx="6" fill="#722f37" opacity="0.65"/>
+    <rect x="112" y="504" width="96" height="12" rx="6" fill="#722f37" opacity="0.45"/>
+    <rect x="130" y="540" width="60" height="60" rx="30" fill="#c8a96e" opacity="0.8"/>
+  </g>
+  <text x="450" y="1030" text-anchor="middle" fill="#421017" font-family="Georgia, serif" font-size="54">La Abeja</text>
+  <text x="450" y="1090" text-anchor="middle" fill="#722f37" font-family="Arial, sans-serif" font-size="28" letter-spacing="5">VINOS</text>
+</svg>

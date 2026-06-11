@@ -1,5 +1,5 @@
-import { type FormEvent, useMemo, useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { Link } from "react-router-dom";
 import { authApi } from "../../api/auth";
@@ -7,35 +7,10 @@ import { ordersApi } from "../../api/orders";
 import { paymentsApi } from "../../api/payments";
 import { Button } from "../../components/ui/Button";
 import { useCart } from "../../hooks/useCart";
-import { formatARS } from "../../lib/utils";
+import { applyWineImageFallback, wineImageSrc } from "../../lib/assets";
+import { formatARS, formatDate } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
 import type { Order, ShippingMethod } from "../../types/orders";
-
-const shippingOptions: Array<{
-  value: ShippingMethod;
-  label: string;
-  description: string;
-  cost: number;
-}> = [
-  {
-    value: "standard",
-    label: "Envío estándar",
-    description: "Entrega estimada entre 5 y 7 días hábiles.",
-    cost: 3500,
-  },
-  {
-    value: "express",
-    label: "Envío express",
-    description: "Prioridad en preparación y entrega estimada entre 2 y 3 días.",
-    cost: 6500,
-  },
-  {
-    value: "pickup",
-    label: "Retiro en bodega",
-    description: "Coordinamos retiro en San Rafael sin costo de envío.",
-    cost: 0,
-  },
-];
 
 export function CheckoutPage() {
   const { items, subtotal, subtotalFormatted } = useCart();
@@ -71,14 +46,63 @@ export function CheckoutPage() {
     notes: "",
   });
 
-  const selectedShipping = useMemo(
-    () =>
-      shippingOptions.find((option) => option.value === shippingForm.shipping_method) ??
-      shippingOptions[0],
-    [shippingForm.shipping_method],
+  const quoteAddressReady = Boolean(
+    shippingForm.city.trim() &&
+      shippingForm.province.trim() &&
+      shippingForm.postal_code.trim() &&
+      shippingForm.country.trim(),
   );
 
-  const total = subtotal + selectedShipping.cost;
+  const shippingQuoteQuery = useQuery({
+    queryKey: [
+      "checkout-shipping-quotes",
+      items.map((item) => `${item.wineId}:${item.quantity}`),
+      shippingForm.city,
+      shippingForm.province,
+      shippingForm.postal_code,
+      shippingForm.country,
+    ],
+    queryFn: () =>
+      ordersApi.quoteShipping({
+        items: items.map((item) => ({
+          wine_id: item.wineId,
+          quantity: item.quantity,
+        })),
+        shipping_address: {
+          city: shippingForm.city,
+          province: shippingForm.province,
+          postal_code: shippingForm.postal_code,
+          country: shippingForm.country,
+        },
+      }),
+    enabled: items.length > 0 && quoteAddressReady,
+    staleTime: 60_000,
+  });
+
+  const shippingOptions = shippingQuoteQuery.data?.quotes ?? [];
+
+  useEffect(() => {
+    if (shippingOptions.length === 0) {
+      return;
+    }
+    if (shippingOptions.some((option) => option.shipping_method === shippingForm.shipping_method)) {
+      return;
+    }
+    setShippingForm((current) => ({
+      ...current,
+      shipping_method: shippingOptions[0].shipping_method,
+    }));
+  }, [shippingOptions, shippingForm.shipping_method]);
+
+  const selectedShipping = useMemo(
+    () =>
+      shippingOptions.find((option) => option.shipping_method === shippingForm.shipping_method) ??
+      null,
+    [shippingOptions, shippingForm.shipping_method],
+  );
+
+  const shippingCost = selectedShipping ? Number.parseFloat(selectedShipping.shipping_cost) : 0;
+  const total = subtotal + shippingCost;
 
   const loginMutation = useMutation({
     mutationFn: () => authApi.login(loginForm),
@@ -134,8 +158,20 @@ export function CheckoutPage() {
     },
   });
 
+  const shippingQuoteError =
+    (shippingQuoteQuery.error as AxiosError<{ detail?: string; shipping_address?: string[] }> | null)
+      ?.response?.data?.detail ??
+    (shippingQuoteQuery.error as AxiosError<{ detail?: string; shipping_address?: string[] }> | null)
+      ?.response?.data?.shipping_address?.[0] ??
+    (shippingQuoteQuery.error instanceof Error
+      ? shippingQuoteQuery.error.message
+      : null);
+
   const checkoutMutation = useMutation({
     mutationFn: async () => {
+      if (!selectedShipping) {
+        throw new Error("Necesitamos una cotización válida antes de enviarte a Mercado Pago.");
+      }
       const order = await ordersApi.create({
         items: items.map((item) => ({
           wine_id: item.wineId,
@@ -523,11 +559,31 @@ export function CheckoutPage() {
                   Método de entrega
                 </p>
                 <div className="mt-4 grid gap-4">
+                  {shippingQuoteQuery.isLoading ? (
+                    <div className="rounded-[24px] border border-burgundy-100 bg-cream-50 px-5 py-4 text-sm text-burgundy-700">
+                      Calculando opciones de envío con la dirección cargada...
+                    </div>
+                  ) : null}
+
+                  {!shippingQuoteQuery.isLoading && shippingQuoteError ? (
+                    <div className="rounded-[24px] border border-burgundy-200 bg-burgundy-50 px-5 py-4 text-sm text-burgundy-800">
+                      {shippingQuoteError}
+                    </div>
+                  ) : null}
+
+                  {!shippingQuoteQuery.isLoading &&
+                  !shippingQuoteError &&
+                  shippingOptions.length === 0 ? (
+                    <div className="rounded-[24px] border border-burgundy-100 bg-cream-50 px-5 py-4 text-sm text-burgundy-700">
+                      Completá ciudad, provincia y código postal para cotizar el envío.
+                    </div>
+                  ) : null}
+
                   {shippingOptions.map((option) => (
                     <label
-                      key={option.value}
+                      key={option.shipping_method}
                       className={`rounded-[24px] border px-5 py-4 ${
-                        shippingForm.shipping_method === option.value
+                        shippingForm.shipping_method === option.shipping_method
                           ? "border-burgundy-300 bg-burgundy-50"
                           : "border-burgundy-100 bg-cream-50"
                       }`}
@@ -536,12 +592,12 @@ export function CheckoutPage() {
                         <input
                           type="radio"
                           name="shipping_method"
-                          value={option.value}
-                          checked={shippingForm.shipping_method === option.value}
+                          value={option.shipping_method}
+                          checked={shippingForm.shipping_method === option.shipping_method}
                           onChange={() =>
                             setShippingForm((current) => ({
                               ...current,
-                              shipping_method: option.value,
+                              shipping_method: option.shipping_method,
                             }))
                           }
                         />
@@ -549,12 +605,19 @@ export function CheckoutPage() {
                           <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                             <p className="font-semibold text-burgundy-950">{option.label}</p>
                             <p className="text-sm font-semibold text-burgundy-900">
-                              {option.cost > 0 ? formatARS(option.cost) : "Sin cargo"}
+                              {Number.parseFloat(option.shipping_cost) > 0
+                                ? formatARS(option.shipping_cost)
+                                : "Sin cargo"}
                             </p>
                           </div>
                           <p className="mt-2 text-sm leading-6 text-burgundy-700">
                             {option.description}
                           </p>
+                          {option.estimated_delivery ? (
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
+                              Estimado: {formatDate(option.estimated_delivery)}
+                            </p>
+                          ) : null}
                         </div>
                       </div>
                     </label>
@@ -590,10 +653,21 @@ export function CheckoutPage() {
                 </div>
               ) : null}
 
-              <Button className="w-full" type="submit" disabled={checkoutMutation.isPending}>
+              <Button
+                className="w-full"
+                type="submit"
+                disabled={
+                  checkoutMutation.isPending ||
+                  shippingQuoteQuery.isLoading ||
+                  Boolean(shippingQuoteError) ||
+                  !selectedShipping
+                }
+              >
                 {checkoutMutation.isPending
                   ? "Generando orden y preparando pago..."
-                  : "Confirmar pedido y pagar con Mercado Pago"}
+                  : shippingQuoteQuery.isLoading
+                    ? "Cotizando envío..."
+                    : "Confirmar pedido y pagar con Mercado Pago"}
               </Button>
             </form>
           )}
@@ -611,11 +685,9 @@ export function CheckoutPage() {
                   className="flex items-start gap-4 rounded-[22px] border border-burgundy-100 bg-cream-50 p-4"
                 >
                   <img
-                    src={
-                      item.primaryImage ??
-                      "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=900&q=80"
-                    }
+                    src={wineImageSrc(item.primaryImage)}
                     alt={item.name}
+                    onError={applyWineImageFallback}
                     className="h-20 w-16 rounded-[16px] object-cover"
                   />
                   <div className="flex-1">
@@ -638,9 +710,13 @@ export function CheckoutPage() {
                 <span>{subtotalFormatted}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span>{selectedShipping.label}</span>
+                <span>{selectedShipping?.label ?? "Envío"}</span>
                 <span>
-                  {selectedShipping.cost > 0 ? formatARS(selectedShipping.cost) : "Sin cargo"}
+                  {selectedShipping
+                    ? shippingCost > 0
+                      ? formatARS(selectedShipping.shipping_cost)
+                      : "Sin cargo"
+                    : "Calculando..."}
                 </span>
               </div>
               <div className="flex items-center justify-between text-lg font-semibold text-burgundy-950">

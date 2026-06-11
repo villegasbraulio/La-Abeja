@@ -25,9 +25,26 @@ def get_first_env(*names: str, default: str = "") -> str:
             return value
     return default
 
+
+def get_redis_url(default_db: int) -> str:
+    """Build a Redis URL from either a full URL or Render-style host/port vars."""
+    redis_url = os.getenv("REDIS_URL", "").strip()
+    if redis_url:
+        return redis_url
+
+    redis_host = os.getenv("REDIS_HOST", "").strip()
+    if redis_host:
+        redis_port = os.getenv("REDIS_PORT", "6379").strip() or "6379"
+        return f"redis://{redis_host}:{redis_port}/{default_db}"
+
+    return f"redis://localhost:6379/{default_db}"
+
 SECRET_KEY = os.getenv("SECRET_KEY", "unsafe-development-secret-key-change-me")
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 ALLOWED_HOSTS = get_list_env("ALLOWED_HOSTS", "localhost,127.0.0.1")
+RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME", "").strip()
+if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -109,9 +126,9 @@ AUTH_USER_MODEL = "authentication.CustomUser"
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 
-REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+REDIS_URL = get_redis_url(default_db=0)
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", REDIS_URL)
-CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/1")
+CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", get_redis_url(default_db=1))
 CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "False").lower() == "true"
 
 REST_FRAMEWORK = {

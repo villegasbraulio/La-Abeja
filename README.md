@@ -503,6 +503,68 @@ make migrate
 make seed
 ```
 
+## Deploy en Render + Vercel
+
+Guia completa: [docs/deploy-render-vercel.md](/Users/braulio/La-Abeja/docs/deploy-render-vercel.md).
+
+La forma mas simple para este monorepo es:
+
+- backend Django en Render
+- Postgres y Redis/Key Value en Render
+- frontend Vite en Vercel
+- imagenes publicadas como URLs absolutas, idealmente Cloudinary o assets estaticos/CDN
+
+### 1. Backend en Render
+
+Este repo incluye [`render.yaml`](/Users/braulio/La-Abeja/render.yaml) para crear el servicio web, Postgres y Redis/Key Value desde un Blueprint.
+
+Pasos:
+
+1. Subi el repo a GitHub.
+2. En Render: **New > Blueprint** y selecciona este repo.
+3. Completa las variables marcadas como secret/sync manual:
+   - `FRONTEND_URL`: `https://tu-proyecto.vercel.app`
+   - `BACKEND_URL`: `https://tu-backend.onrender.com`
+   - `CORS_ALLOWED_ORIGINS`: `https://tu-proyecto.vercel.app`
+   - `CSRF_TRUSTED_ORIGINS`: `https://tu-proyecto.vercel.app,https://tu-backend.onrender.com`
+   - `OPENAI_API_KEY` si queres embeddings y mejor RAG semantico
+   - `MERCADOPAGO_*` si queres checkout real
+4. Render corre `collectstatic` en build y `python manage.py migrate` como predeploy.
+5. Despues del primer deploy, ejecuta una vez en la shell de Render:
+
+```bash
+python manage.py seed_demo_data
+python manage.py seed_ai_knowledge
+python manage.py reindex_ai_knowledge
+```
+
+Si no cargas `OPENAI_API_KEY`, el RAG sigue respondiendo con busqueda lexica, pero no va a tener recuperacion semantica real.
+
+### 2. Frontend en Vercel
+
+En Vercel crea un proyecto apuntando al subdirectorio `frontend`.
+
+Configuracion recomendada:
+
+- Framework preset: `Vite`
+- Root directory: `frontend`
+- Install command: `npm install`
+- Build command: `npm run build`
+- Output directory: `dist`
+
+Variables:
+
+```bash
+VITE_API_URL=https://tu-backend.onrender.com/api/v1
+VITE_ASSET_BASE_URL=https://tu-backend.onrender.com
+```
+
+`frontend/vercel.json` ya tiene el rewrite a `index.html` para que funcionen rutas como `/vinos/:slug` y `/backoffice/login`.
+
+### 3. Imagenes
+
+Para produccion evita depender de rutas locales o URLs incompletas. El frontend ahora normaliza rutas relativas usando `VITE_ASSET_BASE_URL`, pero lo mas estable es guardar imagenes como URLs absolutas de Cloudinary, S3, Vercel public assets o un CDN.
+
 ## Acceso demo
 
 Si corres `seed_demo_data` con los defaults de [`.env.example`](/Users/braulio/La-Abeja/.env.example):
