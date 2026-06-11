@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Prepare compose env file
+        run: cp .env.example .env
       - name: Validate compose file
         run: docker compose -f docker-compose.prod.yml config >/dev/null
       - name: Build containers
