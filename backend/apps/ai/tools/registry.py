@@ -64,6 +64,7 @@ from .operations_tools import (
 )
 from .ops_tools import list_low_stock_items, list_pending_orders
 from .order_tools import get_order_by_number
+from .visit_tools import search_visit_context
 
 
 class ToolRegistry:
@@ -74,6 +75,22 @@ class ToolRegistry:
         self._tools = {
             spec.name: spec
             for spec in [
+                ToolSpec(
+                    name="search_visit_context",
+                    description="Search winery visits, events, slots, and bookings.",
+                    risk_level=ToolExecution.RiskLevel.READ_ONLY,
+                    input_schema={
+                        "type": "object",
+                        "properties": {
+                            "query": {"type": "string"},
+                            "status": {"type": "string"},
+                            "experience_id": {"type": "string"},
+                            "limit": {"type": "integer", "minimum": 1, "maximum": 20},
+                        },
+                        "additionalProperties": False,
+                    },
+                    handler=search_visit_context,
+                ),
                 ToolSpec(
                     name="get_order_by_number",
                     description="Fetch a single order by its human-readable number.",

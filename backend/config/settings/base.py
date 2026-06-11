@@ -198,7 +198,7 @@ ENABLE_WHATSAPP_NOTIFICATIONS = (
 ENABLE_SMS_NOTIFICATIONS = os.getenv("ENABLE_SMS_NOTIFICATIONS", "False").lower() == "true"
 LOW_STOCK_ALERT_ENABLED = os.getenv("LOW_STOCK_ALERT_ENABLED", "True").lower() == "true"
 
-AI_LLM_PROVIDER = os.getenv("AI_LLM_PROVIDER", "openai").lower()
+AI_LLM_PROVIDER = os.getenv("AI_LLM_PROVIDER", "groq").lower()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 GROQ_BASE_URL = get_first_env(
@@ -218,7 +218,7 @@ AI_CHAT_MODEL = (
 AI_REASONING_MODEL = (
     os.getenv("AI_REASONING_MODEL", DEFAULT_AI_REASONING_MODEL) or DEFAULT_AI_REASONING_MODEL
 )
-AI_EMBEDDING_MODEL = os.getenv("AI_EMBEDDING_MODEL", "text-embedding-3-large")
+AI_EMBEDDING_MODEL = os.getenv("AI_EMBEDDING_MODEL", "")
 AI_MAX_KNOWLEDGE_RESULTS = int(os.getenv("AI_MAX_KNOWLEDGE_RESULTS", "6"))
 AI_USE_LLM = os.getenv("AI_USE_LLM", "True").lower() == "true"
 AI_USE_TOOL_CALLING = os.getenv("AI_USE_TOOL_CALLING", "True").lower() == "true"

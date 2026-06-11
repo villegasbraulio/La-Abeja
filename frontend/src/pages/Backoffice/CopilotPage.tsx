@@ -55,6 +55,24 @@ const quickActionCards = [
     prompt: "Pedí cancelación del pedido LAB-2026-000145 por solicitud del cliente",
     mode: "draft" as const,
   },
+  {
+    title: "Visitas activas",
+    description: "Listá las experiencias de visita publicadas o destacadas.",
+    prompt: "Mostrame las visitas activas y destacadas",
+    mode: "draft" as const,
+  },
+  {
+    title: "Reservas de visita",
+    description: "Buscá reservas, eventos y turnos por cliente o código.",
+    prompt: "Buscá reservas de visita del cliente ana@example.com",
+    mode: "draft" as const,
+  },
+  {
+    title: "Eventos de esta semana",
+    description: "Revisá la agenda operativa de experiencias y cupos.",
+    prompt: "Qué eventos y turnos de visita tengo esta semana?",
+    mode: "draft" as const,
+  },
 ];
 
 type PostApprovalSuggestion = {
@@ -313,10 +331,10 @@ export function BackofficeCopilotPage() {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-burgundy-500">
-                  Quick actions
+                  Acciones disponibles
                 </p>
                 <p className="mt-2 text-sm text-burgundy-700">
-                  Atajos para las tools nuevas de pedidos, pagos, logística y reservas.
+                  Atajos para pedidos, pagos, logística, reservas y visitas.
                 </p>
               </div>
             </div>

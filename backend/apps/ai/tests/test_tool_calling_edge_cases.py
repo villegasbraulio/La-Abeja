@@ -103,6 +103,7 @@ def test_tool_calling_agent_executes_multiple_tools_in_order(
 ) -> None:
     """Multiple tool calls should execute sequentially and preserve order metadata."""
     del seeded_catalog_and_knowledge
+    settings.AI_LLM_PROVIDER = "openai"
     settings.OPENAI_API_KEY = "test-key"
     settings.AI_USE_LLM = True
     settings.AI_USE_TOOL_CALLING = True
@@ -145,6 +146,7 @@ def test_tool_calling_agent_handles_invalid_json_arguments(
 ) -> None:
     """Invalid JSON arguments should not crash the tool loop."""
     del seeded_catalog_and_knowledge
+    settings.AI_LLM_PROVIDER = "openai"
     settings.OPENAI_API_KEY = "test-key"
     settings.AI_USE_LLM = True
     settings.AI_USE_TOOL_CALLING = True
@@ -179,6 +181,7 @@ def test_tool_calling_agent_handles_invalid_json_arguments(
 @pytest.mark.django_db
 def test_tool_calling_agent_ignores_unknown_tools_and_finishes(settings, monkeypatch) -> None:
     """Unknown tool names should be skipped rather than blowing up the loop."""
+    settings.AI_LLM_PROVIDER = "openai"
     settings.OPENAI_API_KEY = "test-key"
     settings.AI_USE_LLM = True
     settings.AI_USE_TOOL_CALLING = True
@@ -213,6 +216,7 @@ def test_tool_calling_agent_ignores_unknown_tools_and_finishes(settings, monkeyp
 @pytest.mark.django_db
 def test_tool_calling_agent_returns_none_on_empty_final_output(settings, monkeypatch) -> None:
     """Blank model outputs should degrade to the orchestrator fallback path."""
+    settings.AI_LLM_PROVIDER = "openai"
     settings.OPENAI_API_KEY = "test-key"
     settings.AI_USE_LLM = True
     settings.AI_USE_TOOL_CALLING = True
@@ -241,6 +245,7 @@ def test_orchestrator_marks_run_for_human_when_llm_requests_blocked_write(
     settings, monkeypatch
 ) -> None:
     """Tool-calling runs should surface pending approvals instead of pretending the write happened."""
+    settings.AI_LLM_PROVIDER = "openai"
     settings.OPENAI_API_KEY = "test-key"
     settings.AI_USE_LLM = True
     settings.AI_USE_TOOL_CALLING = True
@@ -301,6 +306,7 @@ def test_orchestrator_marks_run_for_human_when_llm_requests_blocked_write(
 @pytest.mark.django_db
 def test_tool_calling_agent_returns_none_on_openai_exception(settings, monkeypatch) -> None:
     """Unexpected OpenAI errors should not bubble up to callers."""
+    settings.AI_LLM_PROVIDER = "openai"
     settings.OPENAI_API_KEY = "test-key"
     settings.AI_USE_LLM = True
     settings.AI_USE_TOOL_CALLING = True

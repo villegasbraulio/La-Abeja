@@ -48,6 +48,7 @@ class _FakeOpenAIClient:
 @pytest.mark.django_db
 def test_embedding_service_returns_vectors_with_mocked_openai(settings, monkeypatch) -> None:
     """Embedding service should normalize OpenAI embedding responses."""
+    settings.AI_LLM_PROVIDER = "openai"
     settings.OPENAI_API_KEY = "test-key"
     settings.AI_USE_LLM = True
     monkeypatch.setitem(sys.modules, "openai", SimpleNamespace(OpenAI=_FakeOpenAIClient))

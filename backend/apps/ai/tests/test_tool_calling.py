@@ -157,6 +157,7 @@ def test_openai_tool_calling_agent_executes_registry_tools(
 ) -> None:
     """The tool-calling agent should execute a tool and return the model's final answer."""
     del seeded_public_knowledge
+    settings.AI_LLM_PROVIDER = "openai"
     settings.OPENAI_API_KEY = "test-key"
     settings.AI_USE_LLM = True
     settings.AI_USE_TOOL_CALLING = True
@@ -207,6 +208,7 @@ def test_openai_tool_calling_agent_executes_registry_tools(
 @pytest.mark.django_db
 def test_openai_tool_calling_agent_returns_none_when_disabled(settings) -> None:
     """The tool-calling layer should no-op cleanly when disabled."""
+    settings.AI_LLM_PROVIDER = "openai"
     settings.OPENAI_API_KEY = ""
     settings.AI_USE_LLM = False
     settings.AI_USE_TOOL_CALLING = False

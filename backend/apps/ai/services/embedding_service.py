@@ -24,6 +24,9 @@ class EmbeddingService:
         cleaned = [text.strip() for text in texts if text.strip()]
         if not cleaned:
             return EmbeddingBatchResult(model="none", vectors=[], used_remote=False)
+        provider_name = str(getattr(settings, "AI_LLM_PROVIDER", "openai")).strip().lower()
+        if provider_name == "groq":
+            return None
         if not settings.OPENAI_API_KEY or not settings.AI_USE_LLM:
             return None
 

@@ -1,7 +1,12 @@
 import { apiClient } from "./client";
 import type {
   BackofficeCategory,
+  BackofficeBooking,
+  BackofficeBookingPayload,
+  BackofficeExperience,
+  BackofficeExperiencePayload,
   BackofficeDashboard,
+  BackofficeTimeSlot,
   BackofficeOrderDetail,
   BackofficeOrderListItem,
   BackofficeVarietal,
@@ -118,6 +123,92 @@ export const backofficeApi = {
     },
     remove: async (wineId: string): Promise<void> => {
       await apiClient.delete(`/backoffice/wines/${wineId}/`);
+    },
+  },
+  visits: {
+    experiences: {
+      list: async (): Promise<BackofficeExperience[]> => {
+        const response = await apiClient.get<BackofficeExperience[]>("/backoffice/visits/experiences/");
+        return response.data;
+      },
+      detail: async (experienceId: string): Promise<BackofficeExperience> => {
+        const response = await apiClient.get<BackofficeExperience>(
+          `/backoffice/visits/experiences/${experienceId}/`,
+        );
+        return response.data;
+      },
+      create: async (payload: BackofficeExperiencePayload): Promise<BackofficeExperience> => {
+        const response = await apiClient.post<BackofficeExperience>(
+          "/backoffice/visits/experiences/",
+          payload,
+        );
+        return response.data;
+      },
+      update: async (
+        experienceId: string,
+        payload: BackofficeExperiencePayload,
+      ): Promise<BackofficeExperience> => {
+        const response = await apiClient.put<BackofficeExperience>(
+          `/backoffice/visits/experiences/${experienceId}/`,
+          payload,
+        );
+        return response.data;
+      },
+      remove: async (experienceId: string): Promise<void> => {
+        await apiClient.delete(`/backoffice/visits/experiences/${experienceId}/`);
+      },
+    },
+    slots: {
+      list: async (params?: { experience?: string }): Promise<BackofficeTimeSlot[]> => {
+        const searchParams = new URLSearchParams();
+        if (params?.experience) {
+          searchParams.set("experience", params.experience);
+        }
+        const suffix = searchParams.toString();
+        const response = await apiClient.get<BackofficeTimeSlot[]>(
+          `/backoffice/visits/slots/${suffix ? `?${suffix}` : ""}`,
+        );
+        return response.data;
+      },
+    },
+    bookings: {
+      list: async (params?: {
+        experience?: string;
+        status?: string;
+        search?: string;
+      }): Promise<BackofficeBooking[]> => {
+        const searchParams = new URLSearchParams();
+        if (params?.experience) {
+          searchParams.set("experience", params.experience);
+        }
+        if (params?.status) {
+          searchParams.set("status", params.status);
+        }
+        if (params?.search) {
+          searchParams.set("search", params.search);
+        }
+        const suffix = searchParams.toString();
+        const response = await apiClient.get<BackofficeBooking[]>(
+          `/backoffice/visits/bookings/${suffix ? `?${suffix}` : ""}`,
+        );
+        return response.data;
+      },
+      detail: async (bookingId: string): Promise<BackofficeBooking> => {
+        const response = await apiClient.get<BackofficeBooking>(
+          `/backoffice/visits/bookings/${bookingId}/`,
+        );
+        return response.data;
+      },
+      update: async (
+        bookingId: string,
+        payload: BackofficeBookingPayload,
+      ): Promise<BackofficeBooking> => {
+        const response = await apiClient.patch<BackofficeBooking>(
+          `/backoffice/visits/bookings/${bookingId}/`,
+          payload,
+        );
+        return response.data;
+      },
     },
   },
   orders: {

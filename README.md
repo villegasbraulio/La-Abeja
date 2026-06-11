@@ -429,15 +429,7 @@ Variables importantes para demo base:
 
 ### 2. Providers LLM
 
-El runtime conversacional ya acepta aliases utiles para OpenAI y Groq.
-
-#### OpenAI
-
-```bash
-AI_LLM_PROVIDER=openai
-OPENAI_API_KEY=tu_api_key
-AI_CHAT_MODEL=gpt-4.1
-```
+El runtime conversacional usa Groq como default para chat y tool-calling.
 
 #### Groq
 
@@ -464,9 +456,9 @@ GROQ_API_KEY=tu_api_key
 
 Nota importante:
 
-- chat y tool-calling pueden correr con Groq
-- embeddings siguen usando `OPENAI_API_KEY` hoy
-- si no hay embeddings remotos, el knowledge retrieval sigue funcionando con busqueda lexica
+- chat y tool-calling corren con Groq
+- el conocimiento sigue funcionando con busqueda lexica aunque no haya embeddings remotos
+- si mas adelante queres reactivar embeddings semanticos con otro proveedor, se puede sumar sin tocar el runtime conversacional
 
 ### 3. Backend
 
@@ -527,7 +519,7 @@ Pasos:
    - `BACKEND_URL`: `https://tu-backend.onrender.com`
    - `CORS_ALLOWED_ORIGINS`: `https://tu-proyecto.vercel.app`
    - `CSRF_TRUSTED_ORIGINS`: `https://tu-proyecto.vercel.app,https://tu-backend.onrender.com`
-   - `OPENAI_API_KEY` si queres embeddings y mejor RAG semantico
+   - `GROQ_API_KEY` para el Copilot
    - `MERCADOPAGO_*` si queres checkout real
 4. En modo gratis, Render corre install, migraciones, collectstatic y seed desde el `buildCommand` porque `preDeployCommand` no esta disponible para servicios free.
 5. Si mas adelante pasas a un plan pago, conviene mover migraciones a `preDeployCommand`:
@@ -536,7 +528,7 @@ Pasos:
 python manage.py migrate
 ```
 
-Limitacion importante: Render Free Postgres expira a los 30 dias y Free Key Value puede perder datos al reiniciar. Sirve para demo gratis, no para produccion estable. Si no cargas `OPENAI_API_KEY`, el RAG sigue respondiendo con busqueda lexica, pero no va a tener recuperacion semantica real.
+Limitacion importante: Render Free Postgres expira a los 30 dias y Free Key Value puede perder datos al reiniciar. Sirve para demo gratis, no para produccion estable. El RAG sigue respondiendo con busqueda lexica aunque no tengas embeddings externos.
 
 ### 2. Frontend en Vercel
 
@@ -670,7 +662,7 @@ Desarrolle una plataforma e-commerce y backoffice AI-first para una bodega, inte
 - que no es un chatbot aislado, sino una capa AI conectada al sistema transaccional
 - que el agente lee y escribe sobre entidades reales con guardrails y approvals
 - que el RAG tiene ingestion, chunking, embeddings y fallback lexico si la capa semantica no esta disponible
-- que el runtime es multi-provider y hoy puede correr con OpenAI o Groq
+- que el runtime conversa con Groq por defecto y mantiene aislada la capa de proveedor
 - que la solucion incluye evaluacion, audit trail y superficies operativas usables por negocio
 
 ## Limitaciones actuales
@@ -678,7 +670,7 @@ Desarrolle una plataforma e-commerce y backoffice AI-first para una bodega, inte
 El proyecto ya es fuerte como demo tecnica, pero sigue teniendo limites reales:
 
 - la sincronizacion de knowledge sources externos todavia esta en una etapa inicial
-- embeddings siguen acoplados a OpenAI
+- embeddings semanticos quedaron como capa opcional; con Groq el RAG funciona por busqueda lexica
 - parte de los workflows AI estan orientados a demo y no a operacion productiva a gran escala
 - falta endurecimiento productivo de observabilidad, retries y operaciones externas
 - reservas completas siguen siendo roadmap

@@ -60,6 +60,47 @@ class ResponseBuilder:
         ]
         return "Encontre estas opciones en el catalogo:\n" + "\n".join(lines)
 
+    def build_visit_context_response(self, result: dict[str, object]) -> str:
+        """Render visit and event search results."""
+        experiences = list(result.get("experiences") or [])
+        slots = list(result.get("slots") or [])
+        bookings = list(result.get("bookings") or [])
+        if not experiences and not slots and not bookings:
+            return (
+                "No encontre visitas, eventos o reservas que coincidan con esa consulta. "
+                "Si queres, probamos con el nombre de la experiencia, el email del cliente o el código de confirmación."
+            )
+
+        parts: list[str] = []
+        if experiences:
+            exp_lines = [
+                (
+                    f"- {item['name']} · {item['experience_type']} · "
+                    f"{item['duration_minutes']} min · {item['min_guests']}-{item['max_guests']} personas"
+                )
+                for item in experiences
+            ]
+            parts.append("Experiencias encontradas:\n" + "\n".join(exp_lines))
+        if bookings:
+            booking_lines = [
+                (
+                    f"- {item['confirmation_code']} · {item['customer_name']} · "
+                    f"{item['experience_name']} · {item['status']}"
+                )
+                for item in bookings
+            ]
+            parts.append("Reservas encontradas:\n" + "\n".join(booking_lines))
+        if slots:
+            slot_lines = [
+                (
+                    f"- {item['experience_name']} · {item['date']} {item['start_time']} - "
+                    f"{item['end_time']} · cupos {item['spots_available']}/{item['capacity']}"
+                )
+                for item in slots
+            ]
+            parts.append("Turnos encontrados:\n" + "\n".join(slot_lines))
+        return "\n\n".join(parts)
+
     def build_knowledge_response(self, results: list[dict[str, object]]) -> str:
         """Render a knowledge-based response fallback."""
         if not results:

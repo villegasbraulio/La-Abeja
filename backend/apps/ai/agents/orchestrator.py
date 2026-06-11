@@ -281,6 +281,13 @@ class AIOrchestrator:
             fallback_text = self.response_builder.build_catalog_response(result.get("results", []))
             evidence = ["tool:search_catalog"]
             citations = []
+        elif intent == "visit_search":
+            result = self.tool_registry.execute(
+                tool_name="search_visit_context", payload=payload, context=context
+            )
+            fallback_text = self.response_builder.build_visit_context_response(result)
+            evidence = ["tool:search_visit_context"]
+            citations = []
         else:
             result = self.tool_registry.execute(
                 tool_name="search_knowledge_base",
@@ -426,6 +433,21 @@ class AIOrchestrator:
             and "pedido" in normalized
         ):
             return "pending_orders", {"limit": 5}
+        if is_staff and any(
+            keyword in normalized
+            for keyword in [
+                "visita",
+                "visitas",
+                "evento",
+                "eventos",
+                "maridaj",
+                "degust",
+                "turno",
+                "cupo",
+                "hospitalidad",
+            ]
+        ):
+            return "visit_search", {"query": message, "limit": 5}
         if any(
             keyword in normalized for keyword in ["vino", "malbec", "cabernet", "blend", "etiqueta"]
         ):

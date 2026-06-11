@@ -36,6 +36,63 @@ export interface BackofficeVarietal {
   wines_count: number;
 }
 
+export interface BackofficeExperience {
+  id: string;
+  name: string;
+  slug: string;
+  experience_type: string;
+  description: string;
+  duration_minutes: number;
+  price_per_person: string;
+  min_guests: number;
+  max_guests: number;
+  includes: string[];
+  highlights: string[];
+  cover_image: string;
+  gallery_images: string[];
+  cancellation_hours: number;
+  is_active: boolean;
+  is_featured: boolean;
+  bookings_count: number;
+  slots_count: number;
+}
+
+export interface BackofficeTimeSlot {
+  id: string;
+  experience: string;
+  experience_name: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  capacity: number;
+  spots_available: number;
+  guide_name: string;
+  is_blocked: boolean;
+  block_reason: string;
+}
+
+export interface BackofficeBooking {
+  id: string;
+  confirmation_code: string;
+  customer_name: string;
+  customer_email: string;
+  experience_name: string;
+  experience_type: string;
+  slot_date: string;
+  slot_start_time: string;
+  slot_end_time: string;
+  guest_count: number;
+  total_price: string;
+  status: string;
+  special_requests: string;
+  dietary_restrictions: string[];
+  qr_code_url: string;
+  checked_in_at: string | null;
+  reminder_24h_sent: boolean;
+  reminder_1h_sent: boolean;
+  created_at: string;
+}
+
 export interface BackofficeWineImage {
   id?: number;
   url: string;
@@ -149,4 +206,29 @@ export interface BackofficeOrderDetail extends Order {
   customer_name: string;
   customer_email: string;
   customer_phone: string;
+}
+
+export interface BackofficeExperiencePayload {
+  name: string;
+  slug?: string;
+  experience_type: string;
+  description: string;
+  duration_minutes: number;
+  price_per_person: string;
+  min_guests: number;
+  max_guests: number;
+  includes: string[];
+  highlights: string[];
+  cover_image: string;
+  gallery_images: string[];
+  cancellation_hours: number;
+  is_active: boolean;
+  is_featured: boolean;
+}
+
+export interface BackofficeBookingPayload {
+  status: string;
+  guest_count: number;
+  special_requests: string;
+  checked_in_at: string | null;
 }

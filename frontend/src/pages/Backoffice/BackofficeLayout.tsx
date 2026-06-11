@@ -13,6 +13,7 @@ const backofficeLinks = [
   { label: "Approvals AI", href: "/backoffice/approvals-ai" },
   { label: "Reservas AI", href: "/backoffice/reservas-stock-ai" },
   { label: "Cancelaciones AI", href: "/backoffice/cancelaciones-ai" },
+  { label: "Visitas", href: "/backoffice/visitas" },
   { label: "Pedidos", href: "/backoffice/pedidos" },
   { label: "Vinos", href: "/backoffice/vinos" },
   { label: "Categorias", href: "/backoffice/categorias" },

@@ -45,16 +45,18 @@ services:
           name: la-abeja-redis
           property: port
       - key: AI_LLM_PROVIDER
-        value: openai
+        value: groq
       - key: AI_CHAT_MODEL
-        value: gpt-4.1
-      - key: AI_EMBEDDING_MODEL
-        value: text-embedding-3-large
+        value: openai/gpt-oss-20b
+      - key: AI_REASONING_MODEL
+        value: openai/gpt-oss-120b
+      - key: GROQ_BASE_URL
+        value: https://api.groq.com/openai/v1
       - key: AI_ENABLE_PGVECTOR
         value: "True"
       - key: AI_EMBEDDING_DIMENSIONS
         value: "1536"
-      - key: OPENAI_API_KEY
+      - key: GROQ_API_KEY
         sync: false
       - key: MERCADOPAGO_ACCESS_TOKEN
         sync: false

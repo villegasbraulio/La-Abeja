@@ -55,6 +55,12 @@ from .serializers import (
 )
 
 
+def _serialized_conversation_with_turns(conversation: Conversation) -> dict[str, object]:
+    """Return a fresh serialized conversation with its latest turns."""
+    fresh_conversation = Conversation.objects.prefetch_related("turns").get(pk=conversation.pk)
+    return ConversationSerializer(fresh_conversation).data
+
+
 class AIChatSessionCreateView(generics.CreateAPIView):
     """Create a customer or staff-facing AI conversation."""
 
@@ -101,7 +107,7 @@ class AIChatSessionMessageView(APIView):
         )
         return Response(
             {
-                "conversation": ConversationSerializer(conversation).data,
+                "conversation": _serialized_conversation_with_turns(conversation),
                 "assistant_turn": {
                     "id": str(result.assistant_turn.id),
                     "content": result.assistant_turn.content,
@@ -166,7 +172,7 @@ class AICopilotMessageView(APIView):
         )
         return Response(
             {
-                "conversation": ConversationSerializer(conversation).data,
+                "conversation": _serialized_conversation_with_turns(conversation),
                 "assistant_turn": {
                     "id": str(result.assistant_turn.id),
                     "content": result.assistant_turn.content,

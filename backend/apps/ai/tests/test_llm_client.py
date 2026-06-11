@@ -47,6 +47,7 @@ class _FakeOpenAIClient:
 
 def test_llm_client_returns_fallback_when_disabled(settings) -> None:
     """No API key or disabled flag should force deterministic fallback."""
+    settings.AI_LLM_PROVIDER = "openai"
     settings.AI_USE_LLM = False
     settings.OPENAI_API_KEY = ""
 
@@ -64,6 +65,7 @@ def test_llm_client_returns_fallback_when_disabled(settings) -> None:
 
 def test_llm_client_returns_fallback_on_import_error(settings, monkeypatch) -> None:
     """Import errors should not break the agent path."""
+    settings.AI_LLM_PROVIDER = "openai"
     settings.AI_USE_LLM = True
     settings.OPENAI_API_KEY = "test-key"
     monkeypatch.delitem(sys.modules, "openai", raising=False)
@@ -90,6 +92,7 @@ def test_llm_client_returns_fallback_on_import_error(settings, monkeypatch) -> N
 
 def test_llm_client_returns_fallback_on_api_exception(settings, monkeypatch) -> None:
     """Remote API exceptions should degrade to deterministic fallback."""
+    settings.AI_LLM_PROVIDER = "openai"
     settings.AI_USE_LLM = True
     settings.OPENAI_API_KEY = "test-key"
     monkeypatch.setitem(
@@ -113,6 +116,7 @@ def test_llm_client_returns_fallback_on_api_exception(settings, monkeypatch) -> 
 
 def test_llm_client_returns_fallback_on_empty_output(settings, monkeypatch) -> None:
     """Empty model responses should not leak through as blank assistant replies."""
+    settings.AI_LLM_PROVIDER = "openai"
     settings.AI_USE_LLM = True
     settings.OPENAI_API_KEY = "test-key"
     monkeypatch.setitem(
@@ -139,6 +143,7 @@ def test_llm_client_returns_fallback_on_empty_output(settings, monkeypatch) -> N
 
 def test_llm_client_returns_model_text_when_openai_succeeds(settings, monkeypatch) -> None:
     """Successful remote responses should be surfaced with the configured model."""
+    settings.AI_LLM_PROVIDER = "openai"
     settings.AI_USE_LLM = True
     settings.OPENAI_API_KEY = "test-key"
     settings.AI_CHAT_MODEL = "gpt-test"

@@ -12,6 +12,7 @@ import { BackofficeLoginPage } from "./pages/Backoffice/LoginPage";
 import { BackofficeOrdersPage } from "./pages/Backoffice/OrdersPage";
 import { BackofficeStockReservationsPage } from "./pages/Backoffice/StockReservationsPage";
 import { BackofficeTasksPage } from "./pages/Backoffice/TasksPage";
+import { BackofficeVisitsPage } from "./pages/Backoffice/VisitsPage";
 import { VarietalsPage } from "./pages/Backoffice/VarietalsPage";
 import { WinesPage } from "./pages/Backoffice/WinesPage";
 import { CartPage } from "./pages/Cart";
@@ -54,6 +55,7 @@ export default function App() {
         <Route path="approvals-ai" element={<BackofficeApprovalsPage />} />
         <Route path="reservas-stock-ai" element={<BackofficeStockReservationsPage />} />
         <Route path="cancelaciones-ai" element={<BackofficeCancellationApprovalsPage />} />
+        <Route path="visitas" element={<BackofficeVisitsPage />} />
         <Route path="pedidos" element={<BackofficeOrdersPage />} />
         <Route path="vinos" element={<WinesPage />} />
         <Route path="categorias" element={<CategoriesPage />} />
