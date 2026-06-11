@@ -8,13 +8,4 @@ DEBUG = False
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 CELERY_TASK_ALWAYS_EAGER = True
-MIGRATION_MODULES = {
-    "authentication": None,
-    "ai": None,
-    "catalog": None,
-    "orders": None,
-    "payments": None,
-    "reservations": None,
-    "automations": None,
-    "notifications": None,
-}
+AI_ENABLE_PGVECTOR = False

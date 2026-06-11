@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
+from django.conf import settings
 from django.db import migrations
 
 
 def create_pgvector_support(apps, schema_editor) -> None:
     """Create the vector extension and side table only on PostgreSQL."""
     del apps
-    if schema_editor.connection.vendor != "postgresql":
+    if not settings.AI_ENABLE_PGVECTOR or schema_editor.connection.vendor != "postgresql":
         return
     with schema_editor.connection.cursor() as cursor:
         cursor.execute("CREATE EXTENSION IF NOT EXISTS vector;")
