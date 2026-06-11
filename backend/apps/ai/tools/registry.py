@@ -1,12 +1,14 @@
 """Central tool registry."""
 
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 from time import perf_counter
 
 from apps.ai.models import ToolExecution
-from apps.ai.services.audit_service import AuditService
 from apps.ai.services.approval_service import ApprovalService
+from apps.ai.services.audit_service import AuditService
 
 from .analytics_tools import (
     get_conversion_funnel,
@@ -16,9 +18,9 @@ from .analytics_tools import (
     get_sales_by_bottle,
     get_sales_by_channel,
     get_sales_by_varietal,
-    get_top_skus,
     get_sales_over_period,
     get_sales_summary,
+    get_top_skus,
 )
 from .base import ToolContext, ToolSpec
 from .business_tools import (
@@ -38,7 +40,12 @@ from .business_tools import (
     update_support_task,
 )
 from .catalog_tools import get_stock_snapshot, search_catalog
-from .knowledge_tools import get_answerable_sources, search_knowledge_base, search_playbooks, search_policies
+from .knowledge_tools import (
+    get_answerable_sources,
+    search_knowledge_base,
+    search_playbooks,
+    search_policies,
+)
 from .operations_tools import (
     create_payment_followup,
     create_restock_task,
@@ -74,7 +81,10 @@ class ToolRegistry:
                     input_schema={
                         "type": "object",
                         "properties": {
-                            "order_number": {"type": "string", "description": "Human-readable order number such as LAB-2026-000145."}
+                            "order_number": {
+                                "type": "string",
+                                "description": "Human-readable order number such as LAB-2026-000145.",
+                            }
                         },
                         "required": ["order_number"],
                         "additionalProperties": False,
@@ -95,7 +105,15 @@ class ToolRegistry:
                             "statuses": {"type": "array", "items": {"type": "string"}},
                             "start_date": {"type": "string"},
                             "end_date": {"type": "string"},
-                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
+                            "period": {
+                                "type": "string",
+                                "enum": [
+                                    "last_7_days",
+                                    "last_30_days",
+                                    "current_month",
+                                    "previous_month",
+                                ],
+                            },
                             "limit": {"type": "integer", "minimum": 1, "maximum": 25},
                         },
                         "additionalProperties": False,
@@ -109,7 +127,10 @@ class ToolRegistry:
                     input_schema={
                         "type": "object",
                         "properties": {
-                            "query": {"type": "string", "description": "Customer or operator search query for wines."}
+                            "query": {
+                                "type": "string",
+                                "description": "Customer or operator search query for wines.",
+                            }
                         },
                         "required": ["query"],
                         "additionalProperties": False,
@@ -137,7 +158,10 @@ class ToolRegistry:
                     input_schema={
                         "type": "object",
                         "properties": {
-                            "query": {"type": "string", "description": "Question to answer from La Abeja knowledge."}
+                            "query": {
+                                "type": "string",
+                                "description": "Question to answer from La Abeja knowledge.",
+                            }
                         },
                         "required": ["query"],
                         "additionalProperties": False,
@@ -195,9 +219,7 @@ class ToolRegistry:
                     risk_level=ToolExecution.RiskLevel.READ_ONLY,
                     input_schema={
                         "type": "object",
-                        "properties": {
-                            "limit": {"type": "integer", "minimum": 1, "maximum": 20}
-                        },
+                        "properties": {"limit": {"type": "integer", "minimum": 1, "maximum": 20}},
                         "additionalProperties": False,
                     },
                     handler=list_low_stock_items,
@@ -208,9 +230,7 @@ class ToolRegistry:
                     risk_level=ToolExecution.RiskLevel.READ_ONLY,
                     input_schema={
                         "type": "object",
-                        "properties": {
-                            "limit": {"type": "integer", "minimum": 1, "maximum": 20}
-                        },
+                        "properties": {"limit": {"type": "integer", "minimum": 1, "maximum": 20}},
                         "additionalProperties": False,
                     },
                     handler=list_pending_orders,
@@ -222,7 +242,10 @@ class ToolRegistry:
                     input_schema={
                         "type": "object",
                         "properties": {
-                            "message": {"type": "string", "description": "Raw customer message text."}
+                            "message": {
+                                "type": "string",
+                                "description": "Raw customer message text.",
+                            }
                         },
                         "required": ["message"],
                         "additionalProperties": False,
@@ -236,8 +259,14 @@ class ToolRegistry:
                     input_schema={
                         "type": "object",
                         "properties": {
-                            "message": {"type": "string", "description": "Customer message to answer."},
-                            "customer_name": {"type": "string", "description": "Optional customer first or full name."},
+                            "message": {
+                                "type": "string",
+                                "description": "Customer message to answer.",
+                            },
+                            "customer_name": {
+                                "type": "string",
+                                "description": "Optional customer first or full name.",
+                            },
                         },
                         "required": ["message"],
                         "additionalProperties": False,
@@ -316,7 +345,17 @@ class ToolRegistry:
                             "order_number": {"type": "string"},
                             "customer_email": {"type": "string"},
                             "conversation_id": {"type": "string"},
-                            "note_type": {"type": "string", "enum": ["general", "order", "customer", "support", "sales", "payment"]},
+                            "note_type": {
+                                "type": "string",
+                                "enum": [
+                                    "general",
+                                    "order",
+                                    "customer",
+                                    "support",
+                                    "sales",
+                                    "payment",
+                                ],
+                            },
                             "limit": {"type": "integer", "minimum": 1, "maximum": 25},
                         },
                         "additionalProperties": False,
@@ -396,7 +435,10 @@ class ToolRegistry:
                             "title": {"type": "string"},
                             "summary": {"type": "string"},
                             "ticket_type": {"type": "string"},
-                            "priority": {"type": "string", "enum": ["low", "medium", "high", "urgent"]},
+                            "priority": {
+                                "type": "string",
+                                "enum": ["low", "medium", "high", "urgent"],
+                            },
                             "order_number": {"type": "string"},
                             "conversation_id": {"type": "string"},
                             "customer_email": {"type": "string"},
@@ -419,7 +461,14 @@ class ToolRegistry:
                             "content": {"type": "string"},
                             "note_type": {
                                 "type": "string",
-                                "enum": ["general", "order", "customer", "support", "sales", "payment"],
+                                "enum": [
+                                    "general",
+                                    "order",
+                                    "customer",
+                                    "support",
+                                    "sales",
+                                    "payment",
+                                ],
                             },
                             "order_number": {"type": "string"},
                             "conversation_id": {"type": "string"},
@@ -440,7 +489,10 @@ class ToolRegistry:
                             "conversation_id": {"type": "string"},
                             "title": {"type": "string"},
                             "reason": {"type": "string"},
-                            "priority": {"type": "string", "enum": ["low", "medium", "high", "urgent"]},
+                            "priority": {
+                                "type": "string",
+                                "enum": ["low", "medium", "high", "urgent"],
+                            },
                             "assigned_to_email": {"type": "string"},
                             "due_in_days": {"type": "integer"},
                             "customer_email": {"type": "string"},
@@ -460,7 +512,13 @@ class ToolRegistry:
                             "task_id": {"type": "string"},
                             "status": {
                                 "type": "string",
-                                "enum": ["open", "in_progress", "blocked", "completed", "cancelled"],
+                                "enum": [
+                                    "open",
+                                    "in_progress",
+                                    "blocked",
+                                    "completed",
+                                    "cancelled",
+                                ],
                             },
                             "priority": {
                                 "type": "string",
@@ -525,7 +583,10 @@ class ToolRegistry:
                             "order_number": {"type": "string"},
                             "claim_reason": {"type": "string"},
                             "summary": {"type": "string"},
-                            "priority": {"type": "string", "enum": ["low", "medium", "high", "urgent"]},
+                            "priority": {
+                                "type": "string",
+                                "enum": ["low", "medium", "high", "urgent"],
+                            },
                             "assigned_to_email": {"type": "string"},
                             "due_in_days": {"type": "integer"},
                         },
@@ -564,7 +625,10 @@ class ToolRegistry:
                             "slug": {"type": "string"},
                             "auto_low_stock": {"type": "boolean"},
                             "suggested_quantity": {"type": "integer"},
-                            "priority": {"type": "string", "enum": ["low", "medium", "high", "urgent"]},
+                            "priority": {
+                                "type": "string",
+                                "enum": ["low", "medium", "high", "urgent"],
+                            },
                             "assigned_to_email": {"type": "string"},
                             "due_in_days": {"type": "integer"},
                         },
@@ -749,7 +813,15 @@ class ToolRegistry:
                         "properties": {
                             "start_date": {"type": "string"},
                             "end_date": {"type": "string"},
-                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
+                            "period": {
+                                "type": "string",
+                                "enum": [
+                                    "last_7_days",
+                                    "last_30_days",
+                                    "current_month",
+                                    "previous_month",
+                                ],
+                            },
                         },
                         "additionalProperties": False,
                     },
@@ -764,7 +836,15 @@ class ToolRegistry:
                         "properties": {
                             "start_date": {"type": "string"},
                             "end_date": {"type": "string"},
-                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
+                            "period": {
+                                "type": "string",
+                                "enum": [
+                                    "last_7_days",
+                                    "last_30_days",
+                                    "current_month",
+                                    "previous_month",
+                                ],
+                            },
                             "grain": {"type": "string", "enum": ["day", "week", "month"]},
                         },
                         "additionalProperties": False,
@@ -780,7 +860,15 @@ class ToolRegistry:
                         "properties": {
                             "start_date": {"type": "string"},
                             "end_date": {"type": "string"},
-                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
+                            "period": {
+                                "type": "string",
+                                "enum": [
+                                    "last_7_days",
+                                    "last_30_days",
+                                    "current_month",
+                                    "previous_month",
+                                ],
+                            },
                             "limit": {"type": "integer", "minimum": 1, "maximum": 25},
                         },
                         "additionalProperties": False,
@@ -796,7 +884,15 @@ class ToolRegistry:
                         "properties": {
                             "start_date": {"type": "string"},
                             "end_date": {"type": "string"},
-                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
+                            "period": {
+                                "type": "string",
+                                "enum": [
+                                    "last_7_days",
+                                    "last_30_days",
+                                    "current_month",
+                                    "previous_month",
+                                ],
+                            },
                             "limit": {"type": "integer", "minimum": 1, "maximum": 25},
                         },
                         "additionalProperties": False,
@@ -812,8 +908,19 @@ class ToolRegistry:
                         "properties": {
                             "start_date": {"type": "string"},
                             "end_date": {"type": "string"},
-                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
-                            "sort_by": {"type": "string", "enum": ["bottles_sold", "revenue", "order_count"]},
+                            "period": {
+                                "type": "string",
+                                "enum": [
+                                    "last_7_days",
+                                    "last_30_days",
+                                    "current_month",
+                                    "previous_month",
+                                ],
+                            },
+                            "sort_by": {
+                                "type": "string",
+                                "enum": ["bottles_sold", "revenue", "order_count"],
+                            },
                             "limit": {"type": "integer", "minimum": 1, "maximum": 25},
                         },
                         "additionalProperties": False,
@@ -829,7 +936,15 @@ class ToolRegistry:
                         "properties": {
                             "start_date": {"type": "string"},
                             "end_date": {"type": "string"},
-                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
+                            "period": {
+                                "type": "string",
+                                "enum": [
+                                    "last_7_days",
+                                    "last_30_days",
+                                    "current_month",
+                                    "previous_month",
+                                ],
+                            },
                         },
                         "additionalProperties": False,
                     },
@@ -844,7 +959,15 @@ class ToolRegistry:
                         "properties": {
                             "start_date": {"type": "string"},
                             "end_date": {"type": "string"},
-                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
+                            "period": {
+                                "type": "string",
+                                "enum": [
+                                    "last_7_days",
+                                    "last_30_days",
+                                    "current_month",
+                                    "previous_month",
+                                ],
+                            },
                         },
                         "additionalProperties": False,
                     },
@@ -859,7 +982,15 @@ class ToolRegistry:
                         "properties": {
                             "start_date": {"type": "string"},
                             "end_date": {"type": "string"},
-                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
+                            "period": {
+                                "type": "string",
+                                "enum": [
+                                    "last_7_days",
+                                    "last_30_days",
+                                    "current_month",
+                                    "previous_month",
+                                ],
+                            },
                         },
                         "additionalProperties": False,
                     },
@@ -874,7 +1005,15 @@ class ToolRegistry:
                         "properties": {
                             "start_date": {"type": "string"},
                             "end_date": {"type": "string"},
-                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
+                            "period": {
+                                "type": "string",
+                                "enum": [
+                                    "last_7_days",
+                                    "last_30_days",
+                                    "current_month",
+                                    "previous_month",
+                                ],
+                            },
                         },
                         "additionalProperties": False,
                     },
@@ -889,7 +1028,15 @@ class ToolRegistry:
                         "properties": {
                             "start_date": {"type": "string"},
                             "end_date": {"type": "string"},
-                            "period": {"type": "string", "enum": ["last_7_days", "last_30_days", "current_month", "previous_month"]},
+                            "period": {
+                                "type": "string",
+                                "enum": [
+                                    "last_7_days",
+                                    "last_30_days",
+                                    "current_month",
+                                    "previous_month",
+                                ],
+                            },
                             "limit": {"type": "integer", "minimum": 1, "maximum": 25},
                         },
                         "additionalProperties": False,
@@ -913,7 +1060,9 @@ class ToolRegistry:
         spec = self._tools[tool_name]
         started_at = perf_counter()
         if spec.requires_approval and not bypass_approval:
-            approval = self._approval_service.request_tool_approval(spec=spec, payload=payload, context=context)
+            approval = self._approval_service.request_tool_approval(
+                spec=spec, payload=payload, context=context
+            )
             latency_ms = int((perf_counter() - started_at) * 1000)
             result = {
                 "approval_required": True,

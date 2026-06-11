@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
-from typing import Iterable
 from uuid import uuid4
 
 from django.contrib.auth import get_user_model
@@ -51,7 +51,9 @@ def create_support_task(payload: dict[str, object], context: ToolContext) -> dic
     assigned_to = _resolve_staff_user(payload.get("assigned_to_email"))
     due_at = _parse_due_at(payload)
 
-    workflow_run = _create_workflow_run(context=context, workflow_type="create_support_task", payload=payload)
+    workflow_run = _create_workflow_run(
+        context=context, workflow_type="create_support_task", payload=payload
+    )
     task = SupportTask.objects.create(
         task_type=task_type,
         title=title,
@@ -210,14 +212,18 @@ def mark_order_for_review(payload: dict[str, object], context: ToolContext) -> d
     }
 
 
-def create_lead_from_conversation(payload: dict[str, object], context: ToolContext) -> dict[str, object]:
+def create_lead_from_conversation(
+    payload: dict[str, object], context: ToolContext
+) -> dict[str, object]:
     """Create a commercial lead from a conversation or manual input."""
     if not context.is_staff:
         return {"created": False, "error": "staff_required"}
 
     conversation = _resolve_conversation(payload.get("conversation_id"), context=context)
     customer = _resolve_customer(payload.get("customer_email"), conversation=conversation)
-    full_name = str(payload.get("full_name") or "").strip() or (customer.full_name if customer else "")
+    full_name = str(payload.get("full_name") or "").strip() or (
+        customer.full_name if customer else ""
+    )
     if not full_name:
         return {"created": False, "error": "missing_full_name"}
 
@@ -228,7 +234,9 @@ def create_lead_from_conversation(payload: dict[str, object], context: ToolConte
         email=str(payload.get("email") or (customer.email if customer else "")).strip().lower(),
         phone=str(payload.get("phone") or (customer.phone if customer else "")).strip(),
         company=str(payload.get("company") or "").strip(),
-        source_channel=conversation.channel if conversation else str(payload.get("source_channel") or Conversation.Channel.WEB),
+        source_channel=conversation.channel
+        if conversation
+        else str(payload.get("source_channel") or Conversation.Channel.WEB),
         interest_summary=str(payload.get("interest_summary") or "").strip(),
         desired_varietals=desired_varietals,
         estimated_order_value=estimated_order_value,
@@ -284,7 +292,17 @@ def update_support_task(payload: dict[str, object], context: ToolContext) -> dic
         task.description = _append_text_block(task.description, append_note)
 
     task.metadata = {**task.metadata, "last_updated_by_run_id": str(context.run.id)}
-    task.save(update_fields=["status", "priority", "assigned_to", "due_at", "description", "metadata", "updated_at"])
+    task.save(
+        update_fields=[
+            "status",
+            "priority",
+            "assigned_to",
+            "due_at",
+            "description",
+            "metadata",
+            "updated_at",
+        ]
+    )
     return {
         "updated": True,
         "task_id": str(task.id),
@@ -320,12 +338,22 @@ def update_lead_status(payload: dict[str, object], context: ToolContext) -> dict
         lead.estimated_order_value = estimated_order_value
 
     lead.metadata = {**lead.metadata, "last_updated_by_run_id": str(context.run.id)}
-    lead.save(update_fields=["status", "interest_summary", "estimated_order_value", "metadata", "updated_at"])
+    lead.save(
+        update_fields=[
+            "status",
+            "interest_summary",
+            "estimated_order_value",
+            "metadata",
+            "updated_at",
+        ]
+    )
     return {
         "updated": True,
         "lead_id": str(lead.id),
         "status": lead.status,
-        "estimated_order_value": str(lead.estimated_order_value) if lead.estimated_order_value is not None else None,
+        "estimated_order_value": str(lead.estimated_order_value)
+        if lead.estimated_order_value is not None
+        else None,
     }
 
 
@@ -394,7 +422,9 @@ def update_order_status(payload: dict[str, object], context: ToolContext) -> dic
         "previous_status": previous_status,
         "status": order.status,
         "tracking_number": order.tracking_number,
-        "estimated_delivery": order.estimated_delivery.isoformat() if order.estimated_delivery else None,
+        "estimated_delivery": order.estimated_delivery.isoformat()
+        if order.estimated_delivery
+        else None,
         "note_id": str(note_record.id),
     }
 
@@ -405,7 +435,10 @@ def send_whatsapp_message(payload: dict[str, object], context: ToolContext) -> d
         return {"sent": False, "error": "staff_required"}
 
     order = _resolve_order(payload.get("order_number"))
-    customer = _resolve_customer(payload.get("customer_email"), conversation=_resolve_conversation(payload.get("conversation_id"), context=context))
+    customer = _resolve_customer(
+        payload.get("customer_email"),
+        conversation=_resolve_conversation(payload.get("conversation_id"), context=context),
+    )
     phone = _resolve_phone_number(payload.get("phone"), order=order, customer=customer)
     if not phone:
         return {"sent": False, "error": "missing_phone"}
@@ -423,7 +456,8 @@ def send_whatsapp_message(payload: dict[str, object], context: ToolContext) -> d
 
     note = InternalNote.objects.create(
         note_type=InternalNote.NoteType.SUPPORT,
-        content=f"WhatsApp sent to {phone}. " + (f"Template: {template}." if template else f"Message: {message}"),
+        content=f"WhatsApp sent to {phone}. "
+        + (f"Template: {template}." if template else f"Message: {message}"),
         order=order,
         customer=customer or (order.user if order else None),
         conversation=_resolve_conversation(payload.get("conversation_id"), context=context),
@@ -447,7 +481,10 @@ def send_support_email(payload: dict[str, object], context: ToolContext) -> dict
         return {"sent": False, "error": "staff_required"}
 
     order = _resolve_order(payload.get("order_number"))
-    customer = _resolve_customer(payload.get("customer_email"), conversation=_resolve_conversation(payload.get("conversation_id"), context=context))
+    customer = _resolve_customer(
+        payload.get("customer_email"),
+        conversation=_resolve_conversation(payload.get("conversation_id"), context=context),
+    )
     recipient = _resolve_email_address(payload.get("to"), order=order, customer=customer)
     if not recipient:
         return {"sent": False, "error": "missing_email"}
@@ -456,7 +493,9 @@ def send_support_email(payload: dict[str, object], context: ToolContext) -> dict
     if not message:
         return {"sent": False, "error": "missing_message"}
 
-    template = str(payload.get("template") or "ai_support_follow_up").strip() or "ai_support_follow_up"
+    template = (
+        str(payload.get("template") or "ai_support_follow_up").strip() or "ai_support_follow_up"
+    )
     subject_hint = str(payload.get("subject_hint") or "").strip()
     EmailService.send_transactional(
         to=recipient,
@@ -486,7 +525,9 @@ def send_support_email(payload: dict[str, object], context: ToolContext) -> dict
     }
 
 
-def classify_customer_message(payload: dict[str, object], context: ToolContext) -> dict[str, object]:
+def classify_customer_message(
+    payload: dict[str, object], context: ToolContext
+) -> dict[str, object]:
     """Classify a support message with deterministic business heuristics."""
     del context
     message = str(payload.get("message") or "").strip()
@@ -520,7 +561,9 @@ def classify_customer_message(payload: dict[str, object], context: ToolContext) 
 
     if any(keyword in normalized for keyword in ["urgente", "ya", "hoy", "ahora", "inmediato"]):
         urgency = "high"
-    if any(keyword in normalized for keyword in ["enoj", "mal", "reclamo", "devolucion", "cancelar"]):
+    if any(
+        keyword in normalized for keyword in ["enoj", "mal", "reclamo", "devolucion", "cancelar"]
+    ):
         sentiment = "negative"
         urgency = "high" if urgency == "normal" else urgency
 
@@ -542,22 +585,42 @@ def draft_whatsapp_reply(payload: dict[str, object], context: ToolContext) -> di
         return {"drafted": False, "error": "missing_message"}
 
     customer_name = str(payload.get("customer_name") or "").strip()
-    classification = classify_customer_message({"message": message}, ToolContext(run=context.run, user_id=context.user_id, is_staff=context.is_staff))
+    classification = classify_customer_message(
+        {"message": message},
+        ToolContext(run=context.run, user_id=context.user_id, is_staff=context.is_staff),
+    )
     greeting = f"Hola {customer_name}," if customer_name else "Hola,"
     intent = str(classification.get("intent") or "general_support")
 
     if intent == "order_status":
-        body = "gracias por escribirnos. Si me compartis el numero de pedido, te ayudo a revisar el estado enseguida."
+        body = (
+            "gracias por escribirnos. Si me compartis el numero de pedido, "
+            "te ayudo a revisar el estado enseguida."
+        )
     elif intent == "shipping_question":
-        body = "gracias por tu consulta. Puedo ayudarte con opciones de envio o retiro en bodega segun tu pedido."
+        body = (
+            "gracias por tu consulta. Puedo ayudarte con opciones de envio o retiro "
+            "en bodega segun tu pedido."
+        )
     elif intent == "payment_issue":
-        body = "veo que tu consulta es sobre el pago. Si me compartis el numero de pedido o comprobante, lo revisamos con prioridad."
+        body = (
+            "veo que tu consulta es sobre el pago. Si me compartis el numero de pedido "
+            "o comprobante, lo revisamos con prioridad."
+        )
     elif intent == "corporate_sales":
-        body = "gracias por contactarnos. Podemos ayudarte con regalos corporativos y propuestas para eventos."
+        body = (
+            "gracias por contactarnos. Podemos ayudarte con regalos corporativos "
+            "y propuestas para eventos."
+        )
     elif intent == "product_recommendation":
-        body = "feliz de ayudarte a elegir un vino. Si me contas presupuesto, varietal o para que ocasion es, te recomiendo opciones concretas."
+        body = (
+            "feliz de ayudarte a elegir un vino. Si me contas presupuesto, varietal "
+            "o para que ocasion es, te recomiendo opciones concretas."
+        )
     else:
-        body = "gracias por escribirnos. Contame un poco mas y te ayudo a resolverlo lo antes posible."
+        body = (
+            "gracias por escribirnos. Contame un poco mas y te ayudo a resolverlo lo antes posible."
+        )
 
     closing = "Quedo atento."
     return {
@@ -568,7 +631,9 @@ def draft_whatsapp_reply(payload: dict[str, object], context: ToolContext) -> di
     }
 
 
-def recommend_wines_for_customer(payload: dict[str, object], context: ToolContext) -> dict[str, object]:
+def recommend_wines_for_customer(
+    payload: dict[str, object], context: ToolContext
+) -> dict[str, object]:
     """Recommend wines from catalog data and optional customer preferences."""
     del context
     customer = _resolve_customer(payload.get("customer_email"))
@@ -580,7 +645,9 @@ def recommend_wines_for_customer(payload: dict[str, object], context: ToolContex
     max_price = _parse_decimal(payload.get("max_price"))
     min_price = _parse_decimal(payload.get("min_price"))
 
-    queryset = Wine.objects.select_related("category", "varietal").filter(is_active=True, stock__gt=0)
+    queryset = Wine.objects.select_related("category", "varietal").filter(
+        is_active=True, stock__gt=0
+    )
     if preferred_varietals:
         varietal_query = Q()
         for varietal_name in preferred_varietals:
@@ -602,7 +669,9 @@ def recommend_wines_for_customer(payload: dict[str, object], context: ToolContex
                 "category": wine.category.name,
                 "price": str(wine.price),
                 "stock": wine.stock,
-                "reason": _build_recommendation_reason(wine=wine, preferred_varietals=preferred_varietals),
+                "reason": _build_recommendation_reason(
+                    wine=wine, preferred_varietals=preferred_varietals
+                ),
             }
             for wine in wines
         ]
@@ -626,12 +695,19 @@ def check_payment_issue(payload: dict[str, object], context: ToolContext) -> dic
     }:
         diagnosis = "payment_ok"
         recommendation = "No hace falta intervenir. El pedido ya avanzo correctamente."
-    elif payment.status == Payment.Status.APPROVED and payment.order.status == Order.Status.PENDING_PAYMENT:
+    elif (
+        payment.status == Payment.Status.APPROVED
+        and payment.order.status == Order.Status.PENDING_PAYMENT
+    ):
         diagnosis = "payment_approved_order_not_advanced"
-        recommendation = "Revisar integracion de pagos y actualizar el pedido manualmente si corresponde."
+        recommendation = (
+            "Revisar integracion de pagos y actualizar el pedido manualmente si corresponde."
+        )
     elif payment.status == Payment.Status.REJECTED:
         diagnosis = "payment_rejected"
-        recommendation = "Pedir un nuevo intento de pago o validar el motivo de rechazo con el cliente."
+        recommendation = (
+            "Pedir un nuevo intento de pago o validar el motivo de rechazo con el cliente."
+        )
     elif payment.status == Payment.Status.CANCELLED:
         diagnosis = "payment_cancelled"
         recommendation = "Confirmar si el cliente desea reactivar la compra."
@@ -667,14 +743,22 @@ def _resolve_order(order_number: object) -> Order | None:
     normalized = str(order_number or "").strip()
     if not normalized:
         return None
-    return Order.objects.select_related("user", "payment").filter(order_number__iexact=normalized).first()
+    return (
+        Order.objects.select_related("user", "payment")
+        .filter(order_number__iexact=normalized)
+        .first()
+    )
 
 
 def _resolve_support_task(task_id: object) -> SupportTask | None:
     normalized = str(task_id or "").strip()
     if not normalized:
         return None
-    return SupportTask.objects.select_related("order", "customer", "assigned_to").filter(id=normalized).first()
+    return (
+        SupportTask.objects.select_related("order", "customer", "assigned_to")
+        .filter(id=normalized)
+        .first()
+    )
 
 
 def _resolve_lead(lead_id: object) -> Lead | None:
@@ -684,7 +768,9 @@ def _resolve_lead(lead_id: object) -> Lead | None:
     return Lead.objects.select_related("customer", "conversation").filter(id=normalized).first()
 
 
-def _resolve_conversation(conversation_id: object, *, context: ToolContext | None = None) -> Conversation | None:
+def _resolve_conversation(
+    conversation_id: object, *, context: ToolContext | None = None
+) -> Conversation | None:
     normalized = str(conversation_id or "").strip()
     if not normalized:
         return context.run.conversation if context is not None else None
@@ -732,7 +818,9 @@ def _actor_from_context(context: ToolContext):
     return User.objects.filter(id=context.user_id).first()
 
 
-def _create_workflow_run(*, context: ToolContext, workflow_type: str, payload: dict[str, object]) -> WorkflowRun:
+def _create_workflow_run(
+    *, context: ToolContext, workflow_type: str, payload: dict[str, object]
+) -> WorkflowRun:
     return WorkflowRun.objects.create(
         workflow_type=workflow_type,
         status=WorkflowRun.Status.RUNNING,
@@ -747,7 +835,7 @@ def _normalize_string_list(raw_value: object) -> list[str]:
         return []
     if isinstance(raw_value, str):
         items: Iterable[str] = [part.strip() for part in raw_value.split(",")]
-    elif isinstance(raw_value, (list, tuple, set)):
+    elif isinstance(raw_value, list | tuple | set):
         items = [str(item).strip() for item in raw_value]
     else:
         return []
@@ -781,7 +869,9 @@ def _append_text_block(existing: str, addition: str) -> str:
 
 
 def _build_recommendation_reason(*, wine: Wine, preferred_varietals: list[str]) -> str:
-    matched_varietal = any(item.lower() in wine.varietal.name.lower() for item in preferred_varietals)
+    matched_varietal = any(
+        item.lower() in wine.varietal.name.lower() for item in preferred_varietals
+    )
     reasons = []
     if matched_varietal:
         reasons.append(f"coincide con la preferencia por {wine.varietal.name}")

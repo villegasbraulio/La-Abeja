@@ -7,7 +7,15 @@ from decimal import Decimal
 import pytest
 from rest_framework import status
 
-from apps.ai.models import ApprovalRequest, Conversation, KnowledgeSource, Lead, StockReservation, SupportTask, WorkflowRun
+from apps.ai.models import (
+    ApprovalRequest,
+    Conversation,
+    KnowledgeSource,
+    Lead,
+    StockReservation,
+    SupportTask,
+    WorkflowRun,
+)
 from apps.ai.rag.ingest import KnowledgeIngestionService
 from apps.authentication.tests.factories import UserFactory
 from apps.catalog.tests.factories import WineFactory
@@ -195,7 +203,10 @@ def test_staff_can_fetch_copilot_overview_with_recent_artifacts(authenticated_cl
     assert len(response.data["prompt_suggestions"]) >= 3
     assert response.data["recent_tasks"][0]["title"] == "Revisar despacho frenado"
     assert response.data["recent_stock_reservations"][0]["wine_sku"] == "LAB-OVERVIEW-1"
-    assert response.data["pending_cancellation_approvals"][0]["action_name"] == "request_order_cancellation"
+    assert (
+        response.data["pending_cancellation_approvals"][0]["action_name"]
+        == "request_order_cancellation"
+    )
 
 
 @pytest.mark.django_db
@@ -319,7 +330,9 @@ def test_staff_can_list_stock_reservations(authenticated_client) -> None:
         reason="Reserva de contingencia",
     )
 
-    response = client.get("/api/v1/ai/stock-reservations/?status=partially_released&search=contingencia")
+    response = client.get(
+        "/api/v1/ai/stock-reservations/?status=partially_released&search=contingencia"
+    )
 
     assert response.status_code == status.HTTP_200_OK
     assert response.data[0]["id"] == str(reservation.id)

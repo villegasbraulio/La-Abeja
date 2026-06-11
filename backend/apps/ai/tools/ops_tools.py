@@ -15,10 +15,9 @@ def list_low_stock_items(payload: dict[str, object], context: ToolContext) -> di
     if not context.is_staff:
         return {"error": "staff_required", "results": []}
     limit = int(payload.get("limit") or 5)
-    wines = (
-        Wine.objects.filter(is_active=True, stock__lte=F("low_stock_threshold"))
-        .order_by("stock", "name")[:limit]
-    )
+    wines = Wine.objects.filter(is_active=True, stock__lte=F("low_stock_threshold")).order_by(
+        "stock", "name"
+    )[:limit]
     return {
         "results": [
             {

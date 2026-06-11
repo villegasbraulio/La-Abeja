@@ -529,16 +529,14 @@ Pasos:
    - `CSRF_TRUSTED_ORIGINS`: `https://tu-proyecto.vercel.app,https://tu-backend.onrender.com`
    - `OPENAI_API_KEY` si queres embeddings y mejor RAG semantico
    - `MERCADOPAGO_*` si queres checkout real
-4. Render corre `collectstatic` en build y `python manage.py migrate` como predeploy.
-5. Despues del primer deploy, ejecuta una vez en la shell de Render:
+4. En modo gratis, Render corre install, migraciones, collectstatic y seed desde el `buildCommand` porque `preDeployCommand` no esta disponible para servicios free.
+5. Si mas adelante pasas a un plan pago, conviene mover migraciones a `preDeployCommand`:
 
 ```bash
-python manage.py seed_demo_data
-python manage.py seed_ai_knowledge
-python manage.py reindex_ai_knowledge
+python manage.py migrate
 ```
 
-Si no cargas `OPENAI_API_KEY`, el RAG sigue respondiendo con busqueda lexica, pero no va a tener recuperacion semantica real.
+Limitacion importante: Render Free Postgres expira a los 30 dias y Free Key Value puede perder datos al reiniciar. Sirve para demo gratis, no para produccion estable. Si no cargas `OPENAI_API_KEY`, el RAG sigue respondiendo con busqueda lexica, pero no va a tener recuperacion semantica real.
 
 ### 2. Frontend en Vercel
 

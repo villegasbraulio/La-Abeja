@@ -1,5 +1,7 @@
 """Seed baseline knowledge for the AI support agent."""
 
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 from django.core.management.base import BaseCommand

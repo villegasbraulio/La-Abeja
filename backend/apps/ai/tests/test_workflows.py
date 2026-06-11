@@ -5,13 +5,21 @@ from __future__ import annotations
 import pytest
 from rest_framework import status
 
-from apps.ai.models import AgentRun, ApprovalRequest, Conversation, InternalNote, StockReservation, ToolExecution, WorkflowRun
+from apps.ai.models import (
+    AgentRun,
+    ApprovalRequest,
+    Conversation,
+    InternalNote,
+    StockReservation,
+    ToolExecution,
+    WorkflowRun,
+)
 from apps.ai.tools.base import ToolContext
 from apps.ai.tools.registry import ToolRegistry
 from apps.authentication.tests.factories import UserFactory
+from apps.catalog.tests.factories import WineFactory
 from apps.orders.models import Order
 from apps.orders.tests.factories import OrderFactory
-from apps.catalog.tests.factories import WineFactory
 
 
 @pytest.mark.django_db
@@ -53,7 +61,9 @@ def test_staff_can_approve_pending_ai_action(authenticated_client) -> None:
     user.is_staff = True
     user.save(update_fields=["is_staff"])
     customer = UserFactory(email="buyer@example.com", phone="+5492604000000")
-    order = OrderFactory(user=customer, order_number="LAB-2026-000145", status=Order.Status.PREPARING)
+    order = OrderFactory(
+        user=customer, order_number="LAB-2026-000145", status=Order.Status.PREPARING
+    )
     conversation = Conversation.objects.create(mode=Conversation.Mode.OPS, customer=user)
     run = AgentRun.objects.create(conversation=conversation, agent_type=AgentRun.AgentType.OPS)
     result = ToolRegistry().execute(
@@ -88,7 +98,9 @@ def test_staff_can_approve_pending_ai_action(authenticated_client) -> None:
     assert suggestion["title"] == "Avisar despacho al cliente"
     assert "tracking AND-145" in suggestion["suggested_message"]
     assert order.order_number in suggestion["suggested_prompt"]
-    assert ToolExecution.objects.filter(run__agent_type=AgentRun.AgentType.WORKFLOW, tool_name="update_order_status").exists()
+    assert ToolExecution.objects.filter(
+        run__agent_type=AgentRun.AgentType.WORKFLOW, tool_name="update_order_status"
+    ).exists()
     assert InternalNote.objects.filter(order=order, note_type="order").exists()
 
 
@@ -133,7 +145,11 @@ def test_non_staff_cannot_decide_approvals(authenticated_client) -> None:
         workflow_type="manual_review",
         idempotency_key="workflow-deny-1",
     )
-    approval = ApprovalRequest.objects.create(workflow_run=workflow, action_name="send_support_email", action_payload={"to": "cliente@example.com"})
+    approval = ApprovalRequest.objects.create(
+        workflow_run=workflow,
+        action_name="send_support_email",
+        action_payload={"to": "cliente@example.com"},
+    )
 
     response = client.post(
         f"/api/v1/ai/approvals/{approval.id}/approve/",
@@ -161,9 +177,13 @@ def test_registry_blocks_high_risk_tool_and_marks_run_for_human() -> None:
 
     run.refresh_from_db()
     assert result["approval_required"] is True
-    assert ApprovalRequest.objects.filter(id=result["approval_request_id"], action_name="send_whatsapp_message").exists()
+    assert ApprovalRequest.objects.filter(
+        id=result["approval_request_id"], action_name="send_whatsapp_message"
+    ).exists()
     assert run.needs_human is True
-    assert ToolExecution.objects.filter(run=run, status=ToolExecution.Status.BLOCKED, tool_name="send_whatsapp_message").exists()
+    assert ToolExecution.objects.filter(
+        run=run, status=ToolExecution.Status.BLOCKED, tool_name="send_whatsapp_message"
+    ).exists()
 
 
 @pytest.mark.django_db
@@ -173,12 +193,18 @@ def test_approving_same_request_twice_does_not_reexecute_tool(authenticated_clie
     user.is_staff = True
     user.save(update_fields=["is_staff"])
     customer = UserFactory(email="repeat@example.com")
-    order = OrderFactory(user=customer, order_number="LAB-2026-000188", status=Order.Status.READY_TO_SHIP)
+    order = OrderFactory(
+        user=customer, order_number="LAB-2026-000188", status=Order.Status.READY_TO_SHIP
+    )
     conversation = Conversation.objects.create(mode=Conversation.Mode.OPS, customer=user)
     run = AgentRun.objects.create(conversation=conversation, agent_type=AgentRun.AgentType.OPS)
     result = ToolRegistry().execute(
         tool_name="update_order_status",
-        payload={"order_number": order.order_number, "new_status": "shipped", "tracking_number": "AND-188"},
+        payload={
+            "order_number": order.order_number,
+            "new_status": "shipped",
+            "tracking_number": "AND-188",
+        },
         context=ToolContext(run=run, user_id=str(user.id), is_staff=True),
     )
     approval = ApprovalRequest.objects.get(id=result["approval_request_id"])
@@ -188,7 +214,12 @@ def test_approving_same_request_twice_does_not_reexecute_tool(authenticated_clie
 
     assert first_response.status_code == status.HTTP_200_OK
     assert second_response.status_code == status.HTTP_200_OK
-    assert ToolExecution.objects.filter(tool_name="update_order_status", run__agent_type=AgentRun.AgentType.WORKFLOW).count() == 1
+    assert (
+        ToolExecution.objects.filter(
+            tool_name="update_order_status", run__agent_type=AgentRun.AgentType.WORKFLOW
+        ).count()
+        == 1
+    )
 
 
 @pytest.mark.django_db
@@ -214,21 +245,29 @@ def test_reserve_stock_tool_requires_approval_and_executes_on_approve(authentica
     assert response.status_code == status.HTTP_200_OK
     assert result["approval_required"] is True
     assert wine.stock == 6
-    suggestion = ApprovalRequest.objects.get(id=approval.id).workflow_run.result_payload["post_approval_suggestion"]
+    suggestion = ApprovalRequest.objects.get(id=approval.id).workflow_run.result_payload[
+        "post_approval_suggestion"
+    ]
     assert suggestion["title"] == "Confirmar reserva operativa"
     assert "3 unidad(es)" in suggestion["suggested_prompt"]
     assert "6 unidades disponibles" in suggestion["suggested_message"]
-    assert StockReservation.objects.filter(wine=wine, quantity=3, status=StockReservation.Status.ACTIVE).exists()
+    assert StockReservation.objects.filter(
+        wine=wine, quantity=3, status=StockReservation.Status.ACTIVE
+    ).exists()
 
 
 @pytest.mark.django_db
-def test_request_order_cancellation_is_blocked_then_cancels_after_approval(authenticated_client) -> None:
+def test_request_order_cancellation_is_blocked_then_cancels_after_approval(
+    authenticated_client,
+) -> None:
     """Order cancellation requests should only mutate the order after approval."""
     client, user = authenticated_client
     user.is_staff = True
     user.save(update_fields=["is_staff"])
     customer = UserFactory(email="cancel-me@example.com")
-    order = OrderFactory(user=customer, order_number="LAB-2026-000505", status=Order.Status.PENDING_PAYMENT)
+    order = OrderFactory(
+        user=customer, order_number="LAB-2026-000505", status=Order.Status.PENDING_PAYMENT
+    )
     conversation = Conversation.objects.create(mode=Conversation.Mode.OPS, customer=user)
     run = AgentRun.objects.create(conversation=conversation, agent_type=AgentRun.AgentType.OPS)
 
@@ -239,12 +278,16 @@ def test_request_order_cancellation_is_blocked_then_cancels_after_approval(authe
     )
     approval = ApprovalRequest.objects.get(id=result["approval_request_id"])
 
-    response = client.post(f"/api/v1/ai/approvals/{approval.id}/approve/", {"note": "Cancelar"}, format="json")
+    response = client.post(
+        f"/api/v1/ai/approvals/{approval.id}/approve/", {"note": "Cancelar"}, format="json"
+    )
 
     order.refresh_from_db()
     assert response.status_code == status.HTTP_200_OK
     assert order.status == Order.Status.CANCELLED
-    suggestion = ApprovalRequest.objects.get(id=approval.id).workflow_run.result_payload["post_approval_suggestion"]
+    suggestion = ApprovalRequest.objects.get(id=approval.id).workflow_run.result_payload[
+        "post_approval_suggestion"
+    ]
     assert suggestion["title"] == "Confirmar cancelación al cliente"
     assert order.order_number in suggestion["suggested_message"]
     assert InternalNote.objects.filter(order=order, note_type="order").exists()

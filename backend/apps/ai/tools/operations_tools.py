@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 from django.db.models import Count, F, Q, Sum
 from django.utils import timezone
 
 from apps.ai.models import Conversation, InternalNote, Lead, StockReservation, SupportTask
 from apps.catalog.models import Wine
-from apps.orders.models import Cart, Order
+from apps.orders.models import Order
 from apps.orders.state_machine import can_transition
 from apps.payments.models import Payment
 
@@ -23,7 +23,6 @@ from .business_tools import (
     _resolve_customer,
     _resolve_order,
     _resolve_payment,
-    _resolve_staff_user,
     check_payment_issue,
     create_internal_note,
     create_support_task,
@@ -100,13 +99,19 @@ def get_customer_360(payload: dict[str, object], context: ToolContext) -> dict[s
     if customer is None:
         return {"found": False, "error": "customer_not_found"}
 
-    all_orders = Order.objects.filter(user=customer).select_related("payment").prefetch_related("items")
+    all_orders = (
+        Order.objects.filter(user=customer).select_related("payment").prefetch_related("items")
+    )
     completed_orders = all_orders.filter(status__in=COMPLETED_ORDER_STATUSES)
     revenue = completed_orders.aggregate(total=Sum("total")).get("total")
     last_order = all_orders.order_by("-created_at").first()
     last_completed = completed_orders.order_by("-created_at").first()
-    open_tasks = SupportTask.objects.filter(customer=customer, status__in=OPEN_TASK_STATUSES).select_related("order", "assigned_to")[:5]
-    recent_notes = InternalNote.objects.filter(customer=customer).select_related("order", "created_by")[:5]
+    open_tasks = SupportTask.objects.filter(
+        customer=customer, status__in=OPEN_TASK_STATUSES
+    ).select_related("order", "assigned_to")[:5]
+    recent_notes = InternalNote.objects.filter(customer=customer).select_related(
+        "order", "created_by"
+    )[:5]
     recent_leads = Lead.objects.filter(customer=customer).order_by("-created_at")[:3]
 
     return {
@@ -123,7 +128,9 @@ def get_customer_360(payload: dict[str, object], context: ToolContext) -> dict[s
             "order_count": all_orders.count(),
             "completed_order_count": completed_orders.count(),
             "total_revenue": str(revenue or 0),
-            "open_task_count": SupportTask.objects.filter(customer=customer, status__in=OPEN_TASK_STATUSES).count(),
+            "open_task_count": SupportTask.objects.filter(
+                customer=customer, status__in=OPEN_TASK_STATUSES
+            ).count(),
             "note_count": InternalNote.objects.filter(customer=customer).count(),
             "lead_count": Lead.objects.filter(customer=customer).count(),
             "last_order_number": last_order.order_number if last_order else None,
@@ -131,7 +138,9 @@ def get_customer_360(payload: dict[str, object], context: ToolContext) -> dict[s
             "last_completed_order_number": last_completed.order_number if last_completed else None,
             "last_payment_status": getattr(getattr(last_order, "payment", None), "status", None),
         },
-        "recent_orders": [_serialize_order(order) for order in list(all_orders.order_by("-created_at")[:5])],
+        "recent_orders": [
+            _serialize_order(order) for order in list(all_orders.order_by("-created_at")[:5])
+        ],
         "open_tasks": [
             {
                 "task_id": str(task.id),
@@ -159,14 +168,18 @@ def get_customer_360(payload: dict[str, object], context: ToolContext) -> dict[s
                 "lead_id": str(lead.id),
                 "status": lead.status,
                 "interest_summary": lead.interest_summary,
-                "estimated_order_value": str(lead.estimated_order_value) if lead.estimated_order_value is not None else None,
+                "estimated_order_value": str(lead.estimated_order_value)
+                if lead.estimated_order_value is not None
+                else None,
             }
             for lead in recent_leads
         ],
     }
 
 
-def get_customer_orders_summary(payload: dict[str, object], context: ToolContext) -> dict[str, object]:
+def get_customer_orders_summary(
+    payload: dict[str, object], context: ToolContext
+) -> dict[str, object]:
     """Return a concise order summary for one customer."""
     customer = _resolve_target_customer(payload, context=context)
     if customer is None:
@@ -188,7 +201,9 @@ def get_customer_orders_summary(payload: dict[str, object], context: ToolContext
         "completed_order_count": completed_orders.count(),
         "total_revenue": str(completed_orders.aggregate(total=Sum("total")).get("total") or 0),
         "status_breakdown": status_counts,
-        "recent_orders": [_serialize_order(order) for order in list(orders.order_by("-created_at")[:5])],
+        "recent_orders": [
+            _serialize_order(order) for order in list(orders.order_by("-created_at")[:5])
+        ],
     }
 
 
@@ -197,7 +212,9 @@ def search_internal_notes(payload: dict[str, object], context: ToolContext) -> d
     if not context.is_staff:
         return {"results": [], "error": "staff_required"}
 
-    queryset = InternalNote.objects.select_related("order", "customer", "conversation", "created_by")
+    queryset = InternalNote.objects.select_related(
+        "order", "customer", "conversation", "created_by"
+    )
     query = str(payload.get("query") or "").strip()
     order_number = str(payload.get("order_number") or "").strip()
     customer_email = str(payload.get("customer_email") or "").strip().lower()
@@ -243,7 +260,9 @@ def create_ticket_and_assign(payload: dict[str, object], context: ToolContext) -
     if not summary:
         return {"created": False, "error": "missing_summary"}
 
-    ticket_type = str(payload.get("ticket_type") or SupportTask.TaskType.SUPPORT_FOLLOW_UP).strip().lower()
+    ticket_type = (
+        str(payload.get("ticket_type") or SupportTask.TaskType.SUPPORT_FOLLOW_UP).strip().lower()
+    )
     task_type = _coerce_task_type(ticket_type)
     title = str(payload.get("title") or "").strip() or summary[:120]
     result = create_support_task(
@@ -274,7 +293,9 @@ def create_ticket_and_assign(payload: dict[str, object], context: ToolContext) -
     }
 
 
-def escalate_conversation_to_human(payload: dict[str, object], context: ToolContext) -> dict[str, object]:
+def escalate_conversation_to_human(
+    payload: dict[str, object], context: ToolContext
+) -> dict[str, object]:
     """Escalate a conversation and create a human follow-up task."""
     if not context.is_staff:
         return {"escalated": False, "error": "staff_required"}
@@ -294,7 +315,9 @@ def escalate_conversation_to_human(payload: dict[str, object], context: ToolCont
             "task_type": SupportTask.TaskType.CONVERSATION_ESCALATION,
             "priority": payload.get("priority") or SupportTask.Priority.HIGH,
             "conversation_id": str(conversation.id),
-            "customer_email": conversation.customer.email if conversation.customer else payload.get("customer_email"),
+            "customer_email": conversation.customer.email
+            if conversation.customer
+            else payload.get("customer_email"),
             "assigned_to_email": payload.get("assigned_to_email"),
             "due_in_days": payload.get("due_in_days") or 1,
         },
@@ -318,7 +341,9 @@ def escalate_conversation_to_human(payload: dict[str, object], context: ToolCont
         {
             "note_type": InternalNote.NoteType.SUPPORT,
             "conversation_id": str(conversation.id),
-            "customer_email": conversation.customer.email if conversation.customer else payload.get("customer_email"),
+            "customer_email": conversation.customer.email
+            if conversation.customer
+            else payload.get("customer_email"),
             "content": f"Conversation escalated to human team. Reason: {reason}",
         },
         context,
@@ -357,7 +382,9 @@ def generate_shipping_update(payload: dict[str, object], context: ToolContext) -
         Order.Status.PREPARING: "Tu pedido esta en preparacion.",
     }.get(order.status, f"Tu pedido hoy figura como {status_label.lower()}.")
 
-    draft_text = f"Hola {order.user.first_name or ''}, {body} {tracking_hint} {delivery_hint}".strip()
+    draft_text = (
+        f"Hola {order.user.first_name or ''}, {body} {tracking_hint} {delivery_hint}".strip()
+    )
     return {
         "generated": True,
         "order_number": order.order_number,
@@ -365,7 +392,9 @@ def generate_shipping_update(payload: dict[str, object], context: ToolContext) -
         "status_label": status_label,
         "tracking_number": order.tracking_number or None,
         "carrier": carrier,
-        "estimated_delivery": order.estimated_delivery.isoformat() if order.estimated_delivery else None,
+        "estimated_delivery": order.estimated_delivery.isoformat()
+        if order.estimated_delivery
+        else None,
         "recommended_channel": "whatsapp" if order.user.phone else "email",
         "draft_text": draft_text,
     }
@@ -381,7 +410,11 @@ def create_payment_followup(payload: dict[str, object], context: ToolContext) ->
         return {"created": False, **diagnosis}
 
     order_number = diagnosis["order_number"]
-    priority = SupportTask.Priority.HIGH if diagnosis["diagnosis"] in {"payment_rejected", "payment_approved_order_not_advanced"} else SupportTask.Priority.MEDIUM
+    priority = (
+        SupportTask.Priority.HIGH
+        if diagnosis["diagnosis"] in {"payment_rejected", "payment_approved_order_not_advanced"}
+        else SupportTask.Priority.MEDIUM
+    )
     summary = str(payload.get("summary") or diagnosis["recommended_action"]).strip()
     task_result = create_support_task(
         {
@@ -434,7 +467,9 @@ def reserve_stock(payload: dict[str, object], context: ToolContext) -> dict[str,
 
     order = _resolve_order(payload.get("order_number"))
     conversation = _resolve_conversation(payload.get("conversation_id"), context=context)
-    customer = _resolve_customer(payload.get("customer_email"), conversation=conversation) or (order.user if order else None)
+    customer = _resolve_customer(payload.get("customer_email"), conversation=conversation) or (
+        order.user if order else None
+    )
     wine.stock -= quantity
     wine.save(update_fields=["stock", "updated_at"])
 
@@ -470,7 +505,9 @@ def reserve_stock(payload: dict[str, object], context: ToolContext) -> dict[str,
     }
 
 
-def release_stock_reservation(payload: dict[str, object], context: ToolContext) -> dict[str, object]:
+def release_stock_reservation(
+    payload: dict[str, object], context: ToolContext
+) -> dict[str, object]:
     """Release a full or partial stock reservation."""
     if not context.is_staff:
         return {"released": False, "error": "staff_required"}
@@ -478,13 +515,20 @@ def release_stock_reservation(payload: dict[str, object], context: ToolContext) 
     reservation = _resolve_stock_reservation(payload.get("reservation_id"))
     if reservation is None:
         return {"released": False, "error": "reservation_not_found"}
-    if reservation.status not in {StockReservation.Status.ACTIVE, StockReservation.Status.PARTIALLY_RELEASED}:
+    if reservation.status not in {
+        StockReservation.Status.ACTIVE,
+        StockReservation.Status.PARTIALLY_RELEASED,
+    }:
         return {"released": False, "error": "reservation_not_active"}
 
     remaining_quantity = reservation.quantity - reservation.released_quantity
     release_quantity = _parse_positive_int(payload.get("quantity")) or remaining_quantity
     if release_quantity > remaining_quantity:
-        return {"released": False, "error": "invalid_quantity", "remaining_quantity": remaining_quantity}
+        return {
+            "released": False,
+            "error": "invalid_quantity",
+            "remaining_quantity": remaining_quantity,
+        }
 
     reservation.wine.stock += release_quantity
     reservation.wine.save(update_fields=["stock", "updated_at"])
@@ -499,9 +543,13 @@ def release_stock_reservation(payload: dict[str, object], context: ToolContext) 
 
     create_internal_note(
         {
-            "note_type": InternalNote.NoteType.ORDER if reservation.order else InternalNote.NoteType.GENERAL,
+            "note_type": InternalNote.NoteType.ORDER
+            if reservation.order
+            else InternalNote.NoteType.GENERAL,
             "order_number": reservation.order.order_number if reservation.order else None,
-            "conversation_id": str(reservation.conversation_id) if reservation.conversation_id else None,
+            "conversation_id": str(reservation.conversation_id)
+            if reservation.conversation_id
+            else None,
             "customer_email": reservation.customer.email if reservation.customer else None,
             "content": (
                 f"Se liberaron {release_quantity} unidad(es) de la reserva {reservation.id} "
@@ -535,7 +583,9 @@ def create_restock_task(payload: dict[str, object], context: ToolContext) -> dic
     if wine is None:
         return {"created": False, "error": "wine_not_found"}
 
-    suggested_quantity = _parse_positive_int(payload.get("suggested_quantity")) or max(wine.low_stock_threshold * 2 - wine.stock, 1)
+    suggested_quantity = _parse_positive_int(payload.get("suggested_quantity")) or max(
+        wine.low_stock_threshold * 2 - wine.stock, 1
+    )
     result = create_support_task(
         {
             "title": f"Reponer stock · {wine.name}",
@@ -578,7 +628,9 @@ def sync_tracking_status(payload: dict[str, object], context: ToolContext) -> di
         "integration_status": "not_configured",
         "tracking_status": _derive_tracking_status(order),
         "order_status": order.status,
-        "estimated_delivery": order.estimated_delivery.isoformat() if order.estimated_delivery else None,
+        "estimated_delivery": order.estimated_delivery.isoformat()
+        if order.estimated_delivery
+        else None,
         "synced_at": timezone.now().isoformat(),
     }
 
@@ -630,7 +682,9 @@ def create_shipping_claim(payload: dict[str, object], context: ToolContext) -> d
     }
 
 
-def request_order_cancellation(payload: dict[str, object], context: ToolContext) -> dict[str, object]:
+def request_order_cancellation(
+    payload: dict[str, object], context: ToolContext
+) -> dict[str, object]:
     """Cancel an order after a human approval gate has executed the tool."""
     if not context.is_staff:
         return {"cancelled": False, "error": "staff_required"}
@@ -665,7 +719,10 @@ def request_order_cancellation(payload: dict[str, object], context: ToolContext)
         followup = create_support_task(
             {
                 "title": f"Revisar devolucion o reembolso · {order.order_number}",
-                "description": "El pedido fue cancelado luego de un pago aprobado. Revisar la gestion financiera correspondiente.",
+                "description": (
+                    "El pedido fue cancelado luego de un pago aprobado. "
+                    "Revisar la gestion financiera correspondiente."
+                ),
                 "task_type": SupportTask.TaskType.PAYMENT_REVIEW,
                 "priority": SupportTask.Priority.HIGH,
                 "order_number": order.order_number,
@@ -724,7 +781,11 @@ def _resolve_stock_reservation(reservation_id: object) -> StockReservation | Non
     normalized = str(reservation_id or "").strip()
     if not normalized:
         return None
-    return StockReservation.objects.select_related("wine", "order", "customer", "conversation").filter(id=normalized).first()
+    return (
+        StockReservation.objects.select_related("wine", "order", "customer", "conversation")
+        .filter(id=normalized)
+        .first()
+    )
 
 
 def _parse_positive_int(value: object) -> int | None:
@@ -777,7 +838,9 @@ def _serialize_order(order: Order) -> dict[str, object]:
         "payment_status": payment.status if payment else None,
         "shipping_method": order.shipping_method,
         "tracking_number": order.tracking_number or None,
-        "estimated_delivery": order.estimated_delivery.isoformat() if order.estimated_delivery else None,
+        "estimated_delivery": order.estimated_delivery.isoformat()
+        if order.estimated_delivery
+        else None,
         "total": str(order.total),
         "customer_name": customer_name,
         "customer_email": order.user.email,

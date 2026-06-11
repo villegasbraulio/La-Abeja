@@ -102,7 +102,12 @@ def get_sales_over_period(payload: dict[str, object], context: ToolContext) -> d
         key = _period_key(row["period"])
         merged.setdefault(
             key,
-            {"period": key, "order_count": 0, "total_revenue": str(Decimal("0.00")), "bottles_sold": 0},
+            {
+                "period": key,
+                "order_count": 0,
+                "total_revenue": str(Decimal("0.00")),
+                "bottles_sold": 0,
+            },
         )
         merged[key]["bottles_sold"] = int(row["bottles_sold"] or 0)
 
@@ -214,7 +219,9 @@ def get_top_skus(payload: dict[str, object], context: ToolContext) -> dict[str, 
     }
 
 
-def get_repeat_customers_metrics(payload: dict[str, object], context: ToolContext) -> dict[str, object]:
+def get_repeat_customers_metrics(
+    payload: dict[str, object], context: ToolContext
+) -> dict[str, object]:
     """Estimate repeat-customer behavior from completed orders."""
     if not context.is_staff:
         return {"error": "staff_required"}
@@ -223,18 +230,28 @@ def get_repeat_customers_metrics(payload: dict[str, object], context: ToolContex
     orders = _completed_orders(window)
     per_customer = list(
         orders.values("user_id", "user__email")
-        .annotate(order_count=Count("id"), revenue=Coalesce(Sum("total"), Decimal("0.00")), last_order_at=Max("created_at"))
+        .annotate(
+            order_count=Count("id"),
+            revenue=Coalesce(Sum("total"), Decimal("0.00")),
+            last_order_at=Max("created_at"),
+        )
         .order_by("-revenue")
     )
     unique_customers = len(per_customer)
     repeat_customers = [row for row in per_customer if int(row["order_count"] or 0) >= 2]
-    total_revenue = sum(((row["revenue"] or Decimal("0.00")) for row in per_customer), Decimal("0.00"))
+    total_revenue = sum(
+        ((row["revenue"] or Decimal("0.00")) for row in per_customer), Decimal("0.00")
+    )
     return {
         "period": window.label,
         "unique_customers": unique_customers,
         "repeat_customers": len(repeat_customers),
-        "repeat_rate": round((len(repeat_customers) / unique_customers), 4) if unique_customers else 0.0,
-        "average_revenue_per_customer": str((total_revenue / unique_customers) if unique_customers else Decimal("0.00")),
+        "repeat_rate": round((len(repeat_customers) / unique_customers), 4)
+        if unique_customers
+        else 0.0,
+        "average_revenue_per_customer": str(
+            (total_revenue / unique_customers) if unique_customers else Decimal("0.00")
+        ),
         "top_repeat_customers": [
             {
                 "customer_email": row["user__email"],
@@ -257,7 +274,9 @@ def get_conversion_funnel(payload: dict[str, object], context: ToolContext) -> d
     carts_with_items = carts.annotate(item_count=Count("items")).filter(item_count__gt=0)
     orders = Order.objects.filter(created_at__gte=window.start_at, created_at__lte=window.end_at)
     paid_orders = orders.filter(status__in=VALID_SALES_STATUSES)
-    payments = Payment.objects.filter(created_at__gte=window.start_at, created_at__lte=window.end_at)
+    payments = Payment.objects.filter(
+        created_at__gte=window.start_at, created_at__lte=window.end_at
+    )
     rejected_payments = payments.filter(status=Payment.Status.REJECTED)
 
     cart_count = carts_with_items.count()
@@ -271,11 +290,15 @@ def get_conversion_funnel(payload: dict[str, object], context: ToolContext) -> d
         "rejected_payment_count": rejected_payments.count(),
         "cart_to_order_rate": round(order_count / cart_count, 4) if cart_count else 0.0,
         "order_to_paid_rate": round(paid_order_count / order_count, 4) if order_count else 0.0,
-        "cart_abandonment_rate": round((cart_count - order_count) / cart_count, 4) if cart_count else 0.0,
+        "cart_abandonment_rate": round((cart_count - order_count) / cart_count, 4)
+        if cart_count
+        else 0.0,
     }
 
 
-def get_returns_and_incidents_metrics(payload: dict[str, object], context: ToolContext) -> dict[str, object]:
+def get_returns_and_incidents_metrics(
+    payload: dict[str, object], context: ToolContext
+) -> dict[str, object]:
     """Summarize refunds, cancellations, payment failures, and AI-generated incidents."""
     if not context.is_staff:
         return {"error": "staff_required"}
@@ -322,7 +345,11 @@ def get_sales_by_channel(payload: dict[str, object], context: ToolContext) -> di
     for row in rows:
         shipping_address = row.get("shipping_address") or {}
         channel = (
-            str(shipping_address.get("source_channel") or shipping_address.get("channel") or "unknown")
+            str(
+                shipping_address.get("source_channel")
+                or shipping_address.get("channel")
+                or "unknown"
+            )
             .strip()
             .lower()
         )
@@ -341,12 +368,16 @@ def get_sales_by_channel(payload: dict[str, object], context: ToolContext) -> di
                 "order_count": value["order_count"],
                 "total_revenue": str(value["total_revenue"]),
             }
-            for channel, value in sorted(grouped.items(), key=lambda item: item[1]["total_revenue"], reverse=True)
+            for channel, value in sorted(
+                grouped.items(), key=lambda item: item[1]["total_revenue"], reverse=True
+            )
         ],
     }
 
 
-def get_margin_estimate_by_product(payload: dict[str, object], context: ToolContext) -> dict[str, object]:
+def get_margin_estimate_by_product(
+    payload: dict[str, object], context: ToolContext
+) -> dict[str, object]:
     """Estimate margin contribution by SKU using current catalog cost_price."""
     if not context.is_staff:
         return {"error": "staff_required"}
@@ -378,7 +409,9 @@ def get_margin_estimate_by_product(payload: dict[str, object], context: ToolCont
                 "bottles_sold": int(row["bottles_sold"] or 0),
                 "revenue": str(row["revenue"] or Decimal("0.00")),
                 "estimated_cost": str(row["estimated_cost"] or Decimal("0.00")),
-                "estimated_margin": str((row["revenue"] or Decimal("0.00")) - (row["estimated_cost"] or Decimal("0.00"))),
+                "estimated_margin": str(
+                    (row["revenue"] or Decimal("0.00")) - (row["estimated_cost"] or Decimal("0.00"))
+                ),
             }
             for row in rows
         ],

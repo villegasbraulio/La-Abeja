@@ -1,5 +1,7 @@
 """Deterministic response building helpers."""
 
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 
@@ -22,8 +24,7 @@ class ResponseBuilder:
             trailing.append(f"Tracking: {tracking_number}.")
         return (
             f"El pedido {result.get('order_number')} figura en estado {status_label}. "
-            f"Pago: {payment_status}. Metodo de entrega: {shipping_label}. "
-            + " ".join(trailing)
+            f"Pago: {payment_status}. Metodo de entrega: {shipping_label}. " + " ".join(trailing)
         ).strip()
 
     def build_low_stock_response(self, results: list[dict[str, object]]) -> str:
@@ -260,7 +261,11 @@ class ResponseBuilder:
             )
         if result.get("cancelled"):
             followup = result.get("payment_followup_task_id")
-            suffix = f" Ademas deje la tarea {followup} para revisar el impacto financiero." if followup else ""
+            suffix = (
+                f" Ademas deje la tarea {followup} para revisar el impacto financiero."
+                if followup
+                else ""
+            )
             return (
                 f"El pedido {result.get('order_number')} quedo cancelado "
                 f"(antes estaba en {result.get('previous_status')}).{suffix}"

@@ -1,5 +1,7 @@
 """Prompt regression tests for the AI app."""
 
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 from apps.ai.agents.prompt_manager import PromptManager

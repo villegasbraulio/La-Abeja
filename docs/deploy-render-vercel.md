@@ -5,7 +5,7 @@ Guia para publicar La Abeja con backend Django y base de datos en Render, y fron
 ## Arquitectura de deploy
 
 - Render Web Service: Django REST API.
-- Render Postgres: base de datos principal.
+- Render Postgres Free: base de datos principal para demo.
 - Render Key Value: Redis compatible para Celery/cache.
 - Vercel: frontend estatico Vite.
 - Imagenes: Cloudinary/S3/CDN o URLs absolutas. El frontend tambien tiene fallback local.
@@ -62,13 +62,23 @@ MERCADOPAGO_PUBLIC_KEY=...
 MERCADOPAGO_WEBHOOK_SECRET=...
 ```
 
-Render hace automaticamente:
+Render hace automaticamente en el `buildCommand`, porque el plan free no soporta `preDeployCommand`:
 
 - `pip install -r requirements/production.txt`
-- `python manage.py collectstatic --noinput`
 - `python manage.py migrate`
-- primer seed: `python manage.py seed_demo_data && python manage.py seed_ai_knowledge`
+- `python manage.py collectstatic --noinput`
+- `python manage.py seed_demo_data`
+- `python manage.py seed_ai_knowledge`
 - start: `gunicorn config.wsgi:application --bind 0.0.0.0:$PORT`
+
+Limitaciones del modo gratis:
+
+- Render Free Web Service puede dormir por inactividad.
+- Render Free Postgres expira a los 30 dias.
+- Render Free Key Value es in-memory: puede perder datos al reiniciar.
+- No hay `preDeployCommand`, shell/SSH ni one-off jobs en el web service free.
+
+Si despues queres hacerlo estable de verdad, cambia el web service y la base a planes pagos y vuelve a mover `python manage.py migrate` a `preDeployCommand`.
 
 Healthcheck:
 
@@ -127,7 +137,7 @@ Frontend:
   - email: `admin@bodegalaabeja.com.ar`
   - password: la que pusiste en `DEMO_ADMIN_PASSWORD`
 
-AI/RAG:
+AI/RAG desde local apuntando a la base de Render, o desde un servicio pago con shell/one-off jobs:
 
 ```bash
 python manage.py run_ai_evals

@@ -196,7 +196,7 @@ export function BackofficeCopilotPage() {
     submitMessage(draft);
   }
 
-  function usePromptSuggestion(prompt: string) {
+  function loadPromptSuggestion(prompt: string) {
     setDraft(prompt);
   }
 
@@ -206,7 +206,7 @@ export function BackofficeCopilotPage() {
       submitMessage(prompt);
       return;
     }
-    usePromptSuggestion(prompt);
+    loadPromptSuggestion(prompt);
   }
 
   function handleInlineApprove() {
@@ -356,7 +356,7 @@ export function BackofficeCopilotPage() {
                 <button
                   key={prompt}
                   type="button"
-                  onClick={() => usePromptSuggestion(prompt)}
+                  onClick={() => loadPromptSuggestion(prompt)}
                   className="rounded-full border border-burgundy-200 bg-white px-4 py-2 text-left text-sm font-semibold text-burgundy-900 transition hover:border-burgundy-400 hover:bg-burgundy-50"
                 >
                   {prompt}

@@ -128,7 +128,9 @@ def test_reindex_ai_knowledge_command_refreshes_active_documents(monkeypatch) ->
         """Capture reindex calls while preserving the original behavior."""
         captured.append((str(kwargs["external_id"]), str(kwargs["title"])))
         monkeypatch.setattr(self.embedding_service, "embed_texts", lambda texts: None)
-        monkeypatch.setattr(self.vector_store, "upsert_chunk_embedding", lambda **inner_kwargs: None)
+        monkeypatch.setattr(
+            self.vector_store, "upsert_chunk_embedding", lambda **inner_kwargs: None
+        )
         return original_upsert(self, **kwargs)
 
     monkeypatch.setattr(KnowledgeIngestionService, "upsert_document", spying_upsert)

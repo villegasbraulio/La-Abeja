@@ -1,7 +1,7 @@
 """AI models package."""
 
 from .conversations import Conversation, ConversationFeedback, ConversationTurn
-from .knowledge import KnowledgeDocument, KnowledgeChunk, KnowledgeSource
+from .knowledge import KnowledgeChunk, KnowledgeDocument, KnowledgeSource
 from .memory import MemoryFact
 from .operations import InternalNote, Lead, StockReservation, SupportTask
 from .runs import AgentRun, ToolExecution

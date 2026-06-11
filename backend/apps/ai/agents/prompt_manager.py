@@ -1,5 +1,7 @@
 """Prompts for the AI app."""
 
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 

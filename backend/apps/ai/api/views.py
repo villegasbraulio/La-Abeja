@@ -1,5 +1,7 @@
 """Views for the AI app."""
 
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 from uuid import uuid4
@@ -17,9 +19,9 @@ from apps.ai.models import (
     ApprovalRequest,
     Conversation,
     ConversationFeedback,
-    Lead,
     KnowledgeDocument,
     KnowledgeSource,
+    Lead,
     StockReservation,
     SupportTask,
     ToolExecution,
@@ -39,10 +41,10 @@ from .serializers import (
     ConversationMessageSerializer,
     ConversationSerializer,
     CopilotMessageSerializer,
-    LeadSerializer,
-    LeadUpdateSerializer,
     KnowledgeDocumentSerializer,
     KnowledgeSourceSerializer,
+    LeadSerializer,
+    LeadUpdateSerializer,
     StockReservationSerializer,
     SupportTaskSerializer,
     SupportTaskUpdateSerializer,
@@ -186,13 +188,22 @@ class AICopilotOverviewView(APIView):
         payload = {
             "metrics": {
                 "open_tasks": SupportTask.objects.filter(
-                    status__in=[SupportTask.Status.OPEN, SupportTask.Status.IN_PROGRESS, SupportTask.Status.BLOCKED]
+                    status__in=[
+                        SupportTask.Status.OPEN,
+                        SupportTask.Status.IN_PROGRESS,
+                        SupportTask.Status.BLOCKED,
+                    ]
                 ).count(),
                 "new_leads": Lead.objects.filter(status=Lead.Status.NEW).count(),
-                "pending_approvals": ApprovalRequest.objects.filter(status=ApprovalRequest.Status.PENDING).count(),
+                "pending_approvals": ApprovalRequest.objects.filter(
+                    status=ApprovalRequest.Status.PENDING
+                ).count(),
                 "runs_needing_human": AgentRun.objects.filter(needs_human=True).count(),
                 "active_stock_reservations": StockReservation.objects.filter(
-                    status__in=[StockReservation.Status.ACTIVE, StockReservation.Status.PARTIALLY_RELEASED]
+                    status__in=[
+                        StockReservation.Status.ACTIVE,
+                        StockReservation.Status.PARTIALLY_RELEASED,
+                    ]
                 ).count(),
                 "pending_cancellation_approvals": ApprovalRequest.objects.filter(
                     status=ApprovalRequest.Status.PENDING,
@@ -211,7 +222,9 @@ class AICopilotOverviewView(APIView):
                 "Pedí cancelación del pedido LAB-2026-000145 por solicitud del cliente",
             ],
             "recent_tasks": SupportTaskSerializer(
-                SupportTask.objects.select_related("order", "customer", "assigned_to", "workflow_run")[:5],
+                SupportTask.objects.select_related(
+                    "order", "customer", "assigned_to", "workflow_run"
+                )[:5],
                 many=True,
             ).data,
             "recent_leads": LeadSerializer(
@@ -219,17 +232,19 @@ class AICopilotOverviewView(APIView):
                 many=True,
             ).data,
             "recent_stock_reservations": StockReservationSerializer(
-                StockReservation.objects.select_related("wine", "order", "customer", "workflow_run")[:5],
+                StockReservation.objects.select_related(
+                    "wine", "order", "customer", "workflow_run"
+                )[:5],
                 many=True,
             ).data,
             "pending_approvals": ApprovalRequestSerializer(
-                ApprovalRequest.objects.select_related("workflow_run", "approved_by")
-                .filter(status=ApprovalRequest.Status.PENDING)[:5],
+                ApprovalRequest.objects.select_related("workflow_run", "approved_by").filter(
+                    status=ApprovalRequest.Status.PENDING
+                )[:5],
                 many=True,
             ).data,
             "pending_cancellation_approvals": ApprovalRequestSerializer(
-                ApprovalRequest.objects.select_related("workflow_run", "approved_by")
-                .filter(
+                ApprovalRequest.objects.select_related("workflow_run", "approved_by").filter(
                     status=ApprovalRequest.Status.PENDING,
                     action_name="request_order_cancellation",
                 )[:5],
@@ -268,7 +283,9 @@ class AITaskListView(generics.ListAPIView):
 
     def get_queryset(self):  # type: ignore[override]
         """Filter tasks by status, task type, search, or conversation."""
-        queryset = SupportTask.objects.select_related("order", "customer", "assigned_to", "workflow_run")
+        queryset = SupportTask.objects.select_related(
+            "order", "customer", "assigned_to", "workflow_run"
+        )
         status_filter = self.request.query_params.get("status")
         task_type = self.request.query_params.get("task_type")
         conversation_id = self.request.query_params.get("conversation_id")
@@ -294,7 +311,9 @@ class AITaskDetailView(generics.RetrieveUpdateAPIView):
     """Retrieve or update an AI-generated task."""
 
     permission_classes = [permissions.IsAuthenticated, IsStaffUser]
-    queryset = SupportTask.objects.select_related("order", "customer", "assigned_to", "workflow_run")
+    queryset = SupportTask.objects.select_related(
+        "order", "customer", "assigned_to", "workflow_run"
+    )
 
     def get_serializer_class(self):  # type: ignore[override]
         """Use a lighter serializer for partial updates."""
@@ -374,7 +393,9 @@ class AIStockReservationListView(generics.ListAPIView):
 
     def get_queryset(self):  # type: ignore[override]
         """Filter reservations by status or search terms."""
-        queryset = StockReservation.objects.select_related("wine", "order", "customer", "workflow_run")
+        queryset = StockReservation.objects.select_related(
+            "wine", "order", "customer", "workflow_run"
+        )
         status_filter = self.request.query_params.get("status")
         search = (self.request.query_params.get("search") or "").strip()
 
@@ -529,7 +550,9 @@ class AIMetricsSummaryView(APIView):
         del request
         payload = {
             "conversations": Conversation.objects.count(),
-            "open_conversations": Conversation.objects.filter(status=Conversation.Status.OPEN).count(),
+            "open_conversations": Conversation.objects.filter(
+                status=Conversation.Status.OPEN
+            ).count(),
             "agent_runs": AgentRun.objects.count(),
             "runs_needing_human": AgentRun.objects.filter(needs_human=True).count(),
             "knowledge_documents": KnowledgeDocument.objects.count(),
@@ -537,10 +560,16 @@ class AIMetricsSummaryView(APIView):
             "workflow_runs": WorkflowRun.objects.count(),
             "tool_executions": ToolExecution.objects.count(),
             "open_tasks": SupportTask.objects.filter(
-                status__in=[SupportTask.Status.OPEN, SupportTask.Status.IN_PROGRESS, SupportTask.Status.BLOCKED]
+                status__in=[
+                    SupportTask.Status.OPEN,
+                    SupportTask.Status.IN_PROGRESS,
+                    SupportTask.Status.BLOCKED,
+                ]
             ).count(),
             "new_leads": Lead.objects.filter(status=Lead.Status.NEW).count(),
-            "pending_approvals": ApprovalRequest.objects.filter(status=ApprovalRequest.Status.PENDING).count(),
+            "pending_approvals": ApprovalRequest.objects.filter(
+                status=ApprovalRequest.Status.PENDING
+            ).count(),
             "top_intents": list(
                 AgentRun.objects.exclude(intent="")
                 .values("intent")

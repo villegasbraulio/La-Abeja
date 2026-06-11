@@ -10,9 +10,9 @@ from apps.ai.models import (
     Conversation,
     ConversationFeedback,
     ConversationTurn,
-    Lead,
     KnowledgeDocument,
     KnowledgeSource,
+    Lead,
     StockReservation,
     SupportTask,
     ToolExecution,
@@ -211,10 +211,16 @@ class WorkflowRunSerializer(serializers.ModelSerializer):
 class ApprovalRequestSerializer(serializers.ModelSerializer):
     """Serialize approval requests."""
 
-    workflow_type = serializers.CharField(source="workflow_run.workflow_type", read_only=True, allow_null=True)
-    workflow_status = serializers.CharField(source="workflow_run.status", read_only=True, allow_null=True)
+    workflow_type = serializers.CharField(
+        source="workflow_run.workflow_type", read_only=True, allow_null=True
+    )
+    workflow_status = serializers.CharField(
+        source="workflow_run.status", read_only=True, allow_null=True
+    )
     workflow_result = serializers.JSONField(source="workflow_run.result_payload", read_only=True)
-    approved_by_email = serializers.EmailField(source="approved_by.email", read_only=True, allow_null=True)
+    approved_by_email = serializers.EmailField(
+        source="approved_by.email", read_only=True, allow_null=True
+    )
 
     class Meta:
         model = ApprovalRequest
@@ -244,12 +250,24 @@ class ApprovalDecisionSerializer(serializers.Serializer):
 class SupportTaskSerializer(serializers.ModelSerializer):
     """Serialize AI-created support and operations tasks."""
 
-    order_number = serializers.CharField(source="order.order_number", read_only=True, allow_null=True)
-    customer_email = serializers.EmailField(source="customer.email", read_only=True, allow_null=True)
-    customer_name = serializers.CharField(source="customer.full_name", read_only=True, allow_null=True)
-    assigned_to_email = serializers.EmailField(source="assigned_to.email", read_only=True, allow_null=True)
-    assigned_to_name = serializers.CharField(source="assigned_to.full_name", read_only=True, allow_null=True)
-    workflow_type = serializers.CharField(source="workflow_run.workflow_type", read_only=True, allow_null=True)
+    order_number = serializers.CharField(
+        source="order.order_number", read_only=True, allow_null=True
+    )
+    customer_email = serializers.EmailField(
+        source="customer.email", read_only=True, allow_null=True
+    )
+    customer_name = serializers.CharField(
+        source="customer.full_name", read_only=True, allow_null=True
+    )
+    assigned_to_email = serializers.EmailField(
+        source="assigned_to.email", read_only=True, allow_null=True
+    )
+    assigned_to_name = serializers.CharField(
+        source="assigned_to.full_name", read_only=True, allow_null=True
+    )
+    workflow_type = serializers.CharField(
+        source="workflow_run.workflow_type", read_only=True, allow_null=True
+    )
 
     class Meta:
         model = SupportTask
@@ -313,8 +331,12 @@ class SupportTaskUpdateSerializer(serializers.ModelSerializer):
 class LeadSerializer(serializers.ModelSerializer):
     """Serialize AI-captured leads."""
 
-    customer_email = serializers.EmailField(source="customer.email", read_only=True, allow_null=True)
-    customer_name = serializers.CharField(source="customer.full_name", read_only=True, allow_null=True)
+    customer_email = serializers.EmailField(
+        source="customer.email", read_only=True, allow_null=True
+    )
+    customer_name = serializers.CharField(
+        source="customer.full_name", read_only=True, allow_null=True
+    )
 
     class Meta:
         model = Lead
@@ -351,10 +373,18 @@ class StockReservationSerializer(serializers.ModelSerializer):
 
     wine_name = serializers.CharField(source="wine.name", read_only=True)
     wine_sku = serializers.CharField(source="wine.sku", read_only=True)
-    order_number = serializers.CharField(source="order.order_number", read_only=True, allow_null=True)
-    customer_email = serializers.EmailField(source="customer.email", read_only=True, allow_null=True)
-    customer_name = serializers.CharField(source="customer.full_name", read_only=True, allow_null=True)
-    workflow_type = serializers.CharField(source="workflow_run.workflow_type", read_only=True, allow_null=True)
+    order_number = serializers.CharField(
+        source="order.order_number", read_only=True, allow_null=True
+    )
+    customer_email = serializers.EmailField(
+        source="customer.email", read_only=True, allow_null=True
+    )
+    customer_name = serializers.CharField(
+        source="customer.full_name", read_only=True, allow_null=True
+    )
+    workflow_type = serializers.CharField(
+        source="workflow_run.workflow_type", read_only=True, allow_null=True
+    )
     remaining_quantity = serializers.SerializerMethodField()
 
     class Meta:

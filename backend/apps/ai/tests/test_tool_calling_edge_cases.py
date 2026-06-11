@@ -1,5 +1,7 @@
 """Edge-case tests for the OpenAI tool-calling and orchestration loop."""
 
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 import json
@@ -35,7 +37,9 @@ class _FakeFunctionCall:
 class _FakeResponse:
     """Minimal fake response envelope."""
 
-    def __init__(self, *, response_id: str, output: list[object] | None = None, output_text: str = "") -> None:
+    def __init__(
+        self, *, response_id: str, output: list[object] | None = None, output_text: str = ""
+    ) -> None:
         self.id = response_id
         self.output = output or []
         self.output_text = output_text
@@ -58,7 +62,9 @@ class _QueueResponsesAPI:
 class _FakeOpenAIClient:
     """Minimal fake OpenAI client for tool-calling tests."""
 
-    def __init__(self, *, api_key: str, responses: list[_FakeResponse], should_raise: bool = False) -> None:
+    def __init__(
+        self, *, api_key: str, responses: list[_FakeResponse], should_raise: bool = False
+    ) -> None:
         del api_key
         self.responses = _QueueResponsesAPI(responses=list(responses), should_raise=should_raise)
 
@@ -92,7 +98,9 @@ def _context(mode: str = Conversation.Mode.SUPPORT, *, is_staff: bool = False) -
 
 
 @pytest.mark.django_db
-def test_tool_calling_agent_executes_multiple_tools_in_order(settings, monkeypatch, seeded_catalog_and_knowledge) -> None:
+def test_tool_calling_agent_executes_multiple_tools_in_order(
+    settings, monkeypatch, seeded_catalog_and_knowledge
+) -> None:
     """Multiple tool calls should execute sequentially and preserve order metadata."""
     del seeded_catalog_and_knowledge
     settings.OPENAI_API_KEY = "test-key"
@@ -103,7 +111,9 @@ def test_tool_calling_agent_executes_multiple_tools_in_order(settings, monkeypat
             response_id="resp-1",
             output=[
                 _FakeFunctionCall("search_catalog", json.dumps({"query": "Malbec"}), "call-1"),
-                _FakeFunctionCall("search_knowledge_base", json.dumps({"query": "retiro en bodega"}), "call-2"),
+                _FakeFunctionCall(
+                    "search_knowledge_base", json.dumps({"query": "retiro en bodega"}), "call-2"
+                ),
             ],
         ),
         _FakeResponse(response_id="resp-2", output=[], output_text="Use dos tools."),
@@ -111,7 +121,9 @@ def test_tool_calling_agent_executes_multiple_tools_in_order(settings, monkeypat
     monkeypatch.setitem(
         sys.modules,
         "openai",
-        SimpleNamespace(OpenAI=lambda *, api_key: _FakeOpenAIClient(api_key=api_key, responses=responses)),
+        SimpleNamespace(
+            OpenAI=lambda *, api_key: _FakeOpenAIClient(api_key=api_key, responses=responses)
+        ),
     )
 
     result = OpenAIToolCallingAgent().run(
@@ -128,7 +140,9 @@ def test_tool_calling_agent_executes_multiple_tools_in_order(settings, monkeypat
 
 
 @pytest.mark.django_db
-def test_tool_calling_agent_handles_invalid_json_arguments(settings, monkeypatch, seeded_catalog_and_knowledge) -> None:
+def test_tool_calling_agent_handles_invalid_json_arguments(
+    settings, monkeypatch, seeded_catalog_and_knowledge
+) -> None:
     """Invalid JSON arguments should not crash the tool loop."""
     del seeded_catalog_and_knowledge
     settings.OPENAI_API_KEY = "test-key"
@@ -144,7 +158,9 @@ def test_tool_calling_agent_handles_invalid_json_arguments(settings, monkeypatch
     monkeypatch.setitem(
         sys.modules,
         "openai",
-        SimpleNamespace(OpenAI=lambda *, api_key: _FakeOpenAIClient(api_key=api_key, responses=responses)),
+        SimpleNamespace(
+            OpenAI=lambda *, api_key: _FakeOpenAIClient(api_key=api_key, responses=responses)
+        ),
     )
 
     result = OpenAIToolCallingAgent().run(
@@ -176,7 +192,9 @@ def test_tool_calling_agent_ignores_unknown_tools_and_finishes(settings, monkeyp
     monkeypatch.setitem(
         sys.modules,
         "openai",
-        SimpleNamespace(OpenAI=lambda *, api_key: _FakeOpenAIClient(api_key=api_key, responses=responses)),
+        SimpleNamespace(
+            OpenAI=lambda *, api_key: _FakeOpenAIClient(api_key=api_key, responses=responses)
+        ),
     )
 
     result = OpenAIToolCallingAgent().run(
@@ -202,7 +220,9 @@ def test_tool_calling_agent_returns_none_on_empty_final_output(settings, monkeyp
     monkeypatch.setitem(
         sys.modules,
         "openai",
-        SimpleNamespace(OpenAI=lambda *, api_key: _FakeOpenAIClient(api_key=api_key, responses=responses)),
+        SimpleNamespace(
+            OpenAI=lambda *, api_key: _FakeOpenAIClient(api_key=api_key, responses=responses)
+        ),
     )
 
     result = OpenAIToolCallingAgent().run(
@@ -217,13 +237,17 @@ def test_tool_calling_agent_returns_none_on_empty_final_output(settings, monkeyp
 
 
 @pytest.mark.django_db
-def test_orchestrator_marks_run_for_human_when_llm_requests_blocked_write(settings, monkeypatch) -> None:
+def test_orchestrator_marks_run_for_human_when_llm_requests_blocked_write(
+    settings, monkeypatch
+) -> None:
     """Tool-calling runs should surface pending approvals instead of pretending the write happened."""
     settings.OPENAI_API_KEY = "test-key"
     settings.AI_USE_LLM = True
     settings.AI_USE_TOOL_CALLING = True
     staff_user = UserFactory(is_staff=True)
-    order = OrderFactory(user=UserFactory(), order_number="LAB-2026-000811", status=Order.Status.READY_TO_SHIP)
+    order = OrderFactory(
+        user=UserFactory(), order_number="LAB-2026-000811", status=Order.Status.READY_TO_SHIP
+    )
     responses = [
         _FakeResponse(
             response_id="resp-1",
@@ -250,7 +274,9 @@ def test_orchestrator_marks_run_for_human_when_llm_requests_blocked_write(settin
     monkeypatch.setitem(
         sys.modules,
         "openai",
-        SimpleNamespace(OpenAI=lambda *, api_key: _FakeOpenAIClient(api_key=api_key, responses=responses)),
+        SimpleNamespace(
+            OpenAI=lambda *, api_key: _FakeOpenAIClient(api_key=api_key, responses=responses)
+        ),
     )
 
     conversation = Conversation.objects.create(mode=Conversation.Mode.OPS, customer=staff_user)
@@ -282,7 +308,9 @@ def test_tool_calling_agent_returns_none_on_openai_exception(settings, monkeypat
         sys.modules,
         "openai",
         SimpleNamespace(
-            OpenAI=lambda *, api_key: _FakeOpenAIClient(api_key=api_key, responses=[], should_raise=True)
+            OpenAI=lambda *, api_key: _FakeOpenAIClient(
+                api_key=api_key, responses=[], should_raise=True
+            )
         ),
     )
 

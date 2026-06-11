@@ -13,9 +13,9 @@ from .api.views import (
     AIChatSessionDetailView,
     AIChatSessionEventsView,
     AIChatSessionFeedbackView,
-    AICopilotOverviewView,
     AIChatSessionMessageView,
     AICopilotMessageView,
+    AICopilotOverviewView,
     AIKnowledgeDocumentListView,
     AIKnowledgeReindexView,
     AIKnowledgeSourceListCreateView,
@@ -60,7 +60,9 @@ urlpatterns = [
     path("runs/<uuid:pk>/steps/", AIRunStepsView.as_view(), name="run-steps"),
     path("tasks/", AITaskListView.as_view(), name="task-list"),
     path("tasks/<uuid:pk>/", AITaskDetailView.as_view(), name="task-detail"),
-    path("stock-reservations/", AIStockReservationListView.as_view(), name="stock-reservation-list"),
+    path(
+        "stock-reservations/", AIStockReservationListView.as_view(), name="stock-reservation-list"
+    ),
     path("leads/", AILeadListView.as_view(), name="lead-list"),
     path("leads/<uuid:pk>/", AILeadDetailView.as_view(), name="lead-detail"),
     path("approvals/", AIApprovalListView.as_view(), name="approval-list"),
@@ -77,7 +79,11 @@ urlpatterns = [
         AIKnowledgeSourceSyncView.as_view(),
         name="knowledge-source-sync",
     ),
-    path("knowledge/documents/", AIKnowledgeDocumentListView.as_view(), name="knowledge-document-list"),
+    path(
+        "knowledge/documents/",
+        AIKnowledgeDocumentListView.as_view(),
+        name="knowledge-document-list",
+    ),
     path("knowledge/reindex/", AIKnowledgeReindexView.as_view(), name="knowledge-reindex"),
     path(
         "workflows/lead-triage/run/",
@@ -94,6 +100,8 @@ urlpatterns = [
         AIWorkflowAbandonedCartRunView.as_view(),
         name="workflow-abandoned-cart",
     ),
-    path("workflows/runs/<uuid:pk>/", AIWorkflowRunDetailView.as_view(), name="workflow-run-detail"),
+    path(
+        "workflows/runs/<uuid:pk>/", AIWorkflowRunDetailView.as_view(), name="workflow-run-detail"
+    ),
     path("metrics/summary/", AIMetricsSummaryView.as_view(), name="metrics-summary"),
 ]

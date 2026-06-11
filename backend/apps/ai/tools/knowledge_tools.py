@@ -59,7 +59,9 @@ def get_answerable_sources(payload: dict[str, object], context: ToolContext) -> 
     if context.is_staff:
         internal_results = retriever.search(query, channel="internal", limit=max(limit * 2, 6))
         seen_chunk_ids = {result.chunk_id for result in results}
-        results.extend([result for result in internal_results if result.chunk_id not in seen_chunk_ids])
+        results.extend(
+            [result for result in internal_results if result.chunk_id not in seen_chunk_ids]
+        )
     unique_sources: dict[int, dict[str, object]] = {}
     for result in results:
         unique_sources.setdefault(

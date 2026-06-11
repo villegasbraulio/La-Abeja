@@ -402,7 +402,9 @@ class OpenAICompatibleProvider(LLMProvider):
                         parts.append(item["text"])
                         continue
                     text_payload = item.get("text")
-                    if isinstance(text_payload, dict) and isinstance(text_payload.get("value"), str):
+                    if isinstance(text_payload, dict) and isinstance(
+                        text_payload.get("value"), str
+                    ):
                         parts.append(text_payload["value"])
                         continue
                 text_attr = getattr(item, "text", None)

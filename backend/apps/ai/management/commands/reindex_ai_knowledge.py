@@ -20,7 +20,9 @@ class Command(BaseCommand):
         documents = KnowledgeDocument.objects.select_related("source").filter(is_active=True)
         reindexed = 0
         for document in documents:
-            combined_content = "\n".join(document.chunks.order_by("chunk_index").values_list("content", flat=True))
+            combined_content = "\n".join(
+                document.chunks.order_by("chunk_index").values_list("content", flat=True)
+            )
             if not combined_content.strip():
                 continue
             service.upsert_document(

@@ -58,7 +58,11 @@ class AIOrchestrator:
             content=message,
         )
         del user_turn
-        agent_type = AgentRun.AgentType.OPS if conversation.mode == Conversation.Mode.OPS else AgentRun.AgentType.SUPPORT
+        agent_type = (
+            AgentRun.AgentType.OPS
+            if conversation.mode == Conversation.Mode.OPS
+            else AgentRun.AgentType.SUPPORT
+        )
         run = AgentRun.objects.create(
             conversation=conversation,
             agent_type=agent_type,
@@ -127,100 +131,150 @@ class AIOrchestrator:
             return OrchestratorResult(assistant_turn=assistant_turn, run=run)
 
         if intent == "search_orders":
-            result = self.tool_registry.execute(tool_name="search_orders", payload=payload, context=context)
-            fallback_text = self.response_builder.build_search_orders_response(result.get("results", []))
+            result = self.tool_registry.execute(
+                tool_name="search_orders", payload=payload, context=context
+            )
+            fallback_text = self.response_builder.build_search_orders_response(
+                result.get("results", [])
+            )
             evidence = ["tool:search_orders"]
             citations: list[dict[str, object]] = []
         elif intent == "customer_360":
-            result = self.tool_registry.execute(tool_name="get_customer_360", payload=payload, context=context)
+            result = self.tool_registry.execute(
+                tool_name="get_customer_360", payload=payload, context=context
+            )
             fallback_text = self.response_builder.build_customer_360_response(result)
             evidence = [f"tool:get_customer_360:{result.get('customer', {}).get('email', '')}"]
             citations = []
         elif intent == "customer_orders_summary":
-            result = self.tool_registry.execute(tool_name="get_customer_orders_summary", payload=payload, context=context)
+            result = self.tool_registry.execute(
+                tool_name="get_customer_orders_summary", payload=payload, context=context
+            )
             fallback_text = self.response_builder.build_customer_orders_summary_response(result)
             evidence = [f"tool:get_customer_orders_summary:{result.get('customer_email', '')}"]
             citations = []
         elif intent == "create_support_task":
-            result = self.tool_registry.execute(tool_name="create_support_task", payload=payload, context=context)
+            result = self.tool_registry.execute(
+                tool_name="create_support_task", payload=payload, context=context
+            )
             fallback_text = self.response_builder.build_support_task_response(result)
             evidence = [f"tool:create_support_task:{result.get('task_id', '')}"]
             citations = []
         elif intent == "create_payment_followup":
-            result = self.tool_registry.execute(tool_name="create_payment_followup", payload=payload, context=context)
+            result = self.tool_registry.execute(
+                tool_name="create_payment_followup", payload=payload, context=context
+            )
             fallback_text = self.response_builder.build_payment_followup_response(result)
             evidence = [f"tool:create_payment_followup:{result.get('task_id', '')}"]
             citations = []
         elif intent == "create_shipping_claim":
-            result = self.tool_registry.execute(tool_name="create_shipping_claim", payload=payload, context=context)
+            result = self.tool_registry.execute(
+                tool_name="create_shipping_claim", payload=payload, context=context
+            )
             fallback_text = self.response_builder.build_shipping_claim_response(result)
             evidence = [f"tool:create_shipping_claim:{result.get('task_id', '')}"]
             citations = []
         elif intent == "reserve_stock":
-            result = self.tool_registry.execute(tool_name="reserve_stock", payload=payload, context=context)
+            result = self.tool_registry.execute(
+                tool_name="reserve_stock", payload=payload, context=context
+            )
             fallback_text = self.response_builder.build_stock_reservation_response(result)
             evidence = [f"tool:reserve_stock:{result.get('reservation_id', '')}"]
             citations = []
         elif intent == "request_order_cancellation":
-            result = self.tool_registry.execute(tool_name="request_order_cancellation", payload=payload, context=context)
+            result = self.tool_registry.execute(
+                tool_name="request_order_cancellation", payload=payload, context=context
+            )
             fallback_text = self.response_builder.build_order_cancellation_response(result)
             evidence = [f"tool:request_order_cancellation:{result.get('order_number', '')}"]
             citations = []
         elif intent == "update_order_status":
-            result = self.tool_registry.execute(tool_name="update_order_status", payload=payload, context=context)
+            result = self.tool_registry.execute(
+                tool_name="update_order_status", payload=payload, context=context
+            )
             fallback_text = self.response_builder.build_order_status_update_response(result)
             evidence = [f"tool:update_order_status:{result.get('order_number', '')}"]
             citations = []
         elif intent == "order_status":
-            result = self.tool_registry.execute(tool_name="get_order_by_number", payload=payload, context=context)
+            result = self.tool_registry.execute(
+                tool_name="get_order_by_number", payload=payload, context=context
+            )
             fallback_text = self.response_builder.build_order_status_response(result)
             evidence = [f"tool:get_order_by_number:{result.get('order_number', '')}"]
             citations: list[dict[str, object]] = []
         elif intent == "low_stock":
-            result = self.tool_registry.execute(tool_name="list_low_stock_items", payload=payload, context=context)
-            fallback_text = self.response_builder.build_low_stock_response(result.get("results", []))
+            result = self.tool_registry.execute(
+                tool_name="list_low_stock_items", payload=payload, context=context
+            )
+            fallback_text = self.response_builder.build_low_stock_response(
+                result.get("results", [])
+            )
             evidence = ["tool:list_low_stock_items"]
             citations = []
         elif intent == "pending_orders":
-            result = self.tool_registry.execute(tool_name="list_pending_orders", payload=payload, context=context)
-            fallback_text = self.response_builder.build_pending_orders_response(result.get("results", []))
+            result = self.tool_registry.execute(
+                tool_name="list_pending_orders", payload=payload, context=context
+            )
+            fallback_text = self.response_builder.build_pending_orders_response(
+                result.get("results", [])
+            )
             evidence = ["tool:list_pending_orders"]
             citations = []
         elif intent == "payment_issue":
-            result = self.tool_registry.execute(tool_name="check_payment_issue", payload=payload, context=context)
+            result = self.tool_registry.execute(
+                tool_name="check_payment_issue", payload=payload, context=context
+            )
             fallback_text = self.response_builder.build_payment_issue_response(result)
             evidence = [f"tool:check_payment_issue:{result.get('order_number', '')}"]
             citations = []
         elif intent == "shipping_update":
-            result = self.tool_registry.execute(tool_name="generate_shipping_update", payload=payload, context=context)
+            result = self.tool_registry.execute(
+                tool_name="generate_shipping_update", payload=payload, context=context
+            )
             fallback_text = self.response_builder.build_shipping_update_response(result)
             evidence = [f"tool:generate_shipping_update:{result.get('order_number', '')}"]
             citations = []
         elif intent == "sales_summary":
-            result = self.tool_registry.execute(tool_name="get_sales_summary", payload=payload, context=context)
+            result = self.tool_registry.execute(
+                tool_name="get_sales_summary", payload=payload, context=context
+            )
             fallback_text = self.response_builder.build_sales_summary_response(result)
             evidence = [f"tool:get_sales_summary:{result.get('period', '')}"]
             citations = []
         elif intent == "sales_over_period":
-            result = self.tool_registry.execute(tool_name="get_sales_over_period", payload=payload, context=context)
+            result = self.tool_registry.execute(
+                tool_name="get_sales_over_period", payload=payload, context=context
+            )
             fallback_text = self.response_builder.build_sales_over_period_response(
                 result.get("results", []),
                 str(result.get("grain") or "day"),
             )
-            evidence = [f"tool:get_sales_over_period:{result.get('period', '')}:{result.get('grain', '')}"]
+            evidence = [
+                f"tool:get_sales_over_period:{result.get('period', '')}:{result.get('grain', '')}"
+            ]
             citations = []
         elif intent == "sales_by_varietal":
-            result = self.tool_registry.execute(tool_name="get_sales_by_varietal", payload=payload, context=context)
-            fallback_text = self.response_builder.build_sales_by_varietal_response(result.get("results", []))
+            result = self.tool_registry.execute(
+                tool_name="get_sales_by_varietal", payload=payload, context=context
+            )
+            fallback_text = self.response_builder.build_sales_by_varietal_response(
+                result.get("results", [])
+            )
             evidence = [f"tool:get_sales_by_varietal:{result.get('period', '')}"]
             citations = []
         elif intent == "sales_by_bottle":
-            result = self.tool_registry.execute(tool_name="get_sales_by_bottle", payload=payload, context=context)
-            fallback_text = self.response_builder.build_sales_by_bottle_response(result.get("results", []))
+            result = self.tool_registry.execute(
+                tool_name="get_sales_by_bottle", payload=payload, context=context
+            )
+            fallback_text = self.response_builder.build_sales_by_bottle_response(
+                result.get("results", [])
+            )
             evidence = [f"tool:get_sales_by_bottle:{result.get('period', '')}"]
             citations = []
         elif intent == "catalog_search":
-            result = self.tool_registry.execute(tool_name="search_catalog", payload=payload, context=context)
+            result = self.tool_registry.execute(
+                tool_name="search_catalog", payload=payload, context=context
+            )
             fallback_text = self.response_builder.build_catalog_response(result.get("results", []))
             evidence = ["tool:search_catalog"]
             citations = []
@@ -257,7 +311,11 @@ class AIOrchestrator:
             role=ConversationTurn.Role.ASSISTANT,
             content=llm_response.text,
             citations=citations,
-            metadata={"intent": intent, "used_llm": llm_response.used_llm, "model": llm_response.model},
+            metadata={
+                "intent": intent,
+                "used_llm": llm_response.used_llm,
+                "model": llm_response.model,
+            },
         )
 
         run.model = llm_response.model
@@ -265,7 +323,9 @@ class AIOrchestrator:
         run.response_text = assistant_turn.content
         run.citations = citations
         run.confidence = 0.950 if intent != "knowledge_search" else (0.880 if citations else 0.350)
-        run.needs_human = bool(run.metadata.get("pending_approval_ids")) or (not citations and intent == "knowledge_search")
+        run.needs_human = bool(run.metadata.get("pending_approval_ids")) or (
+            not citations and intent == "knowledge_search"
+        )
         run.metadata = {**run.metadata, "tool_payload": payload, "used_llm": llm_response.used_llm}
         run.save(
             update_fields=[
@@ -289,51 +349,83 @@ class AIOrchestrator:
         normalized = message.lower()
         order_match = ORDER_NUMBER_RE.search(message)
         if is_staff:
-            order_search_payload = self._detect_order_search_payload(message=message, normalized=normalized)
+            order_search_payload = self._detect_order_search_payload(
+                message=message, normalized=normalized
+            )
             if order_search_payload is not None:
                 return "search_orders", order_search_payload
-            customer_360_payload = self._detect_customer_context_payload(message=message, normalized=normalized)
+            customer_360_payload = self._detect_customer_context_payload(
+                message=message, normalized=normalized
+            )
             if customer_360_payload is not None:
-                intent = "customer_360" if "360" in normalized or "perfil" in normalized else "customer_orders_summary"
+                intent = (
+                    "customer_360"
+                    if "360" in normalized or "perfil" in normalized
+                    else "customer_orders_summary"
+                )
                 return intent, customer_360_payload
-            reserve_stock_payload = self._detect_reserve_stock_payload(message=message, normalized=normalized)
+            reserve_stock_payload = self._detect_reserve_stock_payload(
+                message=message, normalized=normalized
+            )
             if reserve_stock_payload is not None:
                 return "reserve_stock", reserve_stock_payload
-            cancellation_payload = self._detect_order_cancellation_payload(message=message, normalized=normalized)
+            cancellation_payload = self._detect_order_cancellation_payload(
+                message=message, normalized=normalized
+            )
             if cancellation_payload is not None:
                 return "request_order_cancellation", cancellation_payload
-            order_write_payload = self._detect_order_status_write_payload(message=message, normalized=normalized)
+            order_write_payload = self._detect_order_status_write_payload(
+                message=message, normalized=normalized
+            )
             if order_write_payload is not None:
                 return "update_order_status", order_write_payload
-            payment_followup_payload = self._detect_payment_followup_payload(message=message, normalized=normalized)
+            payment_followup_payload = self._detect_payment_followup_payload(
+                message=message, normalized=normalized
+            )
             if payment_followup_payload is not None:
                 return "create_payment_followup", payment_followup_payload
-            shipping_claim_payload = self._detect_shipping_claim_payload(message=message, normalized=normalized)
+            shipping_claim_payload = self._detect_shipping_claim_payload(
+                message=message, normalized=normalized
+            )
             if shipping_claim_payload is not None:
                 return "create_shipping_claim", shipping_claim_payload
-            task_payload = self._detect_task_creation_payload(message=message, normalized=normalized)
+            task_payload = self._detect_task_creation_payload(
+                message=message, normalized=normalized
+            )
             if task_payload is not None:
                 return "create_support_task", task_payload
         if order_match:
-            if any(keyword in normalized for keyword in ["tracking", "envio", "despacho", "en camino"]):
+            if any(
+                keyword in normalized for keyword in ["tracking", "envio", "despacho", "en camino"]
+            ):
                 return "shipping_update", {"order_number": order_match.group(0).upper()}
             if "pago" in normalized or "payment" in normalized:
                 return "payment_issue", {"order_number": order_match.group(0).upper()}
             return "order_status", {"order_number": order_match.group(0).upper()}
-        if is_staff and any(keyword in normalized for keyword in ["ventas", "facturacion", "ingresos"]):
+        if is_staff and any(
+            keyword in normalized for keyword in ["ventas", "facturacion", "ingresos"]
+        ):
             sales_payload = self._detect_sales_payload(normalized)
             if "varietal" in normalized:
                 return "sales_by_varietal", sales_payload
             if any(keyword in normalized for keyword in ["botella", "etiqueta", "sku"]):
                 return "sales_by_bottle", sales_payload
-            if any(keyword in normalized for keyword in ["por dia", "por semana", "por mes", "periodo"]):
+            if any(
+                keyword in normalized for keyword in ["por dia", "por semana", "por mes", "periodo"]
+            ):
                 return "sales_over_period", sales_payload
             return "sales_summary", sales_payload
         if is_staff and "stock" in normalized:
             return "low_stock", {"limit": 5}
-        if is_staff and ("pendiente" in normalized or "preparando" in normalized) and "pedido" in normalized:
+        if (
+            is_staff
+            and ("pendiente" in normalized or "preparando" in normalized)
+            and "pedido" in normalized
+        ):
             return "pending_orders", {"limit": 5}
-        if any(keyword in normalized for keyword in ["vino", "malbec", "cabernet", "blend", "etiqueta"]):
+        if any(
+            keyword in normalized for keyword in ["vino", "malbec", "cabernet", "blend", "etiqueta"]
+        ):
             return "catalog_search", {"query": message}
         return "knowledge_search", {}
 
@@ -368,7 +460,9 @@ class AIOrchestrator:
         order_match = ORDER_NUMBER_RE.search(message)
         if order_match is None:
             return None
-        if not any(keyword in normalized for keyword in ["marc", "actualiz", "cambi", "pone", "deja"]):
+        if not any(
+            keyword in normalized for keyword in ["marc", "actualiz", "cambi", "pone", "deja"]
+        ):
             return None
 
         status_map = [
@@ -381,7 +475,9 @@ class AIOrchestrator:
             ("cancelado", "cancelled"),
             ("pagado", "paid"),
         ]
-        target_status = next((status for phrase, status in status_map if phrase in normalized), None)
+        target_status = next(
+            (status for phrase, status in status_map if phrase in normalized), None
+        )
         if target_status is None:
             return None
 
@@ -416,8 +512,16 @@ class AIOrchestrator:
 
         order_match = ORDER_NUMBER_RE.search(message)
         email_match = EMAIL_RE.search(message)
-        priority = "urgent" if "urgente" in normalized else ("high" if "alta prioridad" in normalized else "medium")
-        task_type = "order_issue" if any(keyword in normalized for keyword in ["pedido", "pago", "tracking", "envio"]) else "support_follow_up"
+        priority = (
+            "urgent"
+            if "urgente" in normalized
+            else ("high" if "alta prioridad" in normalized else "medium")
+        )
+        task_type = (
+            "order_issue"
+            if any(keyword in normalized for keyword in ["pedido", "pago", "tracking", "envio"])
+            else "support_follow_up"
+        )
         title = (
             f"Seguimiento manual · {order_match.group(0).upper()}"
             if order_match is not None
@@ -517,7 +621,15 @@ class AIOrchestrator:
         normalized: str,
     ) -> dict[str, object] | None:
         """Detect prompts that ask to create a payment follow-up task."""
-        if not any(trigger in normalized for trigger in ["seguimiento de pago", "followup de pago", "revisa el pago", "segui el pago"]):
+        if not any(
+            trigger in normalized
+            for trigger in [
+                "seguimiento de pago",
+                "followup de pago",
+                "revisa el pago",
+                "segui el pago",
+            ]
+        ):
             return None
         order_match = ORDER_NUMBER_RE.search(message)
         if order_match is None:
@@ -535,7 +647,15 @@ class AIOrchestrator:
         normalized: str,
     ) -> dict[str, object] | None:
         """Detect prompts to create shipping or logistics claims."""
-        if not any(trigger in normalized for trigger in ["reclamo logist", "reclamo de envio", "shipping claim", "demora de envio"]):
+        if not any(
+            trigger in normalized
+            for trigger in [
+                "reclamo logist",
+                "reclamo de envio",
+                "shipping claim",
+                "demora de envio",
+            ]
+        ):
             return None
         order_match = ORDER_NUMBER_RE.search(message)
         if order_match is None:
@@ -561,7 +681,17 @@ class AIOrchestrator:
         order_match = ORDER_NUMBER_RE.search(message)
         if order_match is None:
             return None
-        if not any(trigger in normalized for trigger in ["pedi cancel", "pedí cancel", "cancela el pedido", "cancelá el pedido", "anula el pedido", "anulá el pedido"]):
+        if not any(
+            trigger in normalized
+            for trigger in [
+                "pedi cancel",
+                "pedí cancel",
+                "cancela el pedido",
+                "cancelá el pedido",
+                "anula el pedido",
+                "anulá el pedido",
+            ]
+        ):
             return None
         return {
             "order_number": order_match.group(0).upper(),

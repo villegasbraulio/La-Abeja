@@ -1,10 +1,12 @@
 """Deterministic AI eval runner for prompt and orchestration regressions."""
 
+# ruff: noqa: E501
+
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Callable
 from uuid import uuid4
 
 from django.contrib.auth import get_user_model
@@ -16,7 +18,6 @@ from apps.ai.models import Conversation, KnowledgeDocument, KnowledgeSource
 from apps.ai.rag.ingest import KnowledgeIngestionService
 from apps.catalog.models import Category, Varietal, Wine
 from apps.orders.models import Order, OrderItem
-from apps.payments.models import Payment
 
 user_model = get_user_model()
 
@@ -76,7 +77,9 @@ class EvalRunner:
         with transaction.atomic(), override_settings(AI_USE_LLM=False, AI_USE_TOOL_CALLING=False):
             user = self._create_user(is_staff=case.is_staff, label=case.name)
             conversation = Conversation.objects.create(
-                channel=Conversation.Channel.BACKOFFICE if case.is_staff else Conversation.Channel.WEB,
+                channel=Conversation.Channel.BACKOFFICE
+                if case.is_staff
+                else Conversation.Channel.WEB,
                 mode=case.mode,
                 customer=user,
             )
@@ -280,7 +283,9 @@ class EvalRunner:
         """Seed enough paid orders to produce a varietal ranking."""
         category = Category.objects.create(name="Ventas Eval", slug=f"ventas-{uuid4().hex[:6]}")
         malbec = Varietal.objects.create(name="Malbec", slug=f"malbec-sales-{uuid4().hex[:6]}")
-        cabernet = Varietal.objects.create(name="Cabernet", slug=f"cabernet-sales-{uuid4().hex[:6]}")
+        cabernet = Varietal.objects.create(
+            name="Cabernet", slug=f"cabernet-sales-{uuid4().hex[:6]}"
+        )
         wine_malbec = self._create_wine(
             category=category,
             varietal=malbec,

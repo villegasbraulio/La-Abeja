@@ -79,7 +79,10 @@ export function CheckoutPage() {
     staleTime: 60_000,
   });
 
-  const shippingOptions = shippingQuoteQuery.data?.quotes ?? [];
+  const shippingOptions = useMemo(
+    () => shippingQuoteQuery.data?.quotes ?? [],
+    [shippingQuoteQuery.data?.quotes],
+  );
 
   useEffect(() => {
     if (shippingOptions.length === 0) {

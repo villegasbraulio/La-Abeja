@@ -1,5 +1,7 @@
 """Approval orchestration for risky AI actions."""
 
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 from uuid import uuid4
@@ -35,7 +37,9 @@ class ApprovalService:
                 "tool_name": spec.name,
                 "tool_description": spec.description,
                 "tool_payload": payload,
-                "conversation_id": str(context.run.conversation_id) if context.run.conversation_id else None,
+                "conversation_id": str(context.run.conversation_id)
+                if context.run.conversation_id
+                else None,
                 "requested_run_id": str(context.run.id),
                 "requested_by_user_id": context.user_id,
                 "risk_level": spec.risk_level,
@@ -50,7 +54,9 @@ class ApprovalService:
                 "tool_name": spec.name,
                 "tool_description": spec.description,
                 "tool_payload": payload,
-                "conversation_id": str(context.run.conversation_id) if context.run.conversation_id else None,
+                "conversation_id": str(context.run.conversation_id)
+                if context.run.conversation_id
+                else None,
                 "requested_run_id": str(context.run.id),
                 "requested_by_user_id": context.user_id,
                 "risk_level": spec.risk_level,
@@ -231,7 +237,9 @@ class ApprovalService:
         """Create the recommended follow-up after a status change."""
         order_number = str(result.get("order_number") or payload.get("order_number") or "").strip()
         status_value = str(result.get("status") or payload.get("new_status") or "").strip()
-        tracking_number = str(result.get("tracking_number") or payload.get("tracking_number") or "").strip()
+        tracking_number = str(
+            result.get("tracking_number") or payload.get("tracking_number") or ""
+        ).strip()
         estimated_delivery = str(
             result.get("estimated_delivery") or payload.get("estimated_delivery") or ""
         ).strip()
@@ -354,7 +362,9 @@ class ApprovalService:
         wine_reference = wine_name or sku
         order_fragment = f" para el pedido {order_number}" if order_number else ""
         remaining_fragment = (
-            f" Quedaron {remaining_stock} unidades disponibles." if remaining_stock is not None else ""
+            f" Quedaron {remaining_stock} unidades disponibles."
+            if remaining_stock is not None
+            else ""
         )
         return {
             "kind": "internal_follow_up",

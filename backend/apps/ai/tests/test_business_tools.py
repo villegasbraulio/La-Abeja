@@ -82,7 +82,9 @@ def test_create_support_task_creates_task_and_workflow() -> None:
     assert task.priority == SupportTask.Priority.HIGH
     assert task.customer == customer
     assert task.workflow_run is not None
-    assert WorkflowRun.objects.filter(id=task.workflow_run_id, workflow_type="create_support_task").exists()
+    assert WorkflowRun.objects.filter(
+        id=task.workflow_run_id, workflow_type="create_support_task"
+    ).exists()
 
 
 @pytest.mark.django_db
@@ -110,8 +112,14 @@ def test_assign_order_issue_and_mark_order_for_review_create_internal_records() 
 
     assert issue_result["created"] is True
     assert review_result["marked"] is True
-    assert SupportTask.objects.filter(order=order, task_type=SupportTask.TaskType.ORDER_ISSUE).count() == 1
-    assert SupportTask.objects.filter(order=order, task_type=SupportTask.TaskType.ORDER_REVIEW).count() == 1
+    assert (
+        SupportTask.objects.filter(order=order, task_type=SupportTask.TaskType.ORDER_ISSUE).count()
+        == 1
+    )
+    assert (
+        SupportTask.objects.filter(order=order, task_type=SupportTask.TaskType.ORDER_REVIEW).count()
+        == 1
+    )
     assert InternalNote.objects.filter(order=order).count() == 2
 
 
@@ -119,7 +127,9 @@ def test_assign_order_issue_and_mark_order_for_review_create_internal_records() 
 def test_create_internal_note_and_lead_from_conversation() -> None:
     """The AI layer should persist notes and commercial leads."""
     customer = UserFactory(email="lead@example.com", first_name="Lucia", last_name="Suarez")
-    conversation = Conversation.objects.create(customer=customer, channel=Conversation.Channel.WHATSAPP)
+    conversation = Conversation.objects.create(
+        customer=customer, channel=Conversation.Channel.WHATSAPP
+    )
     context = _context(conversation=conversation)
 
     note_result = create_internal_note(
@@ -145,7 +155,9 @@ def test_create_internal_note_and_lead_from_conversation() -> None:
 
     assert note_result["created"] is True
     assert lead_result["created"] is True
-    assert InternalNote.objects.filter(conversation=conversation, note_type=InternalNote.NoteType.SALES).exists()
+    assert InternalNote.objects.filter(
+        conversation=conversation, note_type=InternalNote.NoteType.SALES
+    ).exists()
     lead = Lead.objects.get(id=lead_result["lead_id"])
     assert lead.full_name == customer.full_name
     assert lead.desired_varietals == ["Malbec", "Blend"]
@@ -160,7 +172,10 @@ def test_classification_and_whatsapp_draft_cover_payment_issue() -> None:
         context,
     )
     draft = draft_whatsapp_reply(
-        {"message": "Hola, mi pago fue rechazado y necesito resolverlo hoy.", "customer_name": "Sofia"},
+        {
+            "message": "Hola, mi pago fue rechazado y necesito resolverlo hoy.",
+            "customer_name": "Sofia",
+        },
         context,
     )
 
@@ -177,7 +192,13 @@ def test_recommend_wines_for_customer_uses_customer_preferences() -> None:
     category = CategoryFactory()
     malbec = Varietal.objects.create(name="Malbec", slug="malbec")
     cabernet = Varietal.objects.create(name="Cabernet Sauvignon", slug="cabernet-sauvignon")
-    WineFactory(category=category, varietal=malbec, name="Malbec Clasico", sku="LAB-MALBEC", price=Decimal("12000.00"))
+    WineFactory(
+        category=category,
+        varietal=malbec,
+        name="Malbec Clasico",
+        sku="LAB-MALBEC",
+        price=Decimal("12000.00"),
+    )
     WineFactory(
         category=category,
         varietal=cabernet,
@@ -278,7 +299,9 @@ def test_update_order_status_and_contact_tools_execute_side_effects(monkeypatch)
     """High-value handlers should change state and create internal notes when executed."""
     context = _context()
     customer = UserFactory(email="buyer@example.com", phone="+5492604000000")
-    order = OrderFactory(user=customer, order_number="LAB-2026-000990", status=Order.Status.PREPARING)
+    order = OrderFactory(
+        user=customer, order_number="LAB-2026-000990", status=Order.Status.PREPARING
+    )
     sent_whatsapp: list[tuple[str, str]] = []
     sent_emails: list[tuple[str, str, dict[str, object]]] = []
 
@@ -335,13 +358,36 @@ def test_business_tools_return_clear_errors_for_missing_or_invalid_inputs() -> N
 
     assert create_support_task({}, staff_context)["error"] == "missing_title"
     assert create_lead_from_conversation({}, staff_context)["error"] == "missing_full_name"
-    assert update_support_task({"task_id": "00000000-0000-0000-0000-000000000000"}, staff_context)["error"] == "task_not_found"
-    assert update_lead_status({"lead_id": "00000000-0000-0000-0000-000000000000"}, staff_context)["error"] == "lead_not_found"
-    assert update_order_status({"order_number": invalid_order.order_number, "new_status": "spaceship"}, staff_context)["error"] == "invalid_status"
+    assert (
+        update_support_task({"task_id": "00000000-0000-0000-0000-000000000000"}, staff_context)[
+            "error"
+        ]
+        == "task_not_found"
+    )
+    assert (
+        update_lead_status({"lead_id": "00000000-0000-0000-0000-000000000000"}, staff_context)[
+            "error"
+        ]
+        == "lead_not_found"
+    )
+    assert (
+        update_order_status(
+            {"order_number": invalid_order.order_number, "new_status": "spaceship"}, staff_context
+        )["error"]
+        == "invalid_status"
+    )
     assert send_whatsapp_message({"message": "hola"}, staff_context)["error"] == "missing_phone"
     assert send_support_email({"message": "hola"}, staff_context)["error"] == "missing_email"
-    assert create_support_task({"title": "No permitido"}, customer_context)["error"] == "staff_required"
-    assert send_whatsapp_message({"phone": "+5492604000000", "message": "hola"}, customer_context)["error"] == "staff_required"
+    assert (
+        create_support_task({"title": "No permitido"}, customer_context)["error"]
+        == "staff_required"
+    )
+    assert (
+        send_whatsapp_message({"phone": "+5492604000000", "message": "hola"}, customer_context)[
+            "error"
+        ]
+        == "staff_required"
+    )
 
 
 @pytest.mark.django_db
@@ -350,18 +396,64 @@ def test_sales_tools_aggregate_summary_and_breakdowns() -> None:
     category = CategoryFactory()
     malbec = VarietalFactory(name="Malbec", slug="malbec-sales")
     cabernet = VarietalFactory(name="Cabernet", slug="cabernet-sales")
-    wine_malbec = WineFactory(category=category, varietal=malbec, name="Malbec Reserva", sku="LAB-MAL-1")
-    wine_cabernet = WineFactory(category=category, varietal=cabernet, name="Cabernet Estate", sku="LAB-CAB-1")
+    wine_malbec = WineFactory(
+        category=category, varietal=malbec, name="Malbec Reserva", sku="LAB-MAL-1"
+    )
+    wine_cabernet = WineFactory(
+        category=category, varietal=cabernet, name="Cabernet Estate", sku="LAB-CAB-1"
+    )
 
-    order_one = OrderFactory(status=Order.Status.PAID, total=Decimal("13500.00"), subtotal=Decimal("13500.00"), shipping_cost=Decimal("0.00"))
-    OrderItemFactory(order=order_one, wine=wine_malbec, wine_name=wine_malbec.name, wine_sku=wine_malbec.sku, quantity=2, unit_price=Decimal("4500.00"), subtotal=Decimal("9000.00"))
-    OrderItemFactory(order=order_one, wine=wine_cabernet, wine_name=wine_cabernet.name, wine_sku=wine_cabernet.sku, quantity=1, unit_price=Decimal("4500.00"), subtotal=Decimal("4500.00"))
+    order_one = OrderFactory(
+        status=Order.Status.PAID,
+        total=Decimal("13500.00"),
+        subtotal=Decimal("13500.00"),
+        shipping_cost=Decimal("0.00"),
+    )
+    OrderItemFactory(
+        order=order_one,
+        wine=wine_malbec,
+        wine_name=wine_malbec.name,
+        wine_sku=wine_malbec.sku,
+        quantity=2,
+        unit_price=Decimal("4500.00"),
+        subtotal=Decimal("9000.00"),
+    )
+    OrderItemFactory(
+        order=order_one,
+        wine=wine_cabernet,
+        wine_name=wine_cabernet.name,
+        wine_sku=wine_cabernet.sku,
+        quantity=1,
+        unit_price=Decimal("4500.00"),
+        subtotal=Decimal("4500.00"),
+    )
 
-    order_two = OrderFactory(status=Order.Status.SHIPPED, total=Decimal("4500.00"), subtotal=Decimal("4500.00"), shipping_cost=Decimal("0.00"))
-    OrderItemFactory(order=order_two, wine=wine_malbec, wine_name=wine_malbec.name, wine_sku=wine_malbec.sku, quantity=1, unit_price=Decimal("4500.00"), subtotal=Decimal("4500.00"))
+    order_two = OrderFactory(
+        status=Order.Status.SHIPPED,
+        total=Decimal("4500.00"),
+        subtotal=Decimal("4500.00"),
+        shipping_cost=Decimal("0.00"),
+    )
+    OrderItemFactory(
+        order=order_two,
+        wine=wine_malbec,
+        wine_name=wine_malbec.name,
+        wine_sku=wine_malbec.sku,
+        quantity=1,
+        unit_price=Decimal("4500.00"),
+        subtotal=Decimal("4500.00"),
+    )
 
     ignored_order = OrderFactory(status=Order.Status.PENDING_PAYMENT, total=Decimal("9999.00"))
-    OrderItemFactory(order=ignored_order, wine=wine_malbec, wine_name=wine_malbec.name, wine_sku=wine_malbec.sku, quantity=10, unit_price=Decimal("999.90"), subtotal=Decimal("9999.00"))
+    OrderItemFactory(
+        order=ignored_order,
+        wine=wine_malbec,
+        wine_name=wine_malbec.name,
+        wine_sku=wine_malbec.sku,
+        quantity=10,
+        unit_price=Decimal("999.90"),
+        subtotal=Decimal("9999.00"),
+    )
 
     context = _context()
 

@@ -1,12 +1,21 @@
 """Coverage for the newer AI operations, analytics, and knowledge tools."""
 
+# ruff: noqa: E501
+
 from __future__ import annotations
 
 from decimal import Decimal
 
 import pytest
 
-from apps.ai.models import AgentRun, Conversation, InternalNote, KnowledgeSource, StockReservation, SupportTask
+from apps.ai.models import (
+    AgentRun,
+    Conversation,
+    InternalNote,
+    KnowledgeSource,
+    StockReservation,
+    SupportTask,
+)
 from apps.ai.rag.ingest import KnowledgeIngestionService
 from apps.ai.tools.analytics_tools import (
     get_conversion_funnel,
@@ -17,6 +26,7 @@ from apps.ai.tools.analytics_tools import (
     get_top_skus,
 )
 from apps.ai.tools.base import ToolContext
+from apps.ai.tools.knowledge_tools import get_answerable_sources, search_playbooks, search_policies
 from apps.ai.tools.operations_tools import (
     create_payment_followup,
     create_restock_task,
@@ -33,7 +43,6 @@ from apps.ai.tools.operations_tools import (
     search_orders,
     sync_tracking_status,
 )
-from apps.ai.tools.knowledge_tools import get_answerable_sources, search_playbooks, search_policies
 from apps.authentication.tests.factories import UserFactory
 from apps.catalog.tests.factories import CategoryFactory, VarietalFactory, WineFactory
 from apps.orders.models import Cart, CartItem, Order
@@ -76,7 +85,9 @@ def _context(*, is_staff: bool = True, user=None, conversation=None) -> ToolCont
 @pytest.mark.django_db
 def test_order_search_customer_views_and_note_search_cover_support_context() -> None:
     """Staff operators should be able to search orders and build customer context quickly."""
-    customer = UserFactory(email="context@example.com", first_name="Ana", last_name="Lopez", phone="+5492604000002")
+    customer = UserFactory(
+        email="context@example.com", first_name="Ana", last_name="Lopez", phone="+5492604000002"
+    )
     conversation = Conversation.objects.create(customer=customer, mode=Conversation.Mode.OPS)
     staff_context = _context(conversation=conversation)
     order = OrderFactory(
@@ -105,7 +116,9 @@ def test_order_search_customer_views_and_note_search_cover_support_context() -> 
     search_result = search_orders({"customer_email": customer.email}, staff_context)
     summary_result = get_customer_orders_summary({"customer_email": customer.email}, staff_context)
     customer_360 = get_customer_360({"customer_email": customer.email}, staff_context)
-    notes_result = search_internal_notes({"customer_email": customer.email, "query": "tracking"}, staff_context)
+    notes_result = search_internal_notes(
+        {"customer_email": customer.email, "query": "tracking"}, staff_context
+    )
     shipping_draft = generate_shipping_update({"order_number": order.order_number}, staff_context)
     tracking_sync = sync_tracking_status({"order_number": order.order_number}, staff_context)
 
@@ -127,8 +140,15 @@ def test_new_operational_write_tools_create_tasks_and_escalations() -> None:
     conversation = Conversation.objects.create(customer=customer, mode=Conversation.Mode.OPS)
     context = _context(conversation=conversation)
     low_stock_wine = WineFactory(stock=2, low_stock_threshold=8, sku="LAB-LOW-OPS")
-    order = OrderFactory(user=customer, order_number="LAB-2026-000402", status=Order.Status.PAYMENT_FAILED)
-    PaymentFactory(order=order, status=Payment.Status.REJECTED, amount=order.total, status_detail="cc_rejected_bad_filled_card_number")
+    order = OrderFactory(
+        user=customer, order_number="LAB-2026-000402", status=Order.Status.PAYMENT_FAILED
+    )
+    PaymentFactory(
+        order=order,
+        status=Payment.Status.REJECTED,
+        amount=order.total,
+        status_detail="cc_rejected_bad_filled_card_number",
+    )
 
     ticket = create_ticket_and_assign(
         {
@@ -149,7 +169,9 @@ def test_new_operational_write_tools_create_tasks_and_escalations() -> None:
         context,
     )
     payment_followup = create_payment_followup({"order_number": order.order_number}, context)
-    restock_task = create_restock_task({"sku": low_stock_wine.sku, "assigned_to_email": assignee.email}, context)
+    restock_task = create_restock_task(
+        {"sku": low_stock_wine.sku, "assigned_to_email": assignee.email}, context
+    )
     shipping_claim = create_shipping_claim(
         {
             "order_number": order.order_number,
@@ -175,7 +197,9 @@ def test_stock_reservation_release_and_cancellation_handlers_mutate_state() -> N
     customer = UserFactory(email="reserve@example.com")
     context = _context()
     wine = WineFactory(stock=12, sku="LAB-RES-1", name="Reserva Operativa")
-    order = OrderFactory(user=customer, order_number="LAB-2026-000403", status=Order.Status.PENDING_PAYMENT)
+    order = OrderFactory(
+        user=customer, order_number="LAB-2026-000403", status=Order.Status.PENDING_PAYMENT
+    )
     PaymentFactory(order=order, status=Payment.Status.APPROVED, amount=order.total)
 
     reserved = reserve_stock(
@@ -189,9 +213,13 @@ def test_stock_reservation_release_and_cancellation_handlers_mutate_state() -> N
         context,
     )
     wine.refresh_from_db()
-    released = release_stock_reservation({"reservation_id": reserved["reservation_id"], "quantity": 2}, context)
+    released = release_stock_reservation(
+        {"reservation_id": reserved["reservation_id"], "quantity": 2}, context
+    )
     wine.refresh_from_db()
-    cancelled = request_order_cancellation({"order_number": order.order_number, "reason": "Cliente pidio anular la compra."}, context)
+    cancelled = request_order_cancellation(
+        {"order_number": order.order_number, "reason": "Cliente pidio anular la compra."}, context
+    )
     order.refresh_from_db()
     reservation = StockReservation.objects.get(id=reserved["reservation_id"])
 
@@ -247,7 +275,15 @@ def test_knowledge_specialized_search_and_advanced_metrics_work() -> None:
         shipping_cost=Decimal("0.00"),
         shipping_address=_shipping_address(source_channel="web"),
     )
-    OrderItemFactory(order=order_one, wine=wine, wine_name=wine.name, wine_sku=wine.sku, quantity=1, unit_price=Decimal("10000.00"), subtotal=Decimal("10000.00"))
+    OrderItemFactory(
+        order=order_one,
+        wine=wine,
+        wine_name=wine.name,
+        wine_sku=wine.sku,
+        quantity=1,
+        unit_price=Decimal("10000.00"),
+        subtotal=Decimal("10000.00"),
+    )
     order_two = OrderFactory(
         user=repeat_customer,
         status=Order.Status.SHIPPED,
@@ -256,10 +292,27 @@ def test_knowledge_specialized_search_and_advanced_metrics_work() -> None:
         shipping_cost=Decimal("0.00"),
         shipping_address=_shipping_address(source_channel="whatsapp"),
     )
-    OrderItemFactory(order=order_two, wine=wine, wine_name=wine.name, wine_sku=wine.sku, quantity=2, unit_price=Decimal("10000.00"), subtotal=Decimal("20000.00"))
-    OrderFactory(status=Order.Status.REFUNDED, shipping_address=_shipping_address(source_channel="web"))
-    OrderFactory(status=Order.Status.PAYMENT_FAILED, shipping_address=_shipping_address(source_channel="backoffice"))
-    SupportTask.objects.create(task_type=SupportTask.TaskType.SHIPPING_CLAIM, title="Reclamo", priority=SupportTask.Priority.HIGH)
+    OrderItemFactory(
+        order=order_two,
+        wine=wine,
+        wine_name=wine.name,
+        wine_sku=wine.sku,
+        quantity=2,
+        unit_price=Decimal("10000.00"),
+        subtotal=Decimal("20000.00"),
+    )
+    OrderFactory(
+        status=Order.Status.REFUNDED, shipping_address=_shipping_address(source_channel="web")
+    )
+    OrderFactory(
+        status=Order.Status.PAYMENT_FAILED,
+        shipping_address=_shipping_address(source_channel="backoffice"),
+    )
+    SupportTask.objects.create(
+        task_type=SupportTask.TaskType.SHIPPING_CLAIM,
+        title="Reclamo",
+        priority=SupportTask.Priority.HIGH,
+    )
 
     cart = Cart.objects.create(user=repeat_customer)
     CartItem.objects.create(cart=cart, wine=wine, quantity=1, unit_price=wine.price)
