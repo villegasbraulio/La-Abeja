@@ -45,7 +45,7 @@ class ApprovalService:
                 "risk_level": spec.risk_level,
             },
             result_payload={},
-            idempotency_key=f"tool-approval:{spec.name}:{context.run.id}:{uuid4()}",
+            idempotency_key=f"approval:{spec.name[:24]}:{uuid4().hex}",
         )
         return ApprovalRequest.objects.create(
             workflow_run=workflow,

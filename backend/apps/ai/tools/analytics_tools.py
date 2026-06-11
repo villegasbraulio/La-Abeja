@@ -61,8 +61,8 @@ def get_sales_summary(payload: dict[str, object], context: ToolContext) -> dict[
         "start_at": window.start_at.isoformat(),
         "end_at": window.end_at.isoformat(),
         "order_count": int(order_aggregate["order_count"] or 0),
-        "total_revenue": str(order_aggregate["total_revenue"] or Decimal("0.00")),
-        "average_order_value": str(order_aggregate["average_order_value"] or Decimal("0.00")),
+        "total_revenue": _format_decimal(order_aggregate["total_revenue"]),
+        "average_order_value": _format_decimal(order_aggregate["average_order_value"]),
         "bottles_sold": int(bottle_aggregate["bottles_sold"] or 0),
     }
 
@@ -102,7 +102,7 @@ def get_sales_over_period(payload: dict[str, object], context: ToolContext) -> d
         merged[key] = {
             "period": key,
             "order_count": int(row["order_count"] or 0),
-            "total_revenue": str(row["total_revenue"] or Decimal("0.00")),
+            "total_revenue": _format_decimal(row["total_revenue"]),
             "bottles_sold": 0,
         }
     for row in bottle_rows:
@@ -112,7 +112,7 @@ def get_sales_over_period(payload: dict[str, object], context: ToolContext) -> d
             {
                 "period": key,
                 "order_count": 0,
-                "total_revenue": str(Decimal("0.00")),
+                "total_revenue": _format_decimal(Decimal("0.00")),
                 "bottles_sold": 0,
             },
         )
@@ -148,7 +148,7 @@ def get_sales_by_varietal(payload: dict[str, object], context: ToolContext) -> d
             {
                 "varietal": row["wine__varietal__name"] or "Sin varietal",
                 "bottles_sold": int(row["bottles_sold"] or 0),
-                "revenue": str(row["revenue"] or Decimal("0.00")),
+                "revenue": _format_decimal(row["revenue"]),
                 "order_count": int(row["order_count"] or 0),
             }
             for row in rows
@@ -180,7 +180,7 @@ def get_sales_by_bottle(payload: dict[str, object], context: ToolContext) -> dic
                 "sku": row["wine_sku"],
                 "wine_name": row["wine_name"],
                 "bottles_sold": int(row["bottles_sold"] or 0),
-                "revenue": str(row["revenue"] or Decimal("0.00")),
+                "revenue": _format_decimal(row["revenue"]),
                 "order_count": int(row["order_count"] or 0),
             }
             for row in rows
@@ -218,7 +218,7 @@ def get_top_skus(payload: dict[str, object], context: ToolContext) -> dict[str, 
                 "sku": row["wine_sku"],
                 "wine_name": row["wine_name"],
                 "bottles_sold": int(row["bottles_sold"] or 0),
-                "revenue": str(row["revenue"] or Decimal("0.00")),
+                "revenue": _format_decimal(row["revenue"]),
                 "order_count": int(row["order_count"] or 0),
             }
             for row in rows
@@ -256,14 +256,14 @@ def get_repeat_customers_metrics(
         "repeat_rate": round((len(repeat_customers) / unique_customers), 4)
         if unique_customers
         else 0.0,
-        "average_revenue_per_customer": str(
+        "average_revenue_per_customer": _format_decimal(
             (total_revenue / unique_customers) if unique_customers else Decimal("0.00")
         ),
         "top_repeat_customers": [
             {
                 "customer_email": row["user__email"],
                 "order_count": int(row["order_count"] or 0),
-                "revenue": str(row["revenue"] or Decimal("0.00")),
+                "revenue": _format_decimal(row["revenue"]),
                 "last_order_at": row["last_order_at"].isoformat() if row["last_order_at"] else None,
             }
             for row in repeat_customers[: min(5, len(repeat_customers))]
@@ -374,7 +374,7 @@ def get_sales_by_channel(payload: dict[str, object], context: ToolContext) -> di
             {
                 "channel": channel,
                 "order_count": value["order_count"],
-                "total_revenue": str(value["total_revenue"]),
+                "total_revenue": _format_decimal(value["total_revenue"]),
             }
             for channel, value in sorted(
                 grouped.items(), key=lambda item: item[1]["total_revenue"], reverse=True
@@ -415,10 +415,11 @@ def get_margin_estimate_by_product(
                 "sku": row["wine__sku"],
                 "wine_name": row["wine__name"],
                 "bottles_sold": int(row["bottles_sold"] or 0),
-                "revenue": str(row["revenue"] or Decimal("0.00")),
-                "estimated_cost": str(row["estimated_cost"] or Decimal("0.00")),
-                "estimated_margin": str(
-                    (row["revenue"] or Decimal("0.00")) - (row["estimated_cost"] or Decimal("0.00"))
+                "revenue": _format_decimal(row["revenue"]),
+                "estimated_cost": _format_decimal(row["estimated_cost"]),
+                "estimated_margin": _format_decimal(
+                    (row["revenue"] or Decimal("0.00"))
+                    - (row["estimated_cost"] or Decimal("0.00"))
                 ),
             }
             for row in rows
@@ -464,6 +465,11 @@ def _parse_date(raw_value: object) -> date | None:
         return date.fromisoformat(value)
     except ValueError:
         return None
+
+
+def _format_decimal(value: object) -> str:
+    decimal_value = value if isinstance(value, Decimal) else Decimal(str(value or "0"))
+    return format(decimal_value.normalize(), "f")
 
 
 def _bounded_int(value: object, *, default: int, minimum: int, maximum: int) -> int:
