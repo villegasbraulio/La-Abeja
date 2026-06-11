@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Protocol
+from uuid import UUID
 
 from apps.ai.models import AgentRun
 
@@ -13,7 +14,7 @@ class ToolContext:
     """Execution context passed to tools."""
 
     run: AgentRun
-    user_id: str | None
+    user_id: UUID | None
     is_staff: bool
 
 

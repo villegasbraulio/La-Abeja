@@ -73,7 +73,7 @@ class KnowledgeIngestionService:
                 chunk_index=index,
                 section=str(chunk["section"]),
                 content=str(chunk["content"]),
-                token_count=int(chunk["token_count"]),
+                token_count=int(str(chunk["token_count"])),
                 content_hash=str(chunk["content_hash"]),
                 embedding=embedding,
                 embedding_model=embedding_model,

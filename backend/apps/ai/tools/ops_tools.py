@@ -14,7 +14,7 @@ def list_low_stock_items(payload: dict[str, object], context: ToolContext) -> di
     """Return wines whose stock is at or below the threshold."""
     if not context.is_staff:
         return {"error": "staff_required", "results": []}
-    limit = int(payload.get("limit") or 5)
+    limit = _payload_limit(payload, default=5)
     wines = Wine.objects.filter(is_active=True, stock__lte=F("low_stock_threshold")).order_by(
         "stock", "name"
     )[:limit]
@@ -36,7 +36,7 @@ def list_pending_orders(payload: dict[str, object], context: ToolContext) -> dic
     """Return the newest pending operational orders."""
     if not context.is_staff:
         return {"error": "staff_required", "results": []}
-    limit = int(payload.get("limit") or 5)
+    limit = _payload_limit(payload, default=5)
     orders = (
         Order.objects.select_related("user")
         .filter(status__in=[Order.Status.PENDING_PAYMENT, Order.Status.PREPARING])
@@ -55,3 +55,13 @@ def list_pending_orders(payload: dict[str, object], context: ToolContext) -> dic
             for order in orders
         ]
     }
+
+
+def _payload_limit(payload: dict[str, object], *, default: int) -> int:
+    raw_limit = payload.get("limit")
+    if raw_limit in (None, ""):
+        return default
+    try:
+        return int(str(raw_limit))
+    except ValueError:
+        return default

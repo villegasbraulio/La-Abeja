@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from typing import cast
+from uuid import UUID
 
 from django.db import transaction
 from django.utils import timezone
@@ -48,7 +50,7 @@ class AIOrchestrator:
         *,
         conversation: Conversation,
         message: str,
-        user_id: str | None,
+        user_id: UUID | None,
         is_staff: bool,
     ) -> OrchestratorResult:
         """Persist the user message, run the orchestration, and store the assistant reply."""
@@ -130,6 +132,7 @@ class AIOrchestrator:
             conversation.save(update_fields=["summary", "updated_at"])
             return OrchestratorResult(assistant_turn=assistant_turn, run=run)
 
+        citations: list[dict[str, object]] = []
         if intent == "search_orders":
             result = self.tool_registry.execute(
                 tool_name="search_orders", payload=payload, context=context
@@ -138,7 +141,7 @@ class AIOrchestrator:
                 result.get("results", [])
             )
             evidence = ["tool:search_orders"]
-            citations: list[dict[str, object]] = []
+            citations = []
         elif intent == "customer_360":
             result = self.tool_registry.execute(
                 tool_name="get_customer_360", payload=payload, context=context
@@ -201,7 +204,7 @@ class AIOrchestrator:
             )
             fallback_text = self.response_builder.build_order_status_response(result)
             evidence = [f"tool:get_order_by_number:{result.get('order_number', '')}"]
-            citations: list[dict[str, object]] = []
+            citations = []
         elif intent == "low_stock":
             result = self.tool_registry.execute(
                 tool_name="list_low_stock_items", payload=payload, context=context
@@ -284,7 +287,7 @@ class AIOrchestrator:
                 payload={"query": message},
                 context=context,
             )
-            kb_results = list(result.get("results", []))
+            kb_results = cast(list[dict[str, object]], result.get("results", []))
             fallback_text = self.response_builder.build_knowledge_response(kb_results)
             evidence = [
                 f"{item.get('document_title', 'knowledge')}::{item.get('section', '')}"

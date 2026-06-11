@@ -25,7 +25,10 @@ class Command(BaseCommand):
     def handle(self, *args: object, **options: object) -> None:
         """Run eval cases and fail the command if any case regresses."""
         del args
-        case_names = list(options.get("cases") or [])
+        raw_cases = options.get("cases") or []
+        case_names = (
+            [str(case_name) for case_name in raw_cases] if isinstance(raw_cases, list) else []
+        )
         results = EvalRunner().run_all(case_names=case_names or None)
         if case_names and not results:
             raise CommandError("No AI eval cases matched the provided --case filters.")

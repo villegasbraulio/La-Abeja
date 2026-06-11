@@ -55,7 +55,7 @@ def search_orders(payload: dict[str, object], context: ToolContext) -> dict[str,
     phone = str(payload.get("phone") or "").strip()
     status_values = _normalize_status_filters(payload)
     start_date, end_date = _resolve_date_range(payload)
-    limit = max(1, min(int(payload.get("limit") or 10), 25))
+    limit = _bounded_int(payload.get("limit"), default=10, minimum=1, maximum=25)
 
     if query:
         queryset = queryset.filter(
@@ -220,7 +220,7 @@ def search_internal_notes(payload: dict[str, object], context: ToolContext) -> d
     customer_email = str(payload.get("customer_email") or "").strip().lower()
     note_type = str(payload.get("note_type") or "").strip().lower()
     conversation_id = str(payload.get("conversation_id") or "").strip()
-    limit = max(1, min(int(payload.get("limit") or 10), 25))
+    limit = _bounded_int(payload.get("limit"), default=10, minimum=1, maximum=25)
 
     if query:
         queryset = queryset.filter(content__icontains=query)
@@ -375,12 +375,15 @@ def generate_shipping_update(payload: dict[str, object], context: ToolContext) -
         if order.tracking_number
         else "Todavia no hay tracking disponible."
     )
-    body = {
+    status_messages: dict[str, str] = {
         Order.Status.READY_TO_SHIP: "Tu pedido ya esta listo para despacho y saldra en breve.",
         Order.Status.SHIPPED: "Tu pedido ya fue despachado y se encuentra en camino.",
         Order.Status.DELIVERED: "Tu pedido figura como entregado.",
         Order.Status.PREPARING: "Tu pedido esta en preparacion.",
-    }.get(order.status, f"Tu pedido hoy figura como {status_label.lower()}.")
+    }
+    body = status_messages.get(
+        str(order.status), f"Tu pedido hoy figura como {status_label.lower()}."
+    )
 
     draft_text = (
         f"Hola {order.user.first_name or ''}, {body} {tracking_hint} {delivery_hint}".strip()
@@ -790,7 +793,7 @@ def _resolve_stock_reservation(reservation_id: object) -> StockReservation | Non
 
 def _parse_positive_int(value: object) -> int | None:
     try:
-        parsed = int(value)
+        parsed = int(str(value))
     except (TypeError, ValueError):
         return None
     return parsed if parsed > 0 else None
@@ -862,11 +865,22 @@ def _detect_carrier(tracking_number: str) -> str:
 
 
 def _derive_tracking_status(order: Order) -> str:
-    mapping = {
+    mapping: dict[str, str] = {
         Order.Status.READY_TO_SHIP: "label_created",
         Order.Status.SHIPPED: "in_transit",
         Order.Status.DELIVERED: "delivered",
         Order.Status.CANCELLED: "cancelled",
         Order.Status.REFUNDED: "returned_or_refunded",
     }
-    return mapping.get(order.status, order.status)
+    return mapping.get(str(order.status), str(order.status))
+
+
+def _bounded_int(value: object, *, default: int, minimum: int, maximum: int) -> int:
+    if value in (None, ""):
+        parsed = default
+    else:
+        try:
+            parsed = int(str(value))
+        except ValueError:
+            parsed = default
+    return max(minimum, min(parsed, maximum))

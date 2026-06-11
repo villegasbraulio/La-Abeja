@@ -41,7 +41,7 @@ class ApprovalService:
                 if context.run.conversation_id
                 else None,
                 "requested_run_id": str(context.run.id),
-                "requested_by_user_id": context.user_id,
+                "requested_by_user_id": str(context.user_id) if context.user_id else None,
                 "risk_level": spec.risk_level,
             },
             result_payload={},
@@ -58,7 +58,7 @@ class ApprovalService:
                 if context.run.conversation_id
                 else None,
                 "requested_run_id": str(context.run.id),
-                "requested_by_user_id": context.user_id,
+                "requested_by_user_id": str(context.user_id) if context.user_id else None,
                 "risk_level": spec.risk_level,
                 "summary": self._build_summary(spec=spec, payload=payload),
             },
@@ -109,7 +109,7 @@ class ApprovalService:
                 payload=tool_payload,
                 context=ToolContext(
                     run=run,
-                    user_id=str(getattr(approved_by, "id", "")) or None,
+                    user_id=getattr(approved_by, "id", None),
                     is_staff=bool(getattr(approved_by, "is_staff", False)),
                 ),
                 bypass_approval=True,

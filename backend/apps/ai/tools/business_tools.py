@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from datetime import date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
+from typing import cast
 from uuid import uuid4
 
 from django.contrib.auth import get_user_model
@@ -641,7 +642,7 @@ def recommend_wines_for_customer(
     if not preferred_varietals and customer is not None:
         preferred_varietals = _normalize_string_list(customer.preferred_varietals)
 
-    limit = max(1, min(int(payload.get("limit") or 4), 10))
+    limit = _bounded_int(payload.get("limit"), default=4, minimum=1, maximum=10)
     max_price = _parse_decimal(payload.get("max_price"))
     min_price = _parse_decimal(payload.get("min_price"))
 
@@ -807,7 +808,7 @@ def _parse_due_at(payload: dict[str, object]) -> datetime | None:
     if due_in_days in (None, ""):
         return None
     try:
-        return timezone.now() + timedelta(days=int(due_in_days))
+        return cast(datetime, timezone.now() + timedelta(days=int(str(due_in_days))))
     except (TypeError, ValueError):
         return None
 
@@ -859,6 +860,17 @@ def _parse_date(value: object) -> date | None:
         return date.fromisoformat(raw)
     except ValueError:
         return None
+
+
+def _bounded_int(value: object, *, default: int, minimum: int, maximum: int) -> int:
+    if value in (None, ""):
+        parsed = default
+    else:
+        try:
+            parsed = int(str(value))
+        except ValueError:
+            parsed = default
+    return max(minimum, min(parsed, maximum))
 
 
 def _append_text_block(existing: str, addition: str) -> str:

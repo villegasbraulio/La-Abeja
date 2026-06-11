@@ -13,6 +13,7 @@ addopts = "-ra"
 
 [tool.mypy]
 python_version = "3.12"
+mypy_path = "backend"
 plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 check_untyped_defs = true
 warn_return_any = true

@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
+from typing import TypedDict
 
 from django.db.models import Avg, Count, DecimalField, ExpressionWrapper, F, Max, Sum
 from django.db.models.functions import Coalesce, TruncDay, TruncMonth, TruncWeek
@@ -32,6 +33,12 @@ class DateWindow:
     start_at: datetime
     end_at: datetime
     label: str
+
+
+class ChannelBucket(TypedDict):
+    channel: str
+    order_count: int
+    total_revenue: Decimal
 
 
 def get_sales_summary(payload: dict[str, object], context: ToolContext) -> dict[str, object]:
@@ -124,7 +131,7 @@ def get_sales_by_varietal(payload: dict[str, object], context: ToolContext) -> d
         return {"error": "staff_required"}
 
     window = _resolve_date_window(payload)
-    limit = max(1, min(int(payload.get("limit") or 10), 25))
+    limit = _bounded_int(payload.get("limit"), default=10, minimum=1, maximum=25)
     rows = (
         OrderItem.objects.filter(order__in=_completed_orders(window))
         .values("wine__varietal__name")
@@ -155,7 +162,7 @@ def get_sales_by_bottle(payload: dict[str, object], context: ToolContext) -> dic
         return {"error": "staff_required"}
 
     window = _resolve_date_window(payload)
-    limit = max(1, min(int(payload.get("limit") or 10), 25))
+    limit = _bounded_int(payload.get("limit"), default=10, minimum=1, maximum=25)
     rows = (
         OrderItem.objects.filter(order__in=_completed_orders(window))
         .values("wine_sku", "wine_name")
@@ -187,7 +194,7 @@ def get_top_skus(payload: dict[str, object], context: ToolContext) -> dict[str, 
         return {"error": "staff_required"}
 
     window = _resolve_date_window(payload)
-    limit = max(1, min(int(payload.get("limit") or 10), 25))
+    limit = _bounded_int(payload.get("limit"), default=10, minimum=1, maximum=25)
     sort_by = str(payload.get("sort_by") or "bottles_sold").strip().lower()
     valid_sort_fields = {"bottles_sold", "revenue", "order_count"}
     if sort_by not in valid_sort_fields:
@@ -341,9 +348,10 @@ def get_sales_by_channel(payload: dict[str, object], context: ToolContext) -> di
         .values("shipping_address")
         .annotate(order_count=Count("id"), total_revenue=Coalesce(Sum("total"), Decimal("0.00")))
     )
-    grouped: dict[str, dict[str, object]] = {}
+    grouped: dict[str, ChannelBucket] = {}
     for row in rows:
-        shipping_address = row.get("shipping_address") or {}
+        shipping_address_raw = row.get("shipping_address") or {}
+        shipping_address = shipping_address_raw if isinstance(shipping_address_raw, dict) else {}
         channel = (
             str(
                 shipping_address.get("source_channel")
@@ -383,7 +391,7 @@ def get_margin_estimate_by_product(
         return {"error": "staff_required"}
 
     window = _resolve_date_window(payload)
-    limit = max(1, min(int(payload.get("limit") or 10), 25))
+    limit = _bounded_int(payload.get("limit"), default=10, minimum=1, maximum=25)
     rows = (
         OrderItem.objects.filter(order__in=_completed_orders(window))
         .annotate(
@@ -456,6 +464,17 @@ def _parse_date(raw_value: object) -> date | None:
         return date.fromisoformat(value)
     except ValueError:
         return None
+
+
+def _bounded_int(value: object, *, default: int, minimum: int, maximum: int) -> int:
+    if value in (None, ""):
+        parsed = default
+    else:
+        try:
+            parsed = int(str(value))
+        except ValueError:
+            parsed = default
+    return max(minimum, min(parsed, maximum))
 
 
 def _trunc_for_grain(grain: str):

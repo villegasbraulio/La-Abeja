@@ -16,6 +16,7 @@ from django.test.utils import override_settings
 from apps.ai.agents.orchestrator import AIOrchestrator
 from apps.ai.models import Conversation, KnowledgeDocument, KnowledgeSource
 from apps.ai.rag.ingest import KnowledgeIngestionService
+from apps.authentication.models import CustomUser
 from apps.catalog.models import Category, Varietal, Wine
 from apps.orders.models import Order, OrderItem
 
@@ -26,7 +27,7 @@ user_model = get_user_model()
 class EvalEnvironment:
     """Mutable environment passed to per-case setup functions."""
 
-    user: object
+    user: CustomUser
     conversation: Conversation
 
 
@@ -89,7 +90,7 @@ class EvalRunner:
             result = AIOrchestrator().handle_message(
                 conversation=conversation,
                 message=case.message,
-                user_id=str(user.id),
+                user_id=user.id,
                 is_staff=case.is_staff,
             )
             tool_statuses = [
@@ -214,7 +215,7 @@ class EvalRunner:
             )
         return failures
 
-    def _create_user(self, *, is_staff: bool, label: str):
+    def _create_user(self, *, is_staff: bool, label: str) -> CustomUser:
         """Create an isolated user for one eval case."""
         suffix = uuid4().hex[:8]
         email = f"eval-{label}-{suffix}@example.com".replace("_", "-")

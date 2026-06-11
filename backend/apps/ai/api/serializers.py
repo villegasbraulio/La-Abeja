@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import cast
+
 from rest_framework import serializers
 
 from apps.ai.models import (
@@ -325,7 +327,7 @@ class SupportTaskUpdateSerializer(serializers.ModelSerializer):
                 email__iexact=str(assigned_to_email),
                 is_staff=True,
             ).first()
-        return super().update(instance, validated_data)
+        return cast(SupportTask, super().update(instance, validated_data))
 
 
 class LeadSerializer(serializers.ModelSerializer):

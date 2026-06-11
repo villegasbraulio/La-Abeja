@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from typing import cast
 from uuid import uuid4
 
 from django.db.models import Count, Q
@@ -29,6 +30,7 @@ from apps.ai.models import (
 )
 from apps.ai.services.approval_service import ApprovalService
 from apps.ai.tasks.ingestion_tasks import sync_knowledge_source
+from apps.authentication.models import CustomUser
 from apps.authentication.permissions import IsStaffUser
 
 from .permissions import IsStaffOrReadOnlyConversation
@@ -94,7 +96,7 @@ class AIChatSessionMessageView(APIView):
         result = AIOrchestrator().handle_message(
             conversation=conversation,
             message=serializer.validated_data["message"],
-            user_id=str(request.user.id) if request.user.is_authenticated else None,
+            user_id=request.user.id if request.user.is_authenticated else None,
             is_staff=bool(request.user.is_authenticated and request.user.is_staff),
         )
         return Response(
@@ -154,12 +156,12 @@ class AICopilotMessageView(APIView):
             conversation = Conversation.objects.create(
                 channel=Conversation.Channel.BACKOFFICE,
                 mode=Conversation.Mode.OPS,
-                customer=request.user,
+                customer=cast(CustomUser, request.user),
             )
         result = AIOrchestrator().handle_message(
             conversation=conversation,
             message=serializer.validated_data["message"],
-            user_id=str(request.user.id),
+            user_id=request.user.id,
             is_staff=True,
         )
         return Response(

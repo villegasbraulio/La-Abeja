@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, cast
 
 from apps.ai.providers.base import LLMProvider, ProviderTextResponse, ProviderToolCallResult
 from apps.ai.tools.base import ToolContext
@@ -160,6 +160,7 @@ class OpenAICompatibleProvider(LLMProvider):
                     )
                     executed_tools.append(tool_name)
                     if tool_name == "search_knowledge_base":
+                        result_items = cast(list[dict[str, object]], result.get("results", []))
                         citations.extend(
                             [
                                 {
@@ -168,7 +169,7 @@ class OpenAICompatibleProvider(LLMProvider):
                                     "document_title": item.get("document_title"),
                                     "section": item.get("section"),
                                 }
-                                for item in list(result.get("results", []))[:3]
+                                for item in result_items[:3]
                             ]
                         )
                     tool_outputs.append(
@@ -284,6 +285,7 @@ class OpenAICompatibleProvider(LLMProvider):
                     )
                     executed_tools.append(tool_name)
                     if tool_name == "search_knowledge_base":
+                        result_items = cast(list[dict[str, object]], result.get("results", []))
                         citations.extend(
                             [
                                 {
@@ -292,7 +294,7 @@ class OpenAICompatibleProvider(LLMProvider):
                                     "document_title": item.get("document_title"),
                                     "section": item.get("section"),
                                 }
-                                for item in list(result.get("results", []))[:3]
+                                for item in result_items[:3]
                             ]
                         )
                     messages.append(

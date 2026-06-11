@@ -56,7 +56,7 @@ class WineFactory(factory.django.DjangoModelFactory):
     tasting_notes = "Frutas rojas maduras, especias y final largo."
     pairing_suggestions = ["Asado", "Quesos duros"]
     winemaker_notes = "Selección de parcelas viejas."
-    awards = []
+    awards: list[str] = []
     is_featured = False
     is_active = True
     is_limited_edition = False

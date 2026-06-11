@@ -53,7 +53,7 @@ def get_answerable_sources(payload: dict[str, object], context: ToolContext) -> 
     if not query:
         return {"sources": []}
 
-    limit = max(1, min(int(payload.get("limit") or 5), 10))
+    limit = _bounded_int(payload.get("limit"), default=5, minimum=1, maximum=10)
     retriever = KnowledgeRetriever()
     results = retriever.search(query, channel="public", limit=max(limit * 2, 6))
     if context.is_staff:
@@ -73,8 +73,9 @@ def get_answerable_sources(payload: dict[str, object], context: ToolContext) -> 
                 "top_score": result.score,
             },
         )
-        if result.section and result.section not in unique_sources[result.document_id]["sections"]:
-            unique_sources[result.document_id]["sections"].append(result.section)
+        sections = unique_sources[result.document_id]["sections"]
+        if isinstance(sections, list) and result.section and result.section not in sections:
+            sections.append(result.section)
 
     return {
         "sources": list(unique_sources.values())[:limit],
@@ -115,6 +116,19 @@ def _filtered_search(
                 "content": result.content,
                 "score": result.score,
             }
-            for result in filtered[: max(1, min(int(payload.get("limit") or 5), 10))]
+            for result in filtered[
+                : _bounded_int(payload.get("limit"), default=5, minimum=1, maximum=10)
+            ]
         ]
     }
+
+
+def _bounded_int(value: object, *, default: int, minimum: int, maximum: int) -> int:
+    if value in (None, ""):
+        parsed = default
+    else:
+        try:
+            parsed = int(str(value))
+        except ValueError:
+            parsed = default
+    return max(minimum, min(parsed, maximum))
