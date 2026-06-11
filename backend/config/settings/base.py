@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import dj_database_url
 import structlog
@@ -15,6 +16,18 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 def get_list_env(name: str, default: str) -> list[str]:
     """Return a normalized list from a comma-separated environment variable."""
     return [item.strip() for item in os.getenv(name, default).split(",") if item.strip()]
+
+
+def get_origin_list_env(name: str, default: str) -> list[str]:
+    """Return URL origins from a comma-separated environment variable."""
+    return [_normalize_origin(item) for item in get_list_env(name, default)]
+
+
+def _normalize_origin(value: str) -> str:
+    parsed = urlsplit(value.strip())
+    if parsed.scheme and parsed.netloc:
+        return f"{parsed.scheme}://{parsed.netloc}"
+    return value.strip().rstrip("/")
 
 
 def get_first_env(*names: str, default: str = "") -> str:
@@ -157,11 +170,11 @@ SIMPLE_JWT = {
     "ROTATE_REFRESH_TOKENS": True,
 }
 
-CORS_ALLOWED_ORIGINS = get_list_env(
+CORS_ALLOWED_ORIGINS = get_origin_list_env(
     "CORS_ALLOWED_ORIGINS",
     f"{FRONTEND_URL},http://127.0.0.1:3000,http://localhost:3000",
 )
-CSRF_TRUSTED_ORIGINS = get_list_env(
+CSRF_TRUSTED_ORIGINS = get_origin_list_env(
     "CSRF_TRUSTED_ORIGINS",
     f"{FRONTEND_URL},http://127.0.0.1:3000,http://localhost:3000",
 )
