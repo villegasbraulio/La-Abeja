@@ -54,14 +54,18 @@ class OrderListCreateView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         order = serializer.save()
+        reused = bool(getattr(serializer, "order_was_reused", False))
         logger.info(
-            "order_created",
+            "order_reused" if reused else "order_created",
             order_id=str(order.id),
             user_id=str(getattr(request.user, "id", "")),
             customer_email=order.customer_email,
         )
         response_serializer = OrderSerializer(order)
-        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(
+            response_serializer.data,
+            status=status.HTTP_200_OK if reused else status.HTTP_201_CREATED,
+        )
 
 
 class OrderDetailView(generics.RetrieveAPIView):

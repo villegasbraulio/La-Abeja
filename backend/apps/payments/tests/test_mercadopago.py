@@ -128,6 +128,27 @@ def test_client_skips_back_urls_on_local_frontend(monkeypatch, settings) -> None
 
 
 @pytest.mark.django_db
+def test_client_skips_invalid_public_urls(monkeypatch, settings) -> None:
+    """Malformed environment URLs should not break preference creation."""
+    settings.MERCADOPAGO_ACCESS_TOKEN = "test-token"
+    settings.FRONTEND_URL = "la-abeja.vercel.app"
+    settings.BACKEND_URL = "la-abeja-backend.onrender.com"
+    fake_module = type("FakeMercadoPagoModule", (), {"SDK": FakeSDK})
+    monkeypatch.setattr("apps.payments.mercadopago.mercadopago", fake_module)
+
+    order = OrderFactory(total=Decimal("9800.00"), shipping_cost=Decimal("500.00"))
+    OrderItemFactory(order=order)
+
+    client = MercadoPagoClient()
+    response = client.create_preference(order)
+
+    assert response["id"] == "pref_123"
+    assert "notification_url" not in client.sdk.preference_resource.payload
+    assert "back_urls" not in client.sdk.preference_resource.payload
+    assert "auto_return" not in client.sdk.preference_resource.payload
+
+
+@pytest.mark.django_db
 def test_client_includes_guest_access_token_in_back_urls(monkeypatch, settings) -> None:
     """Guest checkout returns should preserve the signed order access token."""
     settings.MERCADOPAGO_ACCESS_TOKEN = "test-token"

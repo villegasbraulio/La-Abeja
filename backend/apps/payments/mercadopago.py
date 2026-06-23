@@ -6,6 +6,7 @@ from typing import Any
 from urllib.parse import urlsplit
 from urllib.parse import urlencode
 
+import structlog
 from django.conf import settings
 
 from apps.orders.access import build_guest_access_token
@@ -23,6 +24,9 @@ except ImportError:  # pragma: no cover - handled at runtime when the SDK is mis
 
 class MercadoPagoAPIError(Exception):
     """Raised when Mercado Pago returns an error response."""
+
+
+logger = structlog.get_logger(__name__)
 
 
 class MercadoPagoClient:
@@ -76,6 +80,12 @@ class MercadoPagoClient:
         if back_urls:
             payload["back_urls"] = back_urls
             payload["auto_return"] = "approved"
+        logger.info(
+            "mercadopago_preference_urls_built",
+            order_id=str(order.id),
+            notification_url=notification_url,
+            has_back_urls=bool(back_urls),
+        )
         stable_key = idempotency_key or f"mercadopago:preference:{order.id}"
         request_options = RequestOptions(
             access_token=self.access_token,
@@ -122,6 +132,12 @@ class MercadoPagoClient:
         if back_urls:
             payload["back_urls"] = back_urls
             payload["auto_return"] = "approved"
+        logger.info(
+            "mercadopago_booking_preference_urls_built",
+            booking_id=str(booking.id),
+            notification_url=notification_url,
+            has_back_urls=bool(back_urls),
+        )
         stable_key = idempotency_key or f"mercadopago:booking:{booking.id}"
         request_options = RequestOptions(
             access_token=self.access_token,
@@ -228,8 +244,8 @@ class MercadoPagoClient:
 
     def _build_back_urls(self, order: Order) -> dict[str, str]:
         """Return public back URLs when the frontend host can receive redirects."""
-        frontend_url = settings.FRONTEND_URL.rstrip("/")
-        if self._is_local_url(frontend_url):
+        frontend_url = self._resolve_public_base_url(settings.FRONTEND_URL, setting_name="FRONTEND_URL")
+        if not frontend_url:
             return {}
 
         guest_access_token = build_guest_access_token(order)
@@ -251,8 +267,8 @@ class MercadoPagoClient:
 
     def _build_booking_back_urls(self, booking: Booking) -> dict[str, str]:
         """Return public back URLs for visit booking redirects."""
-        frontend_url = settings.FRONTEND_URL.rstrip("/")
-        if self._is_local_url(frontend_url):
+        frontend_url = self._resolve_public_base_url(settings.FRONTEND_URL, setting_name="FRONTEND_URL")
+        if not frontend_url:
             return {}
 
         guest_access_token = build_booking_guest_access_token(booking)
@@ -274,15 +290,15 @@ class MercadoPagoClient:
 
     def _build_notification_url(self) -> str | None:
         """Return a public webhook URL when the backend host can receive callbacks."""
-        backend_url = settings.BACKEND_URL.rstrip("/")
-        if self._is_local_url(backend_url):
+        backend_url = self._resolve_public_base_url(settings.BACKEND_URL, setting_name="BACKEND_URL")
+        if not backend_url:
             return None
         return f"{backend_url}/api/v1/payments/webhook/"
 
     def _build_booking_notification_url(self) -> str | None:
         """Return a public webhook URL for visit booking payments."""
-        backend_url = settings.BACKEND_URL.rstrip("/")
-        if self._is_local_url(backend_url):
+        backend_url = self._resolve_public_base_url(settings.BACKEND_URL, setting_name="BACKEND_URL")
+        if not backend_url:
             return None
         return f"{backend_url}/api/v1/visits/payments/webhook/"
 
@@ -291,6 +307,24 @@ class MercadoPagoClient:
         parsed = urlsplit(value)
         hostname = (parsed.hostname or "").lower()
         return hostname in {"localhost", "127.0.0.1", "::1"}
+
+    def _resolve_public_base_url(self, value: str, *, setting_name: str) -> str | None:
+        """Return a normalized HTTPS base URL or skip malformed/local values."""
+        normalized = str(value or "").strip().rstrip("/")
+        if not normalized:
+            return None
+        if self._is_local_url(normalized):
+            return None
+
+        parsed = urlsplit(normalized)
+        if parsed.scheme != "https" or not parsed.netloc:
+            logger.warning(
+                "mercadopago_public_url_invalid",
+                setting=setting_name,
+                value=normalized,
+            )
+            return None
+        return normalized
 
     def _unwrap_response(
         self,

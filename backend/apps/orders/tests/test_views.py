@@ -9,6 +9,8 @@ import pytest
 
 from apps.catalog.tests.factories import WineFactory
 from apps.orders.access import build_guest_access_token
+from apps.orders.models import Order
+from apps.payments.tests.factories import PaymentFactory
 
 from .factories import OrderFactory, OrderItemFactory
 
@@ -129,6 +131,72 @@ class TestOrderCheckoutEndpoints:
         assert response.data["customer_email"] == "guest@example.com"
         assert response.data["guest_access_token"]
         mock_send_transactional.assert_called_once()
+
+    @patch("apps.orders.serializers.EmailService.send_transactional")
+    def test_checkout_reuses_failed_order_instead_of_creating_a_duplicate(
+        self,
+        mock_send_transactional,
+        authenticated_client,
+    ) -> None:
+        """Retrying checkout should update the same unpaid order instead of duplicating it."""
+        client, user = authenticated_client
+        original_wine = WineFactory(price=Decimal("4500.00"), stock=10)
+        replacement_wine = WineFactory(price=Decimal("6200.00"), stock=8)
+        existing_order = OrderFactory(
+            user=user,
+            customer_email=user.email,
+            status="payment_failed",
+            subtotal=Decimal("4500.00"),
+            shipping_cost=Decimal("3993.60"),
+            total=Decimal("8493.60"),
+        )
+        OrderItemFactory(order=existing_order, wine=original_wine, quantity=1, subtotal=Decimal("4500.00"))
+        PaymentFactory(
+            order=existing_order,
+            status="rejected",
+            mp_preference_id="pref_old",
+            mp_payment_id="payment_old",
+            amount=existing_order.total,
+        )
+
+        response = client.post(
+            "/api/v1/orders/orders/",
+            {
+                "items": [
+                    {"wine_id": str(replacement_wine.id), "quantity": 2},
+                ],
+                "shipping_method": "express",
+                "shipping_address": {
+                    "recipient_name": "Maria Perez",
+                    "street": "Av. San Martin",
+                    "number": "450",
+                    "floor_apt": "2B",
+                    "city": "San Rafael",
+                    "province": "Mendoza",
+                    "postal_code": "5600",
+                    "country": "Argentina",
+                    "phone": "+5492604555555",
+                },
+                "notes": "Reintento del checkout.",
+            },
+            format="json",
+        )
+
+        existing_order.refresh_from_db()
+        existing_order.payment.refresh_from_db()
+
+        assert response.status_code == 200
+        assert response.data["id"] == str(existing_order.id)
+        assert Order.objects.filter(user=user).count() == 1
+        assert existing_order.status == "pending_payment"
+        assert existing_order.shipping_method == "express"
+        assert existing_order.total == Decimal("18064.00")
+        assert existing_order.items.count() == 1
+        assert existing_order.items.first().wine_id == replacement_wine.id
+        assert existing_order.payment.status == "pending"
+        assert existing_order.payment.mp_preference_id == ""
+        assert existing_order.payment.mp_payment_id == ""
+        mock_send_transactional.assert_not_called()
 
     def test_checkout_rejects_insufficient_stock(self, authenticated_client) -> None:
         """Checkout should fail when the requested quantity exceeds stock."""

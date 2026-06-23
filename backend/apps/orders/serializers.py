@@ -103,6 +103,7 @@ class OrderCreateSerializer(serializers.Serializer):
     shipping_address = CheckoutShippingAddressSerializer()
     customer_email = serializers.EmailField(required=False)
     notes = serializers.CharField(required=False, allow_blank=True)
+    order_was_reused = False
 
     def validate_items(
         self, items: list[dict[str, object]]
@@ -169,20 +170,37 @@ class OrderCreateSerializer(serializers.Serializer):
         shipping_cost = shipping_quote.shipping_cost
         total = subtotal + shipping_cost
         shipping_address["_shipping_quote"] = _build_shipping_snapshot(shipping_quote)
+        order = self._find_reusable_order(user=user, customer_email=customer_email)
+        self.order_was_reused = order is not None
 
-        order = Order.objects.create(
-            user=user,
-            customer_email=customer_email,
-            subtotal=subtotal,
-            discount_amount=Decimal("0.00"),
-            shipping_cost=shipping_cost,
-            total=total,
-            shipping_method=shipping_method,
-            shipping_address=shipping_address,
-            promo_code_used="",
-            notes=str(notes),
-            estimated_delivery=shipping_quote.estimated_delivery,
-        )
+        if order is None:
+            order = Order.objects.create(
+                user=user,
+                customer_email=customer_email,
+                subtotal=subtotal,
+                discount_amount=Decimal("0.00"),
+                shipping_cost=shipping_cost,
+                total=total,
+                shipping_method=shipping_method,
+                shipping_address=shipping_address,
+                promo_code_used="",
+                notes=str(notes),
+                estimated_delivery=shipping_quote.estimated_delivery,
+            )
+        else:
+            self._refresh_reusable_order(
+                order,
+                subtotal=subtotal,
+                shipping_cost=shipping_cost,
+                total=total,
+                shipping_method=shipping_method,
+                shipping_address=shipping_address,
+                notes=str(notes),
+                estimated_delivery=shipping_quote.estimated_delivery,
+            )
+            order.items.all().delete()
+            self._reset_payment_attempt(order)
+
         for order_item in order_items:
             order_item.order = order
         OrderItem.objects.bulk_create(order_items)
@@ -192,7 +210,8 @@ class OrderCreateSerializer(serializers.Serializer):
             .prefetch_related("items__wine__images")
             .get(pk=order.pk)
         )
-        _send_order_confirmation_email(hydrated_order)
+        if not self.order_was_reused:
+            _send_order_confirmation_email(hydrated_order)
         return hydrated_order
 
     def _resolve_customer_email(self, validated_data: dict[str, object]) -> str:
@@ -207,6 +226,102 @@ class OrderCreateSerializer(serializers.Serializer):
                 {"customer_email": "Necesitamos un email para enviarte el detalle del pedido."}
             )
         return customer_email
+
+    def _find_reusable_order(self, *, user, customer_email: str) -> Order | None:
+        """Return the latest unpaid order for the same customer when it can be retried."""
+        reusable_statuses = {Order.Status.PENDING_PAYMENT, Order.Status.PAYMENT_FAILED}
+        queryset = Order.objects.select_for_update().filter(status__in=reusable_statuses)
+        if user is not None:
+            queryset = queryset.filter(user=user)
+        else:
+            queryset = queryset.filter(user__isnull=True, customer_email=customer_email)
+        return queryset.order_by("-created_at").first()
+
+    def _refresh_reusable_order(
+        self,
+        order: Order,
+        *,
+        subtotal: Decimal,
+        shipping_cost: Decimal,
+        total: Decimal,
+        shipping_method: str,
+        shipping_address: dict[str, object],
+        notes: str,
+        estimated_delivery,
+    ) -> None:
+        """Overwrite an unpaid order snapshot with the latest checkout payload."""
+        order.status = Order.Status.PENDING_PAYMENT
+        order.subtotal = subtotal
+        order.discount_amount = Decimal("0.00")
+        order.shipping_cost = shipping_cost
+        order.total = total
+        order.shipping_method = shipping_method
+        order.shipping_address = shipping_address
+        order.promo_code_used = ""
+        order.notes = notes
+        order.estimated_delivery = estimated_delivery
+        order.tracking_number = ""
+        order.shipped_at = None
+        order.delivered_at = None
+        order.status_email_sent = {}
+        order.review_request_sent = False
+        order.save(
+            update_fields=[
+                "status",
+                "subtotal",
+                "discount_amount",
+                "shipping_cost",
+                "total",
+                "shipping_method",
+                "shipping_address",
+                "promo_code_used",
+                "notes",
+                "estimated_delivery",
+                "tracking_number",
+                "shipped_at",
+                "delivered_at",
+                "status_email_sent",
+                "review_request_sent",
+                "updated_at",
+            ]
+        )
+
+    def _reset_payment_attempt(self, order: Order) -> None:
+        """Drop stale Mercado Pago session data before a new preference is created."""
+        try:
+            payment = order.payment
+        except Payment.DoesNotExist:
+            return
+
+        payment.mp_preference_id = ""
+        payment.preference_init_point = ""
+        payment.preference_sandbox_init_point = ""
+        payment.mp_payment_id = ""
+        payment.mp_merchant_order_id = ""
+        payment.status = Payment.Status.PENDING
+        payment.status_detail = ""
+        payment.payment_method = ""
+        payment.payment_type = ""
+        payment.installments = 1
+        payment.amount = order.total
+        payment.currency = "ARS"
+        payment.save(
+            update_fields=[
+                "mp_preference_id",
+                "preference_init_point",
+                "preference_sandbox_init_point",
+                "mp_payment_id",
+                "mp_merchant_order_id",
+                "status",
+                "status_detail",
+                "payment_method",
+                "payment_type",
+                "installments",
+                "amount",
+                "currency",
+                "updated_at",
+            ]
+        )
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
