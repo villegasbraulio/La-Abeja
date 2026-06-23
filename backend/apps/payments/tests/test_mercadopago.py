@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from decimal import Decimal
+from urllib.parse import parse_qs, urlsplit
 
 import pytest
 
@@ -124,6 +125,35 @@ def test_client_skips_back_urls_on_local_frontend(monkeypatch, settings) -> None
     assert "back_urls" not in client.sdk.preference_resource.payload
     assert "auto_return" not in client.sdk.preference_resource.payload
     assert "notification_url" not in client.sdk.preference_resource.payload
+
+
+@pytest.mark.django_db
+def test_client_includes_guest_access_token_in_back_urls(monkeypatch, settings) -> None:
+    """Guest checkout returns should preserve the signed order access token."""
+    settings.MERCADOPAGO_ACCESS_TOKEN = "test-token"
+    settings.FRONTEND_URL = "https://tienda.example.com"
+    settings.BACKEND_URL = "https://api.example.com"
+    fake_module = type("FakeMercadoPagoModule", (), {"SDK": FakeSDK})
+    monkeypatch.setattr("apps.payments.mercadopago.mercadopago", fake_module)
+
+    order = OrderFactory(
+        user=None,
+        customer_email="guest@example.com",
+        total=Decimal("9800.00"),
+        shipping_cost=Decimal("500.00"),
+    )
+    OrderItemFactory(order=order)
+
+    client = MercadoPagoClient()
+    client.create_preference(order)
+
+    success_url = client.sdk.preference_resource.payload["back_urls"]["success"]
+    parsed = urlsplit(success_url)
+    params = parse_qs(parsed.query)
+
+    assert params["order_id"] == [str(order.id)]
+    assert params["status"] == ["approved"]
+    assert "guest_access_token" in params
 
 
 def test_client_raises_readable_errors_from_sdk(monkeypatch, settings) -> None:

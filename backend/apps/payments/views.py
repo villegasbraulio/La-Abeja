@@ -2,13 +2,9 @@
 
 from __future__ import annotations
 
-import hashlib
-import hmac
-import json
 from typing import Any
 
 import structlog
-from django.conf import settings
 from rest_framework import permissions, status
 from rest_framework.request import Request
 from rest_framework.response import Response
@@ -18,58 +14,9 @@ from .mercadopago import MercadoPagoAPIError, MercadoPagoClient
 from .models import Payment, PaymentWebhookLog
 from .serializers import CreatePreferenceSerializer
 from .services import PaymentIntegrityError, sync_payment
+from .webhook_utils import build_webhook_deduplication_key, has_valid_signature
 
 logger = structlog.get_logger(__name__)
-
-def parse_signature_header(signature_header: str) -> tuple[str | None, str | None]:
-    """Split Mercado Pago's x-signature header into timestamp and digest."""
-    ts_value: str | None = None
-    v1_value: str | None = None
-    for fragment in signature_header.split(","):
-        key, _, value = fragment.partition("=")
-        normalized_key = key.strip().lower()
-        if normalized_key == "ts":
-            ts_value = value.strip()
-        if normalized_key == "v1":
-            v1_value = value.strip()
-    return ts_value, v1_value
-
-
-def has_valid_signature(request: Request, payload: dict[str, Any]) -> bool:
-    """Validate webhook origin when a secret key is configured."""
-    secret = settings.MERCADOPAGO_WEBHOOK_SECRET
-    if not secret:
-        return True
-
-    signature_header = request.headers.get("x-signature", "")
-    request_id = request.headers.get("x-request-id", "")
-    data_id = request.query_params.get("data.id") or str((payload.get("data") or {}).get("id", ""))
-    ts_value, received_signature = parse_signature_header(signature_header)
-
-    if not data_id or not request_id or not ts_value or not received_signature:
-        return False
-
-    template = f"id:{data_id};request-id:{request_id};ts:{ts_value};"
-    expected_signature = hmac.new(
-        secret.encode("utf-8"),
-        template.encode("utf-8"),
-        hashlib.sha256,
-    ).hexdigest()
-    return hmac.compare_digest(expected_signature, received_signature)
-
-
-def build_webhook_deduplication_key(
-    *,
-    topic: str,
-    notification_id: str,
-    payment_resource_id: str,
-    payload: dict[str, Any],
-) -> str:
-    """Build a stable key for repeated deliveries of the same notification."""
-    identity = f"{topic}:{notification_id}:{payment_resource_id}"
-    if notification_id == "unknown" and not payment_resource_id:
-        identity = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
-    return hashlib.sha256(identity.encode("utf-8")).hexdigest()
 
 
 class CreatePreferenceView(APIView):
@@ -93,6 +40,10 @@ class PaymentWebhookView(APIView):
     """Receive Mercado Pago payment notifications."""
 
     permission_classes = [permissions.AllowAny]
+
+    def _is_simulation_payload(self, payload: dict[str, Any]) -> bool:
+        """Detect Mercado Pago simulation payloads that do not map to a real payment."""
+        return payload.get("live_mode") is False
 
     def post(self, request: Request) -> Response:
         """Persist the raw webhook, validate it and sync payment state."""
@@ -177,6 +128,18 @@ class PaymentWebhookView(APIView):
             return Response(status=status.HTTP_200_OK)
         except MercadoPagoAPIError as exc:
             webhook_log.error = str(exc)
+            error_message = str(exc).lower()
+            if self._is_simulation_payload(payload) or "not found" in error_message:
+                webhook_log.processed = True
+                webhook_log.save(update_fields=["error", "processed"])
+                logger.info(
+                    "mercadopago_webhook_simulation_ignored",
+                    notification_id=notification_id,
+                    payment_id=payment_resource_id,
+                    error=str(exc),
+                )
+                return Response(status=status.HTTP_200_OK)
+
             webhook_log.save(update_fields=["error"])
             logger.error("mercadopago_webhook_fetch_failed", error=str(exc))
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)

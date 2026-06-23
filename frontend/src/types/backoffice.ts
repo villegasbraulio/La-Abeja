@@ -143,7 +143,7 @@ export interface BackofficeExperience {
 }
 
 export interface BackofficeTimeSlot {
-  id: string;
+  id: number;
   experience: string;
   experience_name: string;
   date: string;
@@ -151,6 +151,7 @@ export interface BackofficeTimeSlot {
   end_time: string;
   capacity: number;
   spots_available: number;
+  booked_guests: number;
   guide_name: string;
   is_blocked: boolean;
   block_reason: string;
@@ -161,6 +162,7 @@ export interface BackofficeBooking {
   confirmation_code: string;
   customer_name: string;
   customer_email: string;
+  customer_phone: string;
   experience_name: string;
   experience_type: string;
   slot_date: string;
@@ -173,6 +175,8 @@ export interface BackofficeBooking {
   dietary_restrictions: string[];
   qr_code_url: string;
   checked_in_at: string | null;
+  payment_status: string;
+  payment_status_detail: string;
   reminder_24h_sent: boolean;
   reminder_1h_sent: boolean;
   created_at: string;
@@ -316,4 +320,15 @@ export interface BackofficeBookingPayload {
   guest_count: number;
   special_requests: string;
   checked_in_at: string | null;
+}
+
+export interface BackofficeTimeSlotPayload {
+  experience: string;
+  date: string;
+  start_time: string;
+  end_time: string;
+  capacity: number;
+  guide_name: string;
+  is_blocked: boolean;
+  block_reason: string;
 }

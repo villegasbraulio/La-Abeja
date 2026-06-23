@@ -28,6 +28,7 @@ import { OrderDetailPage } from "./pages/OrderDetail";
 import { OrdersPage } from "./pages/Orders";
 import { ProductDetailPage } from "./pages/ProductDetail";
 import { VisitPage } from "./pages/Visit";
+import { VisitBookingResultPage } from "./pages/Visit/ResultPage";
 
 export default function App() {
   return (
@@ -38,6 +39,7 @@ export default function App() {
           <Route path="/vinos" element={<CatalogPage />} />
           <Route path="/vinos/:slug" element={<ProductDetailPage />} />
           <Route path="/visitas" element={<VisitPage />} />
+          <Route path="/visitas/resultado" element={<VisitBookingResultPage />} />
           <Route path="/historia" element={<AboutPage />} />
           <Route path="/regalos" element={<GiftsPage />} />
           <Route path="/guia-de-compra" element={<GuidePage />} />

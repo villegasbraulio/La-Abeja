@@ -10,6 +10,8 @@ import type {
   BackofficeBookingPayload,
   BackofficeExperience,
   BackofficeExperiencePayload,
+  BackofficeTimeSlot,
+  BackofficeTimeSlotPayload,
 } from "../../types/backoffice";
 import {
   BackofficeBadge,
@@ -35,6 +37,8 @@ const experienceTypeOptions = [
 ];
 
 const bookingStatusOptions = [
+  { value: "pending_payment", label: "Esperando pago" },
+  { value: "payment_failed", label: "Pago fallido" },
   { value: "confirmed", label: "Confirmada" },
   { value: "cancelled", label: "Cancelada" },
   { value: "completed", label: "Completada" },
@@ -66,6 +70,16 @@ interface BookingFormState {
   checked_in_at: string;
 }
 
+interface SlotFormState {
+  date: string;
+  start_time: string;
+  end_time: string;
+  capacity: string;
+  guide_name: string;
+  is_blocked: boolean;
+  block_reason: string;
+}
+
 const emptyExperienceForm: ExperienceFormState = {
   name: "",
   slug: "",
@@ -85,10 +99,20 @@ const emptyExperienceForm: ExperienceFormState = {
 };
 
 const emptyBookingForm: BookingFormState = {
-  status: "confirmed",
+  status: "pending_payment",
   guest_count: "2",
   special_requests: "",
   checked_in_at: "",
+};
+
+const emptySlotForm: SlotFormState = {
+  date: "",
+  start_time: "11:00",
+  end_time: "12:30",
+  capacity: "12",
+  guide_name: "",
+  is_blocked: false,
+  block_reason: "",
 };
 
 function listToText(values: string[]) {
@@ -160,6 +184,34 @@ function toBookingPayload(formState: BookingFormState): BackofficeBookingPayload
   };
 }
 
+function toSlotFormState(slot: BackofficeTimeSlot): SlotFormState {
+  return {
+    date: slot.date,
+    start_time: slot.start_time.slice(0, 5),
+    end_time: slot.end_time.slice(0, 5),
+    capacity: String(slot.capacity),
+    guide_name: slot.guide_name,
+    is_blocked: slot.is_blocked,
+    block_reason: slot.block_reason,
+  };
+}
+
+function toSlotPayload(
+  formState: SlotFormState,
+  experienceId: string,
+): BackofficeTimeSlotPayload {
+  return {
+    experience: experienceId,
+    date: formState.date,
+    start_time: `${formState.start_time}:00`,
+    end_time: `${formState.end_time}:00`,
+    capacity: Number.parseInt(formState.capacity, 10),
+    guide_name: formState.guide_name,
+    is_blocked: formState.is_blocked,
+    block_reason: formState.block_reason,
+  };
+}
+
 function formatDateTime(value?: string | null) {
   if (!value) {
     return "Sin fecha";
@@ -190,9 +242,12 @@ export function BackofficeVisitsPage() {
   const queryClient = useQueryClient();
   const [selectedExperienceId, setSelectedExperienceId] = useState<string | null>(null);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
   const [isCreatingExperience, setIsCreatingExperience] = useState(false);
+  const [isCreatingSlot, setIsCreatingSlot] = useState(false);
   const [experienceForm, setExperienceForm] = useState<ExperienceFormState>(emptyExperienceForm);
   const [bookingForm, setBookingForm] = useState<BookingFormState>(emptyBookingForm);
+  const [slotForm, setSlotForm] = useState<SlotFormState>(emptySlotForm);
   const [bookingSearch, setBookingSearch] = useState("");
   const [bookingStatusFilter, setBookingStatusFilter] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -245,6 +300,10 @@ export function BackofficeVisitsPage() {
     [bookings, selectedBookingId],
   );
   const bookingSlots = useMemo(() => slotsQuery.data ?? [], [slotsQuery.data]);
+  const selectedSlot = useMemo(
+    () => bookingSlots.find((slot) => slot.id === selectedSlotId) ?? null,
+    [bookingSlots, selectedSlotId],
+  );
 
   useEffect(() => {
     if (experiences.length === 0) {
@@ -284,6 +343,27 @@ export function BackofficeVisitsPage() {
       setBookingForm(toBookingFormState(selectedBookingQuery.data));
     }
   }, [selectedBookingQuery.data]);
+
+  useEffect(() => {
+    if (bookingSlots.length === 0) {
+      setSelectedSlotId(null);
+      setSlotForm(emptySlotForm);
+      return;
+    }
+
+    if (
+      !isCreatingSlot &&
+      (!selectedSlotId || !bookingSlots.some((slot) => slot.id === selectedSlotId))
+    ) {
+      setSelectedSlotId(bookingSlots[0].id);
+    }
+  }, [bookingSlots, isCreatingSlot, selectedSlotId]);
+
+  useEffect(() => {
+    if (selectedSlot) {
+      setSlotForm(toSlotFormState(selectedSlot));
+    }
+  }, [selectedSlot]);
 
   const saveExperienceMutation = useMutation({
     mutationFn: async () => {
@@ -365,13 +445,79 @@ export function BackofficeVisitsPage() {
     },
   });
 
+  const saveSlotMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedExperienceId) {
+        return;
+      }
+      const payload = toSlotPayload(slotForm, selectedExperienceId);
+      if (selectedSlotId) {
+        return backofficeApi.visits.slots.update(selectedSlotId, payload);
+      }
+      return backofficeApi.visits.slots.create(payload);
+    },
+    onSuccess: async (slot) => {
+      if (!slot) {
+        return;
+      }
+      setFeedback("Turno guardado correctamente.");
+      setFeedbackTone("success");
+      setIsCreatingSlot(false);
+      setSelectedSlotId(slot.id);
+      setSlotForm(toSlotFormState(slot));
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["backoffice-visits-slots"] }),
+        queryClient.invalidateQueries({ queryKey: ["backoffice-visits-experiences"] }),
+        queryClient.invalidateQueries({ queryKey: ["backoffice-visits-bookings"] }),
+      ]);
+    },
+    onError: (error) => {
+      const axiosError = error as AxiosError<{ detail?: string; capacity?: string[]; end_time?: string[] }>;
+      setFeedbackTone("danger");
+      setFeedback(
+        axiosError.response?.data?.detail ??
+          axiosError.response?.data?.capacity?.[0] ??
+          axiosError.response?.data?.end_time?.[0] ??
+          "No pudimos guardar el turno.",
+      );
+    },
+  });
+
+  const deleteSlotMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedSlotId) {
+        return;
+      }
+      await backofficeApi.visits.slots.remove(selectedSlotId);
+    },
+    onSuccess: async () => {
+      setFeedback("Turno eliminado.");
+      setFeedbackTone("success");
+      setIsCreatingSlot(false);
+      setSelectedSlotId(null);
+      setSlotForm(emptySlotForm);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["backoffice-visits-slots"] }),
+        queryClient.invalidateQueries({ queryKey: ["backoffice-visits-experiences"] }),
+        queryClient.invalidateQueries({ queryKey: ["backoffice-visits-bookings"] }),
+      ]);
+    },
+    onError: () => {
+      setFeedbackTone("danger");
+      setFeedback("No pudimos eliminar el turno seleccionado.");
+    },
+  });
+
   function selectExperience(experience: BackofficeExperience | null) {
     setIsCreatingExperience(false);
+    setIsCreatingSlot(false);
     setSelectedExperienceId(experience?.id ?? null);
-      setFeedback(null);
-      if (!experience) {
-        setExperienceForm(emptyExperienceForm);
-        return;
+    setFeedback(null);
+    if (!experience) {
+      setExperienceForm(emptyExperienceForm);
+      setSelectedSlotId(null);
+      setSlotForm(emptySlotForm);
+      return;
     }
     setExperienceForm(toExperienceFormState(experience));
   }
@@ -408,6 +554,15 @@ export function BackofficeVisitsPage() {
     };
   }
 
+  function handleSlotField(field: keyof SlotFormState) {
+    return (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const value = event.target instanceof HTMLInputElement && event.target.type === "checkbox"
+        ? event.target.checked
+        : event.target.value;
+      setSlotForm((current) => ({ ...current, [field]: value } as SlotFormState));
+    };
+  }
+
   function clearFilters() {
     setBookingSearch("");
     setBookingStatusFilter("");
@@ -417,6 +572,24 @@ export function BackofficeVisitsPage() {
     setIsCreatingExperience(true);
     setSelectedExperienceId(null);
     setExperienceForm(emptyExperienceForm);
+    setFeedback(null);
+  }
+
+  function selectSlot(slot: BackofficeTimeSlot | null) {
+    setIsCreatingSlot(false);
+    setSelectedSlotId(slot?.id ?? null);
+    setFeedback(null);
+    if (!slot) {
+      setSlotForm(emptySlotForm);
+      return;
+    }
+    setSlotForm(toSlotFormState(slot));
+  }
+
+  function createNewSlot() {
+    setIsCreatingSlot(true);
+    setSelectedSlotId(null);
+    setSlotForm(emptySlotForm);
     setFeedback(null);
   }
 
@@ -791,7 +964,7 @@ export function BackofficeVisitsPage() {
                     {selectedBooking.customer_name}
                   </h4>
                   <p className="mt-3 text-sm text-burgundy-700">
-                    {selectedBooking.customer_email} · {selectedBooking.slot_date} ·{" "}
+                    {selectedBooking.customer_email} · {selectedBooking.customer_phone} · {selectedBooking.slot_date} ·{" "}
                     {selectedBooking.slot_start_time} - {selectedBooking.slot_end_time}
                   </p>
                 </div>
@@ -856,6 +1029,7 @@ export function BackofficeVisitsPage() {
                       <p>Recordatorio 24h: {selectedBooking.reminder_24h_sent ? "Enviado" : "Pendiente"}</p>
                       <p>Recordatorio 1h: {selectedBooking.reminder_1h_sent ? "Enviado" : "Pendiente"}</p>
                       <p>Check-in: {selectedBooking.checked_in_at ? formatDateTime(selectedBooking.checked_in_at) : "No registrado"}</p>
+                      <p>Pago: {selectedBooking.payment_status || "Sin iniciar"}{selectedBooking.payment_status_detail ? ` · ${selectedBooking.payment_status_detail}` : ""}</p>
                     </div>
                   </BackofficeSectionCard>
                 </div>
@@ -875,39 +1049,182 @@ export function BackofficeVisitsPage() {
       <BackofficePanel>
         <BackofficePanelHeader
           eyebrow="Turnos"
-          title="Slots de la experiencia"
-          description="Los turnos siguen viviendo como estructura operativa de base. Si luego querés, los hacemos editables con la misma UI."
+          title="Agenda de la experiencia"
+          description="Definí fechas, horarios, capacidad máxima y bloqueos operativos sin salir del backoffice."
+          actions={
+            <Button onClick={createNewSlot} disabled={!selectedExperienceId}>
+              Nuevo turno
+            </Button>
+          }
         />
-        <div className="mt-6">
+        <div className="mt-6 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
           {slotsQuery.isLoading ? <p className="text-burgundy-700">Cargando turnos...</p> : null}
           {slotsQuery.isError ? (
             <BackofficeMessage tone="danger">No pudimos cargar los turnos de esta experiencia.</BackofficeMessage>
           ) : null}
-          {bookingSlots.length > 0 ? (
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {bookingSlots.map((slot) => (
-                <article
+          <section className="space-y-4">
+            {bookingSlots.length > 0 ? (
+              bookingSlots.map((slot) => (
+                <button
                   key={slot.id}
-                  className="rounded-[24px] border border-burgundy-100 bg-cream-50 p-5 text-sm text-burgundy-800"
+                  type="button"
+                  onClick={() => selectSlot(slot)}
+                  className={cn(
+                    "w-full rounded-[24px] border p-5 text-left transition",
+                    selectedSlotId === slot.id
+                      ? "border-burgundy-900 bg-burgundy-950 text-cream-50"
+                      : "border-burgundy-100 bg-cream-50 text-burgundy-900",
+                  )}
                 >
-                  <p className="font-semibold text-burgundy-950">
-                    {slot.date} · {slot.start_time}
+                  <p className="font-semibold">
+                    {slot.date} · {slot.start_time.slice(0, 5)} - {slot.end_time.slice(0, 5)}
                   </p>
-                  <p className="mt-2">{slot.experience_name}</p>
-                </article>
-              ))}
-            </div>
-          ) : selectedExperienceId ? (
-            <BackofficeEmptyState
-              title="No hay turnos cargados"
-              description="Esta experiencia todavía no tiene slots asociados."
+                  <p className="mt-2 text-sm opacity-75">{slot.guide_name || "Guía por definir"}</p>
+                  <div className="mt-3 grid gap-1 text-sm opacity-80">
+                    <p>Cupo: {slot.capacity}</p>
+                    <p>Reservados: {slot.booked_guests}</p>
+                    <p>Disponibles: {slot.spots_available}</p>
+                    <p>{slot.is_blocked ? `Bloqueado · ${slot.block_reason || "sin motivo"}` : "Disponible para venta"}</p>
+                  </div>
+                </button>
+              ))
+            ) : selectedExperienceId ? (
+              <BackofficeEmptyState
+                title="No hay turnos cargados"
+                description="Esta experiencia todavía no tiene slots asociados."
+              />
+            ) : (
+              <BackofficeEmptyState
+                title="Seleccioná una visita"
+                description="Los turnos se muestran cuando elegís una experiencia."
+              />
+            )}
+          </section>
+
+          <BackofficePanel className="bg-white">
+            <BackofficePanelHeader
+              eyebrow="Editor de turno"
+              title={
+                selectedSlot
+                  ? `${selectedSlot.date} · ${selectedSlot.start_time.slice(0, 5)}`
+                  : "Nuevo turno"
+              }
+              description="Los cupos disponibles se recalculan solos en base a capacidad, reservas activas y bloqueos."
+              actions={
+                <>
+                  {selectedSlotId ? (
+                    <Button
+                      variant="ghost"
+                      onClick={() => deleteSlotMutation.mutate()}
+                      disabled={deleteSlotMutation.isPending}
+                    >
+                      Eliminar
+                    </Button>
+                  ) : null}
+                  <Button
+                    onClick={() => saveSlotMutation.mutate()}
+                    disabled={saveSlotMutation.isPending || !selectedExperienceId}
+                  >
+                    Guardar turno
+                  </Button>
+                </>
+              }
             />
-          ) : (
-            <BackofficeEmptyState
-              title="Seleccioná una visita"
-              description="Los turnos se muestran cuando elegís una experiencia."
-            />
-          )}
+
+            {selectedExperienceId ? (
+              <div className="mt-6 space-y-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <BackofficeField label="Fecha">
+                    <BackofficeInput
+                      type="date"
+                      value={slotForm.date}
+                      onChange={handleSlotField("date")}
+                    />
+                  </BackofficeField>
+                  <BackofficeField label="Guía">
+                    <BackofficeInput
+                      value={slotForm.guide_name}
+                      onChange={handleSlotField("guide_name")}
+                      placeholder="Nombre interno"
+                    />
+                  </BackofficeField>
+                  <BackofficeField label="Hora de inicio">
+                    <BackofficeInput
+                      type="time"
+                      value={slotForm.start_time}
+                      onChange={handleSlotField("start_time")}
+                    />
+                  </BackofficeField>
+                  <BackofficeField label="Hora de fin">
+                    <BackofficeInput
+                      type="time"
+                      value={slotForm.end_time}
+                      onChange={handleSlotField("end_time")}
+                    />
+                  </BackofficeField>
+                  <BackofficeField label="Capacidad máxima">
+                    <BackofficeInput
+                      type="number"
+                      value={slotForm.capacity}
+                      onChange={handleSlotField("capacity")}
+                    />
+                  </BackofficeField>
+                </div>
+
+                <label
+                  className={cn(
+                    "flex cursor-pointer items-start gap-3 rounded-[24px] border px-4 py-4 transition",
+                    slotForm.is_blocked
+                      ? "border-burgundy-300 bg-burgundy-950 text-cream-50"
+                      : "border-burgundy-100 bg-cream-50 text-burgundy-900",
+                  )}
+                >
+                  <input
+                    type="checkbox"
+                    checked={slotForm.is_blocked}
+                    onChange={handleSlotField("is_blocked")}
+                    className="mt-1 h-4 w-4 accent-burgundy-900"
+                  />
+                  <span>
+                    <span className="block text-sm font-semibold">Bloquear turno</span>
+                    <span className="mt-1 block text-sm leading-6 text-current/70">
+                      Útil para cierres operativos, eventos privados o pausas de agenda.
+                    </span>
+                  </span>
+                </label>
+
+                <BackofficeField label="Motivo del bloqueo">
+                  <BackofficeTextarea
+                    value={slotForm.block_reason}
+                    onChange={handleSlotField("block_reason")}
+                    placeholder="Mantenimiento, evento cerrado, contingencia"
+                  />
+                </BackofficeField>
+
+                {selectedSlot ? (
+                  <BackofficeSectionCard>
+                    <BackofficeSectionHeading
+                      eyebrow="Lectura operativa"
+                      title="Estado del turno"
+                      description="Esto ayuda a saber si todavía puede venderse o si ya quedó tensionado."
+                    />
+                    <div className="mt-4 grid gap-2 text-sm text-burgundy-800">
+                      <p>Reservados: {selectedSlot.booked_guests}</p>
+                      <p>Disponibles: {selectedSlot.spots_available}</p>
+                      <p>Bloqueado: {selectedSlot.is_blocked ? "Sí" : "No"}</p>
+                    </div>
+                  </BackofficeSectionCard>
+                ) : null}
+              </div>
+            ) : (
+              <div className="mt-6">
+                <BackofficeEmptyState
+                  title="Seleccioná una experiencia"
+                  description="Los turnos siempre se crean dentro de una visita concreta."
+                />
+              </div>
+            )}
+          </BackofficePanel>
         </div>
       </BackofficePanel>
     </div>

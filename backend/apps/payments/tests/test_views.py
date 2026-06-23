@@ -12,6 +12,7 @@ from apps.orders.access import build_guest_access_token
 from apps.orders.models import Order
 from apps.orders.tests.factories import OrderFactory, OrderItemFactory
 
+from ..mercadopago import MercadoPagoAPIError
 from ..models import Payment, PaymentWebhookLog
 from .factories import PaymentFactory
 
@@ -162,6 +163,39 @@ class TestPaymentEndpoints:
         assert payment.status == Payment.Status.PENDING
         assert order.status == Order.Status.PENDING_PAYMENT
         assert "transaction_amount" in webhook.error
+
+    @patch("apps.payments.views.MercadoPagoClient.get_payment")
+    def test_webhook_simulation_with_fake_data_id_returns_200(
+        self,
+        mock_get_payment,
+        api_client,
+        settings,
+    ) -> None:
+        """Mercado Pago simulation payloads should not fail when the payment does not exist."""
+        settings.MERCADOPAGO_ACCESS_TOKEN = "test-token"
+        settings.MERCADOPAGO_WEBHOOK_SECRET = ""
+        mock_get_payment.side_effect = MercadoPagoAPIError("payment not found")
+
+        response = api_client.post(
+            "/api/v1/payments/webhook/?data.id=123456&type=payment",
+            {
+                "action": "payment.updated",
+                "api_version": "v1",
+                "data": {"id": "123456"},
+                "date_created": "2021-11-01T02:02:02Z",
+                "id": "123456",
+                "live_mode": False,
+                "type": "payment",
+                "user_id": 724484980,
+            },
+            format="json",
+        )
+
+        webhook = PaymentWebhookLog.objects.get(mp_notification_id="123456")
+
+        assert response.status_code == 200
+        assert webhook.processed is True
+        assert webhook.error == "payment not found"
 
     @patch("apps.payments.serializers.MercadoPagoClient.create_preference")
     def test_create_preference_rejects_ineligible_order(

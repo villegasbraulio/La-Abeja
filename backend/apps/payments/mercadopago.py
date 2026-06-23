@@ -4,10 +4,14 @@ from __future__ import annotations
 
 from typing import Any
 from urllib.parse import urlsplit
+from urllib.parse import urlencode
 
 from django.conf import settings
 
+from apps.orders.access import build_guest_access_token
 from apps.orders.models import Order
+from apps.reservations.access import build_guest_access_token as build_booking_guest_access_token
+from apps.reservations.models import Booking
 
 try:
     import mercadopago
@@ -81,6 +85,52 @@ class MercadoPagoClient:
         return self._unwrap_response(
             response,
             fallback_message="No pudimos crear la preferencia de pago en Mercado Pago.",
+        )
+
+    def create_booking_preference(
+        self,
+        booking: Booking,
+        *,
+        idempotency_key: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a Checkout Pro preference for a specific visit booking."""
+        payer_name, payer_surname = self._resolve_booking_payer_name(booking)
+        payload = {
+            "items": self._build_booking_preference_items(booking),
+            "payer": {
+                "name": payer_name,
+                "surname": payer_surname,
+                "email": self._resolve_booking_customer_email(booking),
+            },
+            "external_reference": str(booking.id),
+            "metadata": {
+                "booking_id": str(booking.id),
+                "confirmation_code": booking.confirmation_code,
+                "experience_slug": booking.time_slot.experience.slug,
+                "experience_name": booking.time_slot.experience.name,
+                "slot_date": booking.time_slot.date.isoformat(),
+                "slot_start_time": booking.time_slot.start_time.isoformat(),
+            },
+            "payment_methods": {
+                "installments": 6,
+            },
+        }
+        notification_url = self._build_booking_notification_url()
+        if notification_url:
+            payload["notification_url"] = notification_url
+        back_urls = self._build_booking_back_urls(booking)
+        if back_urls:
+            payload["back_urls"] = back_urls
+            payload["auto_return"] = "approved"
+        stable_key = idempotency_key or f"mercadopago:booking:{booking.id}"
+        request_options = RequestOptions(
+            access_token=self.access_token,
+            custom_headers={"x-idempotency-key": stable_key},
+        )
+        response = self.sdk.preference().create(payload, request_options)
+        return self._unwrap_response(
+            response,
+            fallback_message="No pudimos crear la preferencia de pago de la visita.",
         )
 
     def get_payment(self, payment_id: str) -> dict[str, Any]:
@@ -168,16 +218,58 @@ class MercadoPagoClient:
             return order.user.email
         raise MercadoPagoAPIError("El pedido no tiene un email válido para cobrar.")
 
+    def _resolve_booking_customer_email(self, booking: Booking) -> str:
+        """Return the booking email for Mercado Pago payer data."""
+        if booking.customer_email:
+            return booking.customer_email
+        if booking.user_id and booking.user:
+            return booking.user.email
+        raise MercadoPagoAPIError("La reserva no tiene un email válido para cobrar.")
+
     def _build_back_urls(self, order: Order) -> dict[str, str]:
         """Return public back URLs when the frontend host can receive redirects."""
         frontend_url = settings.FRONTEND_URL.rstrip("/")
         if self._is_local_url(frontend_url):
             return {}
 
+        guest_access_token = build_guest_access_token(order)
+
+        def build_return_url(status: str) -> str:
+            params = {
+                "order_id": str(order.id),
+                "status": status,
+            }
+            if guest_access_token:
+                params["guest_access_token"] = guest_access_token
+            return f"{frontend_url}/checkout/resultado?{urlencode(params)}"
+
         return {
-            "success": f"{frontend_url}/checkout/resultado?order_id={order.id}&status=approved",
-            "failure": f"{frontend_url}/checkout/resultado?order_id={order.id}&status=failure",
-            "pending": f"{frontend_url}/checkout/resultado?order_id={order.id}&status=pending",
+            "success": build_return_url("approved"),
+            "failure": build_return_url("failure"),
+            "pending": build_return_url("pending"),
+        }
+
+    def _build_booking_back_urls(self, booking: Booking) -> dict[str, str]:
+        """Return public back URLs for visit booking redirects."""
+        frontend_url = settings.FRONTEND_URL.rstrip("/")
+        if self._is_local_url(frontend_url):
+            return {}
+
+        guest_access_token = build_booking_guest_access_token(booking)
+
+        def build_return_url(status: str) -> str:
+            params = {
+                "booking_id": str(booking.id),
+                "status": status,
+            }
+            if guest_access_token:
+                params["guest_access_token"] = guest_access_token
+            return f"{frontend_url}/visitas/resultado?{urlencode(params)}"
+
+        return {
+            "success": build_return_url("approved"),
+            "failure": build_return_url("failure"),
+            "pending": build_return_url("pending"),
         }
 
     def _build_notification_url(self) -> str | None:
@@ -186,6 +278,13 @@ class MercadoPagoClient:
         if self._is_local_url(backend_url):
             return None
         return f"{backend_url}/api/v1/payments/webhook/"
+
+    def _build_booking_notification_url(self) -> str | None:
+        """Return a public webhook URL for visit booking payments."""
+        backend_url = settings.BACKEND_URL.rstrip("/")
+        if self._is_local_url(backend_url):
+            return None
+        return f"{backend_url}/api/v1/visits/payments/webhook/"
 
     def _is_local_url(self, value: str) -> bool:
         """Return whether the URL points to a local-only development host."""
@@ -240,3 +339,24 @@ class MercadoPagoClient:
                 if isinstance(description, str) and description.strip():
                     return description.strip()
         return fallback_message
+
+    def _resolve_booking_payer_name(self, booking: Booking) -> tuple[str, str]:
+        """Prefer account data and fall back to the booking contact snapshot."""
+        first_name = (booking.user.first_name or "").strip() if booking.user_id else ""
+        last_name = (booking.user.last_name or "").strip() if booking.user_id else ""
+        if first_name or last_name:
+            return first_name, last_name
+        return booking.customer_first_name.strip() or "Cliente", booking.customer_last_name.strip()
+
+    def _build_booking_preference_items(self, booking: Booking) -> list[dict[str, Any]]:
+        """Return Mercado Pago items for a winery visit booking."""
+        return [
+            {
+                "id": f"{booking.time_slot.experience.slug}:{booking.time_slot_id}",
+                "title": booking.time_slot.experience.name,
+                "description": f"Reserva {booking.confirmation_code}",
+                "currency_id": "ARS",
+                "quantity": booking.guest_count,
+                "unit_price": float(booking.time_slot.experience.price_per_person),
+            }
+        ]

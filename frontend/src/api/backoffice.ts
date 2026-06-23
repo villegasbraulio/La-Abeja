@@ -9,6 +9,7 @@ import type {
   BackofficeTimeSlot,
   BackofficeOrderDetail,
   BackofficeOrderListItem,
+  BackofficeTimeSlotPayload,
   BackofficeVarietal,
   BackofficeWineDetail,
   BackofficeWineListItem,
@@ -176,6 +177,27 @@ export const backofficeApi = {
           `/backoffice/visits/slots/${suffix ? `?${suffix}` : ""}`,
         );
         return response.data;
+      },
+      detail: async (slotId: number): Promise<BackofficeTimeSlot> => {
+        const response = await apiClient.get<BackofficeTimeSlot>(`/backoffice/visits/slots/${slotId}/`);
+        return response.data;
+      },
+      create: async (payload: BackofficeTimeSlotPayload): Promise<BackofficeTimeSlot> => {
+        const response = await apiClient.post<BackofficeTimeSlot>("/backoffice/visits/slots/", payload);
+        return response.data;
+      },
+      update: async (
+        slotId: number,
+        payload: BackofficeTimeSlotPayload,
+      ): Promise<BackofficeTimeSlot> => {
+        const response = await apiClient.put<BackofficeTimeSlot>(
+          `/backoffice/visits/slots/${slotId}/`,
+          payload,
+        );
+        return response.data;
+      },
+      remove: async (slotId: number): Promise<void> => {
+        await apiClient.delete(`/backoffice/visits/slots/${slotId}/`);
       },
     },
     bookings: {

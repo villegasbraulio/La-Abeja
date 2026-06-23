@@ -64,7 +64,7 @@ class BackofficeTimeSlotListCreateView(generics.ListCreateAPIView):
     filter_backends = [filters.OrderingFilter, filters.SearchFilter]
     ordering_fields = ["date", "start_time", "capacity", "spots_available"]
     ordering = ["-date", "start_time"]
-    search_fields = ["experience__name", "guide_name", "block_reason"]
+    search_fields = ["experience__name", "guide_name", "block_reason", "date"]
 
     def get_queryset(self) -> QuerySet[TimeSlot]:
         """Filter slots by the selected experience if present."""
@@ -88,7 +88,12 @@ class BackofficeBookingListCreateView(generics.ListCreateAPIView):
 
     permission_classes = [permissions.IsAuthenticated, IsStaffUser]
     serializer_class = BackofficeBookingSerializer
-    queryset = Booking.objects.select_related("user", "time_slot", "time_slot__experience").all()
+    queryset = Booking.objects.select_related(
+        "user",
+        "time_slot",
+        "time_slot__experience",
+        "payment",
+    ).all()
     pagination_class = None
     filter_backends = [filters.OrderingFilter, filters.SearchFilter]
     ordering_fields = ["created_at", "guest_count", "total_price", "status"]
@@ -119,5 +124,9 @@ class BackofficeBookingDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     permission_classes = [permissions.IsAuthenticated, IsStaffUser]
     serializer_class = BackofficeBookingSerializer
-    queryset = Booking.objects.select_related("user", "time_slot", "time_slot__experience").all()
-
+    queryset = Booking.objects.select_related(
+        "user",
+        "time_slot",
+        "time_slot__experience",
+        "payment",
+    ).all()

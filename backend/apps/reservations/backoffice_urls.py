@@ -23,7 +23,7 @@ urlpatterns = [
         name="experience-detail",
     ),
     path("visits/slots/", BackofficeTimeSlotListCreateView.as_view(), name="slot-list"),
-    path("visits/slots/<uuid:pk>/", BackofficeTimeSlotDetailView.as_view(), name="slot-detail"),
+    path("visits/slots/<int:pk>/", BackofficeTimeSlotDetailView.as_view(), name="slot-detail"),
     path("visits/bookings/", BackofficeBookingListCreateView.as_view(), name="booking-list"),
     path(
         "visits/bookings/<uuid:pk>/",

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import secrets
 import uuid
 
 from django.conf import settings
@@ -66,6 +67,8 @@ class Booking(models.Model):
     """Customer booking."""
 
     class Status(models.TextChoices):
+        PENDING_PAYMENT = "pending_payment", "Esperando pago"
+        PAYMENT_FAILED = "payment_failed", "Pago fallido"
         CONFIRMED = "confirmed", "Confirmada"
         CANCELLED = "cancelled", "Cancelada"
         COMPLETED = "completed", "Completada"
@@ -77,11 +80,21 @@ class Booking(models.Model):
         settings.AUTH_USER_MODEL,
         related_name="bookings",
         on_delete=models.PROTECT,
+        null=True,
+        blank=True,
     )
     time_slot = models.ForeignKey(TimeSlot, related_name="bookings", on_delete=models.PROTECT)
+    customer_first_name = models.CharField(max_length=100, blank=True)
+    customer_last_name = models.CharField(max_length=100, blank=True)
+    customer_email = models.EmailField(blank=True)
+    customer_phone = models.CharField(max_length=20, blank=True)
     guest_count = models.IntegerField()
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.CONFIRMED)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING_PAYMENT,
+    )
     special_requests = models.TextField(blank=True)
     dietary_restrictions = models.JSONField(default=list, blank=True)
     qr_code_url = models.URLField(blank=True)
@@ -93,3 +106,77 @@ class Booking(models.Model):
     def __str__(self) -> str:
         """Return the booking confirmation code."""
         return self.confirmation_code
+
+    @property
+    def customer_name(self) -> str:
+        """Return the current customer display name."""
+        if self.user_id and self.user:
+            user_name = f"{self.user.first_name} {self.user.last_name}".strip()
+            if user_name:
+                return user_name
+            if self.user.email:
+                return self.user.email
+
+        booking_name = f"{self.customer_first_name} {self.customer_last_name}".strip()
+        return booking_name or self.customer_email or self.confirmation_code
+
+    @classmethod
+    def generate_confirmation_code(cls) -> str:
+        """Return a short collision-resistant confirmation code."""
+        for _ in range(10):
+            code = secrets.token_hex(4).upper()
+            if not cls.objects.filter(confirmation_code=code).exists():
+                return code
+        return uuid.uuid4().hex[:10].upper()
+
+
+class BookingPayment(models.Model):
+    """Mercado Pago-backed payment record for a visit booking."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pendiente"
+        APPROVED = "approved", "Aprobado"
+        REJECTED = "rejected", "Rechazado"
+        CANCELLED = "cancelled", "Cancelado"
+        REFUNDED = "refunded", "Reembolsado"
+        IN_PROCESS = "in_process", "En proceso"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    booking = models.OneToOneField(
+        Booking,
+        on_delete=models.PROTECT,
+        related_name="payment",
+    )
+    idempotency_key = models.CharField(max_length=100, unique=True)
+    mp_preference_id = models.CharField(max_length=100, blank=True)
+    preference_init_point = models.URLField(max_length=1000, blank=True)
+    preference_sandbox_init_point = models.URLField(max_length=1000, blank=True)
+    mp_payment_id = models.CharField(max_length=100, blank=True)
+    mp_merchant_order_id = models.CharField(max_length=100, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    status_detail = models.CharField(max_length=100, blank=True)
+    payment_method = models.CharField(max_length=50, blank=True)
+    payment_type = models.CharField(max_length=50, blank=True)
+    installments = models.IntegerField(default=1)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3, default="ARS")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["mp_preference_id"],
+                condition=~models.Q(mp_preference_id=""),
+                name="unique_nonempty_booking_mp_preference_id",
+            ),
+            models.UniqueConstraint(
+                fields=["mp_payment_id"],
+                condition=~models.Q(mp_payment_id=""),
+                name="unique_nonempty_booking_mp_payment_id",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        """Return a readable booking payment label."""
+        return f"{self.booking.confirmation_code} - {self.status}"

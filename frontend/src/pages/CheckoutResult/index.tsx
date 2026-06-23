@@ -20,6 +20,7 @@ export function CheckoutResultPage() {
   const accessToken = useAuthStore((state) => state.accessToken);
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get("order_id");
+  const guestAccessToken = searchParams.get("guest_access_token");
   const checkoutStatus = resolveCheckoutStatus(searchParams);
   const paymentId = searchParams.get("payment_id") ?? searchParams.get("collection_id");
   const merchantOrderId = searchParams.get("merchant_order_id");
@@ -31,8 +32,8 @@ export function CheckoutResultPage() {
 
   const { data } = useQuery({
     queryKey: ["order-detail", orderId, "checkout-result"],
-    queryFn: () => ordersApi.detail(orderId ?? ""),
-    enabled: Boolean(accessToken && orderId),
+    queryFn: () => ordersApi.detail(orderId ?? "", guestAccessToken),
+    enabled: Boolean(orderId && (accessToken || guestAccessToken)),
   });
 
   useEffect(() => {
@@ -155,7 +156,13 @@ export function CheckoutResultPage() {
 
         <div className="mt-8 flex flex-wrap gap-3">
           {orderId ? (
-            <Link to={`/pedidos/${orderId}`}>
+            <Link
+              to={
+                guestAccessToken
+                  ? `/pedidos/${orderId}?guest_access_token=${encodeURIComponent(guestAccessToken)}`
+                  : `/pedidos/${orderId}`
+              }
+            >
               <Button>Ver detalle del pedido</Button>
             </Link>
           ) : null}

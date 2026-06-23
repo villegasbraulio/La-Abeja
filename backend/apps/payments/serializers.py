@@ -5,13 +5,38 @@ from __future__ import annotations
 from django.db import transaction
 from rest_framework import serializers
 
+from apps.orders.access import resolve_guest_order
 from apps.orders.models import Order
 
 from .mercadopago import MercadoPagoClient
 from .models import Payment
 
 
-class CreatePreferenceSerializer(serializers.Serializer):
+class PaymentOrderResolutionMixin:
+    """Share order resolution rules between payment endpoints."""
+
+    def _resolve_order(self, *, request, order_id):
+        """Return the current user's order or a guest order with a valid token."""
+        if request.user.is_authenticated:
+            return (
+                Order.objects.filter(user=request.user)
+                .prefetch_related("items")
+                .select_related("user")
+                .filter(pk=order_id)
+                .first()
+            )
+
+        guest_access_token = self.initial_data.get("guest_access_token")
+        guest_order = resolve_guest_order(
+            order_id=str(order_id),
+            guest_access_token=str(guest_access_token or ""),
+        )
+        if guest_order is None:
+            return None
+        return guest_order
+
+
+class CreatePreferenceSerializer(PaymentOrderResolutionMixin, serializers.Serializer):
     """Validate and create a Checkout Pro payment preference."""
 
     order_id = serializers.UUIDField()
@@ -29,28 +54,6 @@ class CreatePreferenceSerializer(serializers.Serializer):
             raise serializers.ValidationError("El pedido no tiene productos para cobrar.")
         self.context["order"] = order
         return value
-
-    def _resolve_order(self, *, request, order_id):
-        """Return the current user's order or a guest order with a valid token."""
-        if request.user.is_authenticated:
-            return (
-                Order.objects.filter(user=request.user)
-                .prefetch_related("items")
-                .select_related("user")
-                .filter(pk=order_id)
-                .first()
-            )
-
-        from apps.orders.access import resolve_guest_order
-
-        guest_access_token = self.initial_data.get("guest_access_token")
-        guest_order = resolve_guest_order(
-            order_id=str(order_id),
-            guest_access_token=str(guest_access_token or ""),
-        )
-        if guest_order is None:
-            return None
-        return guest_order
 
     @transaction.atomic
     def create_preference(self) -> dict[str, object]:
