@@ -64,6 +64,22 @@ def test_paid_order_queues_external_side_effects(mock_dispatch) -> None:
 
 @pytest.mark.django_db
 @patch("apps.automations.outbox._dispatch_event")
+def test_preparing_order_queues_external_side_effects(mock_dispatch) -> None:
+    """Preparing orders should keep carrier fulfillment active for shipped orders."""
+    order = OrderFactory(status="pending_payment", shipping_method="standard", tracking_number="")
+    OrderItemFactory(order=order)
+
+    order.status = "preparing"
+    order.save(update_fields=["status", "updated_at"])
+
+    assert OutboxEvent.objects.filter(
+        event_key=f"andreani-fulfillment:{order.id}",
+        status=OutboxEvent.Status.PENDING,
+    ).exists()
+
+
+@pytest.mark.django_db
+@patch("apps.automations.outbox._dispatch_event")
 def test_pickup_order_skips_andreani(mock_dispatch) -> None:
     """Pickup orders should not create a carrier shipment."""
     order = OrderFactory(status="pending_payment", shipping_method="pickup", tracking_number="")

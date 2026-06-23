@@ -8,6 +8,23 @@ import { useAuthStore } from "../../store/authStore";
 import { useCartStore } from "../../store/cartStore";
 import { useToastStore } from "../../store/toastStore";
 
+function buildPostPaymentNote(
+  status: string,
+  shippingMethod: string | undefined,
+  hasTracking: boolean,
+): string | null {
+  if (hasTracking) {
+    return null;
+  }
+  if (!["paid", "preparing", "ready_to_ship"].includes(status)) {
+    return null;
+  }
+  if (shippingMethod === "pickup") {
+    return "Recibimos tu pago. Te vamos a escribir por email para coordinar el retiro en bodega.";
+  }
+  return "Recibimos tu pago. Estamos preparando el pedido y te vamos a enviar por email las novedades del despacho apenas estén disponibles.";
+}
+
 function resolveCheckoutStatus(searchParams: URLSearchParams): string | null {
   return (
     searchParams.get("collection_status") ??
@@ -106,6 +123,27 @@ export function CheckoutResultPage() {
               <p className="text-xs uppercase tracking-[0.16em] text-burgundy-500">Total</p>
               <p className="mt-2 text-lg font-semibold text-burgundy-950">{formatARS(data.total)}</p>
             </div>
+          </div>
+        ) : null}
+
+        {data ? (
+          <div className="mt-6">
+            {buildPostPaymentNote(
+              data.status,
+              data.shipping_method,
+              Boolean(data.tracking_number),
+            ) ? (
+              <div className="rounded-[24px] border border-burgundy-100 bg-white p-6 text-sm text-burgundy-800">
+                <p className="font-semibold text-burgundy-950">Próximo paso</p>
+                <p className="mt-2">
+                  {buildPostPaymentNote(
+                    data.status,
+                    data.shipping_method,
+                    Boolean(data.tracking_number),
+                  )}
+                </p>
+              </div>
+            ) : null}
           </div>
         ) : null}
 

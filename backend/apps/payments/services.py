@@ -31,10 +31,17 @@ PAYMENT_STATUS_MAP: dict[str, str] = {
 }
 
 ORDER_STATUS_MAP: dict[str, str] = {
-    Payment.Status.APPROVED: Order.Status.PAID,
     Payment.Status.REJECTED: Order.Status.PAYMENT_FAILED,
     Payment.Status.CANCELLED: Order.Status.PAYMENT_FAILED,
     Payment.Status.REFUNDED: Order.Status.REFUNDED,
+}
+
+FULFILLMENT_ACTIVE_STATUSES = {
+    Order.Status.PAID,
+    Order.Status.PREPARING,
+    Order.Status.READY_TO_SHIP,
+    Order.Status.SHIPPED,
+    Order.Status.DELIVERED,
 }
 
 
@@ -42,9 +49,17 @@ class PaymentIntegrityError(Exception):
     """Raised when Mercado Pago data does not match the local order."""
 
 
-def resolve_order_status(current_order_status: str, payment_status: str) -> str:
+def resolve_order_status(order: Order, payment_status: str) -> str:
     """Map payment state into an allowed order state transition."""
-    next_status = ORDER_STATUS_MAP.get(payment_status, current_order_status)
+    current_order_status = order.status
+    if payment_status == Payment.Status.APPROVED:
+        next_status = (
+            Order.Status.PAID
+            if order.shipping_method == Order.ShippingMethod.PICKUP
+            else Order.Status.PREPARING
+        )
+    else:
+        next_status = ORDER_STATUS_MAP.get(payment_status, current_order_status)
     if next_status == current_order_status:
         return current_order_status
     if can_transition(current_order_status, next_status):
@@ -92,7 +107,7 @@ def sync_payment(payment_id: object, payment_data: dict[str, Any]) -> Payment:
 
     raw_status = str(payment_data.get("status") or "pending").lower()
     mapped_payment_status = PAYMENT_STATUS_MAP.get(raw_status, Payment.Status.PENDING)
-    next_order_status = resolve_order_status(order.status, mapped_payment_status)
+    next_order_status = resolve_order_status(order, mapped_payment_status)
 
     payment.mp_payment_id = str(payment_data.get("id") or payment.mp_payment_id)
     payment.mp_merchant_order_id = str(
@@ -119,14 +134,17 @@ def sync_payment(payment_id: object, payment_data: dict[str, Any]) -> Payment:
     if next_order_status != order.status:
         previous_status = order.status
         order.status = next_order_status
-        if next_order_status == Order.Status.PAID and not order.estimated_delivery:
+        if next_order_status in FULFILLMENT_ACTIVE_STATUSES and not order.estimated_delivery:
             if order.shipping_method == Order.ShippingMethod.STANDARD:
                 order.estimated_delivery = timezone.localdate() + timedelta(days=7)
             elif order.shipping_method == Order.ShippingMethod.EXPRESS:
                 order.estimated_delivery = timezone.localdate() + timedelta(days=3)
         order.save(update_fields=["status", "estimated_delivery", "updated_at"])
 
-        if previous_status != Order.Status.PAID and next_order_status == Order.Status.PAID:
+        if (
+            previous_status not in FULFILLMENT_ACTIVE_STATUSES
+            and next_order_status in FULFILLMENT_ACTIVE_STATUSES
+        ):
             for item in order.items.select_related("wine").all():
                 Wine.objects.filter(id=item.wine_id).update(
                     stock=models.F("stock") - item.quantity

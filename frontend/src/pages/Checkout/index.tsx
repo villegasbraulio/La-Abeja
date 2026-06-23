@@ -367,7 +367,7 @@ export function CheckoutPage() {
               </h2>
               <p className="mt-3 text-burgundy-700">
                 {authMode === "guest"
-                  ? "Solo necesitamos tu email para enviarte el detalle del pedido, las novedades del pago y el seguimiento de Andreani."
+                  ? "Solo necesitamos tu email para enviarte el detalle del pedido, las novedades del pago y las actualizaciones del despacho."
                   : "Si no querés crear una cuenta, podés cambiar a compra invitada y recibir todo por email."}
               </p>
 

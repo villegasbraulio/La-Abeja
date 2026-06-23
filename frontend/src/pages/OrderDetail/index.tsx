@@ -8,6 +8,23 @@ import { applyWineImageFallback, wineImageSrc } from "../../lib/assets";
 import { formatARS, formatDate } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
 
+function buildOrderProgressMessage(
+  status: string,
+  shippingMethod: string,
+  hasTracking: boolean,
+): string | null {
+  if (hasTracking) {
+    return null;
+  }
+  if (!["paid", "preparing", "ready_to_ship"].includes(status)) {
+    return null;
+  }
+  if (shippingMethod === "pickup") {
+    return "Pago recibido. Te vamos a escribir por email para coordinar el retiro en bodega.";
+  }
+  return "Pago recibido. Estamos preparando tu pedido y te enviaremos por email las novedades del despacho cuando tengamos los datos finales.";
+}
+
 export function OrderDetailPage() {
   const { id = "" } = useParams();
   const accessToken = useAuthStore((state) => state.accessToken);
@@ -86,6 +103,11 @@ export function OrderDetailPage() {
       : (payMutation.error as AxiosError<{ detail?: string }> | null)?.response?.data?.detail;
   const cancelError = (cancelMutation.error as AxiosError<{ detail?: string }> | null)?.response
     ?.data?.detail;
+  const orderProgressMessage = buildOrderProgressMessage(
+    data.status,
+    data.shipping_method,
+    Boolean(data.tracking_number),
+  );
 
   return (
     <section className="mx-auto max-w-7xl px-6 py-16">
@@ -172,6 +194,13 @@ export function OrderDetailPage() {
               </div>
             ) : null}
 
+            {orderProgressMessage ? (
+              <div className="mt-6 rounded-[22px] border border-burgundy-100 bg-cream-50 p-4 text-sm text-burgundy-800">
+                <p className="font-semibold text-burgundy-950">Próximo paso</p>
+                <p className="mt-2">{orderProgressMessage}</p>
+              </div>
+            ) : null}
+
             {data.tracking_number ? (
               <div className="mt-6 rounded-[22px] border border-burgundy-100 bg-cream-50 p-4 text-sm text-burgundy-800">
                 <p className="font-semibold text-burgundy-950">Seguimiento</p>
@@ -183,7 +212,7 @@ export function OrderDetailPage() {
                     rel="noreferrer"
                     className="mt-3 inline-flex text-sm font-semibold text-burgundy-900"
                   >
-                    Seguir envío en Andreani
+                    Seguir envío
                   </a>
                 ) : null}
               </div>

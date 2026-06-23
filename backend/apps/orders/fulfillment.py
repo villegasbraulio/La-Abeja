@@ -51,7 +51,10 @@ def sync_andreani_shipping_order(
     retry_failed: bool = False,
 ) -> AndreaniShipment | None:
     """Idempotently create a shipment and persist its label."""
-    if order.status != Order.Status.PAID or order.shipping_method == Order.ShippingMethod.PICKUP:
+    if (
+        order.status not in {Order.Status.PAID, Order.Status.PREPARING}
+        or order.shipping_method == Order.ShippingMethod.PICKUP
+    ):
         return None
 
     existing_record = AndreaniShipment.objects.filter(order=order).first()

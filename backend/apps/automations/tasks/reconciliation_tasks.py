@@ -82,10 +82,13 @@ def reconcile_pending_payments() -> dict[str, int]:
 
 @shared_task
 def reconcile_stuck_shipments() -> dict[str, int]:
-    """Requeue paid orders missing tracking or a stored label."""
+    """Requeue prepared or paid orders missing tracking or a stored label."""
     threshold = timezone.now() - timedelta(minutes=settings.SHIPMENT_RECONCILIATION_AGE_MINUTES)
     orders = (
-        Order.objects.filter(status=Order.Status.PAID, updated_at__lte=threshold)
+        Order.objects.filter(
+            status__in=[Order.Status.PAID, Order.Status.PREPARING],
+            updated_at__lte=threshold,
+        )
         .exclude(shipping_method=Order.ShippingMethod.PICKUP)
         .order_by("updated_at")
     )

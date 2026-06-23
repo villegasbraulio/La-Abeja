@@ -97,7 +97,7 @@ def test_reconciliation_recovers_missed_approved_payment(
     order.refresh_from_db()
     assert result["payments_synced"] == 1
     assert payment.status == Payment.Status.APPROVED
-    assert order.status == Order.Status.PAID
+    assert order.status == Order.Status.PREPARING
     assert OutboxEvent.objects.filter(event_type=OutboxEvent.EventType.ORDER_EMAIL).exists()
     assert OutboxEvent.objects.filter(
         event_type=OutboxEvent.EventType.ANDREANI_FULFILLMENT
@@ -109,7 +109,10 @@ def test_reconciliation_recovers_missed_approved_payment(
 def test_reconciliation_requeues_paid_order_without_shipment(mock_dispatch, settings) -> None:
     """Paid orders missing tracking should be restored to the outbox."""
     settings.SHIPMENT_RECONCILIATION_AGE_MINUTES = 10
-    order = OrderFactory(status=Order.Status.PAID, shipping_method=Order.ShippingMethod.STANDARD)
+    order = OrderFactory(
+        status=Order.Status.PREPARING,
+        shipping_method=Order.ShippingMethod.STANDARD,
+    )
     Order.objects.filter(pk=order.pk).update(
         updated_at=timezone.now() - timedelta(minutes=20)
     )

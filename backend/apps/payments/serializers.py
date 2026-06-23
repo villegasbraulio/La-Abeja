@@ -61,7 +61,6 @@ class CreatePreferenceSerializer(PaymentOrderResolutionMixin, serializers.Serial
         validated_order: Order = self.context["order"]
         order = (
             Order.objects.select_for_update()
-            .select_related("user")
             .prefetch_related("items")
             .get(pk=validated_order.pk)
         )

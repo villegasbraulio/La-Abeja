@@ -101,7 +101,7 @@ class TestPaymentEndpoints:
         assert response.status_code == 200
         assert payment.status == "approved"
         assert payment.mp_payment_id == "99887766"
-        assert order.status == "paid"
+        assert order.status == "preparing"
         assert wine.stock == 8
 
         repeated_response = api_client.post(
@@ -196,6 +196,51 @@ class TestPaymentEndpoints:
         assert response.status_code == 200
         assert webhook.processed is True
         assert webhook.error == "payment not found"
+
+    @patch("apps.payments.views.MercadoPagoClient.get_payment")
+    def test_webhook_keeps_pickup_orders_as_paid(
+        self,
+        mock_get_payment,
+        api_client,
+        settings,
+    ) -> None:
+        """Pickup orders stay paid because they do not enter carrier preparation."""
+        settings.MERCADOPAGO_ACCESS_TOKEN = "test-token"
+        settings.MERCADOPAGO_WEBHOOK_SECRET = ""
+        settings.MERCADOPAGO_COLLECTOR_ID = "445566"
+        order = OrderFactory(
+            status="pending_payment",
+            total=Decimal("8000.00"),
+            shipping_method=Order.ShippingMethod.PICKUP,
+        )
+        OrderItemFactory(order=order)
+        payment = PaymentFactory(order=order, amount=order.total, status="pending")
+        mock_get_payment.return_value = {
+            "id": 99887769,
+            "status": "approved",
+            "status_detail": "accredited",
+            "external_reference": str(order.id),
+            "transaction_amount": "8000.00",
+            "currency_id": "ARS",
+            "collector_id": 445566,
+            "payment_method_id": "visa",
+            "payment_type_id": "credit_card",
+            "installments": 1,
+            "order": {"id": "merchant_order_3"},
+        }
+
+        response = api_client.post(
+            "/api/v1/payments/webhook/?data.id=99887769&type=payment",
+            {"id": 12348, "type": "payment", "data": {"id": "99887769"}},
+            format="json",
+        )
+
+        payment.refresh_from_db()
+        order.refresh_from_db()
+
+        assert response.status_code == 200
+        assert payment.status == "approved"
+        assert order.status == Order.Status.PAID
 
     @patch("apps.payments.serializers.MercadoPagoClient.create_preference")
     def test_create_preference_rejects_ineligible_order(

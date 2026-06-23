@@ -53,7 +53,7 @@ def order_post_save(
             payload={"order_id": str(instance.id), "template": "order_status_update"},
         )
         if (
-            instance.status == Order.Status.PAID
+            instance.status in {Order.Status.PAID, Order.Status.PREPARING}
             and instance.shipping_method != Order.ShippingMethod.PICKUP
         ):
             enqueue_outbox_event(

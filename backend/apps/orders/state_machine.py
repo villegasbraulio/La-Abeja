@@ -9,6 +9,7 @@ from .models import Order
 ALLOWED_ORDER_TRANSITIONS: Mapping[str, set[str]] = {
     Order.Status.PENDING_PAYMENT: {
         Order.Status.PAID,
+        Order.Status.PREPARING,
         Order.Status.PAYMENT_FAILED,
         Order.Status.CANCELLED,
     },
@@ -17,7 +18,12 @@ ALLOWED_ORDER_TRANSITIONS: Mapping[str, set[str]] = {
     Order.Status.READY_TO_SHIP: {Order.Status.SHIPPED},
     Order.Status.SHIPPED: {Order.Status.DELIVERED, Order.Status.REFUNDED},
     Order.Status.DELIVERED: {Order.Status.REFUNDED},
-    Order.Status.PAYMENT_FAILED: {Order.Status.PENDING_PAYMENT, Order.Status.CANCELLED},
+    Order.Status.PAYMENT_FAILED: {
+        Order.Status.PENDING_PAYMENT,
+        Order.Status.PAID,
+        Order.Status.PREPARING,
+        Order.Status.CANCELLED,
+    },
     Order.Status.CANCELLED: set(),
     Order.Status.REFUNDED: set(),
 }
