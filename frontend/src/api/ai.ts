@@ -3,7 +3,6 @@ import type {
   AIApproval,
   AICopilotOverview,
   AICopilotResponse,
-  AILead,
   AIStockReservation,
   AITask,
 } from "../types/ai";
@@ -73,38 +72,6 @@ export const aiApi = {
       const response = await apiClient.get<AIStockReservation[]>(
         `/ai/stock-reservations/${suffix ? `?${suffix}` : ""}`,
       );
-      return response.data;
-    },
-  },
-  leads: {
-    list: async (params?: {
-      status?: string;
-      search?: string;
-      conversation_id?: string;
-    }): Promise<AILead[]> => {
-      const searchParams = new URLSearchParams();
-      if (params?.status) {
-        searchParams.set("status", params.status);
-      }
-      if (params?.search) {
-        searchParams.set("search", params.search);
-      }
-      if (params?.conversation_id) {
-        searchParams.set("conversation_id", params.conversation_id);
-      }
-      const suffix = searchParams.toString();
-      const response = await apiClient.get<AILead[]>(`/ai/leads/${suffix ? `?${suffix}` : ""}`);
-      return response.data;
-    },
-    update: async (
-      leadId: string,
-      payload: {
-        status?: string;
-        interest_summary?: string;
-        estimated_order_value?: string | null;
-      },
-    ): Promise<AILead> => {
-      const response = await apiClient.patch<AILead>(`/ai/leads/${leadId}/`, payload);
       return response.data;
     },
   },

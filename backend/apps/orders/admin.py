@@ -5,7 +5,15 @@ from __future__ import annotations
 from django.contrib import admin
 from django.db.models import QuerySet
 
-from .models import Cart, CartItem, Order, OrderItem, PromoCode, ShippingAddress
+from .models import (
+    AndreaniShipment,
+    Cart,
+    CartItem,
+    Order,
+    OrderItem,
+    PromoCode,
+    ShippingAddress,
+)
 
 
 class CartItemInline(admin.TabularInline):
@@ -208,3 +216,35 @@ class ShippingAddressAdmin(admin.ModelAdmin):
     list_filter = ("province", "is_default")
     search_fields = ("recipient_name", "user__email", "city", "postal_code")
     autocomplete_fields = ("user",)
+
+
+@admin.register(AndreaniShipment)
+class AndreaniShipmentAdmin(admin.ModelAdmin):
+    """Read-only operational audit trail for Andreani requests."""
+
+    list_display = (
+        "order",
+        "status",
+        "tracking_number",
+        "response_status_code",
+        "attempt_count",
+        "created_at",
+    )
+    list_filter = ("status", "response_status_code", "created_at")
+    search_fields = ("order__order_number", "tracking_number", "idempotency_key")
+    readonly_fields = (
+        "order",
+        "idempotency_key",
+        "status",
+        "tracking_number",
+        "request_payload",
+        "raw_response",
+        "response_status_code",
+        "attempt_count",
+        "label_source_url",
+        "label",
+        "label_error",
+        "last_error",
+        "created_at",
+        "updated_at",
+    )

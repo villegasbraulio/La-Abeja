@@ -7,12 +7,12 @@ import { cn } from "../../lib/utils";
 
 const backofficeLinks = [
   { label: "Resumen", href: "/backoffice" },
+  { label: "Métricas", href: "/backoffice/metricas" },
   { label: "Copilot", href: "/backoffice/copilot" },
-  { label: "Tareas AI", href: "/backoffice/tareas-ai" },
-  { label: "Leads AI", href: "/backoffice/leads-ai" },
-  { label: "Approvals AI", href: "/backoffice/approvals-ai" },
-  { label: "Reservas AI", href: "/backoffice/reservas-stock-ai" },
-  { label: "Cancelaciones AI", href: "/backoffice/cancelaciones-ai" },
+  { label: "Tareas", href: "/backoffice/tareas" },
+  { label: "Aprobaciones", href: "/backoffice/aprobaciones" },
+  { label: "Reservas de stock", href: "/backoffice/reservas-stock" },
+  { label: "Cancelaciones", href: "/backoffice/cancelaciones" },
   { label: "Visitas", href: "/backoffice/visitas" },
   { label: "Pedidos", href: "/backoffice/pedidos" },
   { label: "Vinos", href: "/backoffice/vinos" },

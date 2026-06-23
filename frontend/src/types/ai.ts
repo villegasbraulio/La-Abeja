@@ -83,25 +83,6 @@ export interface AITask {
   updated_at: string;
 }
 
-export interface AILead {
-  id: string;
-  full_name: string;
-  email: string;
-  phone: string;
-  company: string;
-  source_channel: string;
-  status: string;
-  interest_summary: string;
-  desired_varietals: string[];
-  estimated_order_value: string | null;
-  conversation: string | null;
-  customer_email: string | null;
-  customer_name: string | null;
-  metadata: Record<string, unknown>;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface AIStockReservation {
   id: string;
   wine: string;
@@ -144,7 +125,6 @@ export interface AIApproval {
 export interface AICopilotOverview {
   metrics: {
     open_tasks: number;
-    new_leads: number;
     pending_approvals: number;
     runs_needing_human: number;
     active_stock_reservations: number;
@@ -152,7 +132,6 @@ export interface AICopilotOverview {
   };
   prompt_suggestions: string[];
   recent_tasks: AITask[];
-  recent_leads: AILead[];
   recent_stock_reservations: AIStockReservation[];
   pending_approvals: AIApproval[];
   pending_cancellation_approvals: AIApproval[];

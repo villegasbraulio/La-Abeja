@@ -82,7 +82,7 @@ export function BackofficeTasksPage() {
     <div className="space-y-8">
       <section className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
         <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
-          Tareas AI
+          Tareas operativas
         </p>
         <h3 className="mt-3 font-serif text-4xl text-burgundy-950">
           Seguimiento operativo de todo lo que el Copilot deriva o crea para el equipo.
@@ -117,7 +117,7 @@ export function BackofficeTasksPage() {
 
       <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <section className="space-y-4">
-          {tasksQuery.isLoading ? <p className="text-burgundy-700">Cargando tareas AI...</p> : null}
+          {tasksQuery.isLoading ? <p className="text-burgundy-700">Cargando tareas...</p> : null}
           {tasksQuery.isError ? (
             <div className="rounded-[24px] border border-burgundy-200 bg-white p-6 text-burgundy-800 shadow-velvet">
               No pudimos cargar la cola de tareas por ahora.

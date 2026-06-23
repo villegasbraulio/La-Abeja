@@ -17,16 +17,27 @@ class EmailService:
         to: str | list[str],
         template: str,
         context: dict[str, object],
-    ) -> None:
+    ) -> bool:
         """Send a lightweight email payload using Django's email backend."""
         recipients = [to] if isinstance(to, str) else to
         subject = f"Bodega La Abeja · {template.replace('_', ' ').title()}"
         body = "\n".join(f"{key}: {value}" for key, value in context.items())
-        send_mail(
-            subject=subject,
-            message=body,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=recipients,
-            fail_silently=False,
-        )
+        try:
+            send_mail(
+                subject=subject,
+                message=body,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=recipients,
+                fail_silently=False,
+            )
+        except Exception as exc:
+            logger.error(
+                "email_send_failed",
+                template=template,
+                recipients=recipients,
+                error=str(exc),
+            )
+            return False
+
         logger.info("email_sent", template=template, recipients=recipients)
+        return True

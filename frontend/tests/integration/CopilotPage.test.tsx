@@ -43,7 +43,6 @@ describe("BackofficeCopilotPage", () => {
     vi.mocked(aiApi.overview).mockResolvedValue({
       metrics: {
         open_tasks: 2,
-        new_leads: 1,
         pending_approvals: 0,
         runs_needing_human: 1,
         active_stock_reservations: 1,
@@ -54,7 +53,6 @@ describe("BackofficeCopilotPage", () => {
         "Decime las ventas de los últimos 30 días",
       ],
       recent_tasks: [],
-      recent_leads: [],
       recent_stock_reservations: [],
       pending_approvals: [],
       pending_cancellation_approvals: [],
@@ -83,11 +81,11 @@ describe("BackofficeCopilotPage", () => {
   it("renders the initial copilot guidance", () => {
     renderWithProviders(<BackofficeCopilotPage />);
 
-    expect(screen.getByText(/AI Support & Operations Agent/i)).toBeInTheDocument();
+    expect(screen.getByText(/Asistente de soporte y operaciones/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Mostrame el stock bajo/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/tareas abiertas/i)).toBeInTheDocument();
     expect(screen.getByText(/reservas activas/i)).toBeInTheDocument();
-    expect(screen.getByText(/quick actions/i)).toBeInTheDocument();
+    expect(screen.getByText(/acciones disponibles/i)).toBeInTheDocument();
   });
 
   it("sends a message and renders the returned conversation state", async () => {
@@ -178,7 +176,7 @@ describe("BackofficeCopilotPage", () => {
     expect(screen.getByText(/último intent:/i).parentElement).toHaveTextContent("low_stock");
     expect(screen.getByText(/gpt-4.1/i)).toBeInTheDocument();
     expect(screen.getByText(/list_low_stock_items/i)).toBeInTheDocument();
-    expect(screen.getByText(/ver tareas ai/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/ver tareas/i).length).toBeGreaterThan(0);
   });
 
   it("loads a quick action prompt into the textarea", async () => {

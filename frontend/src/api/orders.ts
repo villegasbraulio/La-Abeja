@@ -26,12 +26,20 @@ export const ordersApi = {
     const response = await apiClient.post<Order>("/orders/orders/", payload);
     return response.data;
   },
-  detail: async (orderId: string): Promise<Order> => {
-    const response = await apiClient.get<Order>(`/orders/orders/${orderId}/`);
+  detail: async (orderId: string, guestAccessToken?: string | null): Promise<Order> => {
+    const response = await apiClient.get<Order>(`/orders/orders/${orderId}/`, {
+      params: guestAccessToken ? { guest_access_token: guestAccessToken } : undefined,
+    });
     return response.data;
   },
-  cancel: async (orderId: string): Promise<Order> => {
-    const response = await apiClient.post<Order>(`/orders/orders/${orderId}/cancel/`);
+  cancel: async (orderId: string, guestAccessToken?: string | null): Promise<Order> => {
+    const response = await apiClient.post<Order>(
+      `/orders/orders/${orderId}/cancel/`,
+      null,
+      {
+        params: guestAccessToken ? { guest_access_token: guestAccessToken } : undefined,
+      },
+    );
     return response.data;
   },
 };

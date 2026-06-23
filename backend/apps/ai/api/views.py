@@ -202,7 +202,6 @@ class AICopilotOverviewView(APIView):
                         SupportTask.Status.BLOCKED,
                     ]
                 ).count(),
-                "new_leads": Lead.objects.filter(status=Lead.Status.NEW).count(),
                 "pending_approvals": ApprovalRequest.objects.filter(
                     status=ApprovalRequest.Status.PENDING
                 ).count(),
@@ -233,10 +232,6 @@ class AICopilotOverviewView(APIView):
                 SupportTask.objects.select_related(
                     "order", "customer", "assigned_to", "workflow_run"
                 )[:5],
-                many=True,
-            ).data,
-            "recent_leads": LeadSerializer(
-                Lead.objects.select_related("customer", "conversation")[:5],
                 many=True,
             ).data,
             "recent_stock_reservations": StockReservationSerializer(
@@ -574,7 +569,6 @@ class AIMetricsSummaryView(APIView):
                     SupportTask.Status.BLOCKED,
                 ]
             ).count(),
-            "new_leads": Lead.objects.filter(status=Lead.Status.NEW).count(),
             "pending_approvals": ApprovalRequest.objects.filter(
                 status=ApprovalRequest.Status.PENDING
             ).count(),

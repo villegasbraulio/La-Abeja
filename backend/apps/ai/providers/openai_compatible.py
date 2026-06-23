@@ -3,12 +3,27 @@
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass
 from typing import Any, cast
+
+import structlog
+from django.conf import settings
 
 from apps.ai.providers.base import LLMProvider, ProviderTextResponse, ProviderToolCallResult
 from apps.ai.tools.base import ToolContext
 from apps.ai.tools.registry import ToolRegistry
+
+logger = structlog.get_logger(__name__)
+
+
+class _ProviderCallError(Exception):
+    """Wrap a terminal provider error together with retries already attempted."""
+
+    def __init__(self, cause: Exception, retry_count: int) -> None:
+        super().__init__(str(cause))
+        self.cause = cause
+        self.retry_count = retry_count
 
 
 @dataclass(slots=True)
@@ -29,6 +44,7 @@ class OpenAICompatibleProvider(LLMProvider):
         self._config = config
         self._client = None
         self.provider_name = config.provider_name
+        self.last_observation: dict[str, object] = {}
 
     def is_available(self) -> bool:
         """Return True when the provider has a configured API key."""
@@ -44,10 +60,17 @@ class OpenAICompatibleProvider(LLMProvider):
         """Use the responses API to generate a grounded answer."""
         client = self._get_client()
         if client is None:
+            self._record_observation(
+                operation="grounded_response",
+                started_at=time.perf_counter(),
+                fallback_reason="client_unavailable",
+            )
             return None
 
+        started_at = time.perf_counter()
         try:
-            response = client.responses.create(
+            response, retry_count = self._call_with_retries(
+                client.responses.create,
                 model=self._config.model,
                 input=[
                     {"role": "system", "content": system_prompt},
@@ -60,13 +83,36 @@ class OpenAICompatibleProvider(LLMProvider):
                     },
                 ],
             )
-        except Exception:
+        except Exception as exc:
+            self._record_observation(
+                operation="grounded_response",
+                started_at=started_at,
+                fallback_reason="provider_exception",
+                error=exc,
+            )
             return None
 
         output_text = getattr(response, "output_text", "").strip()
         if not output_text:
+            self._record_observation(
+                operation="grounded_response",
+                started_at=started_at,
+                fallback_reason="empty_output",
+                retry_count=retry_count,
+                usage=self._extract_usage(response),
+            )
             return None
-        return ProviderTextResponse(text=output_text, model=self._config.model)
+        observation = self._record_observation(
+            operation="grounded_response",
+            started_at=started_at,
+            retry_count=retry_count,
+            usage=self._extract_usage(response),
+        )
+        return ProviderTextResponse(
+            text=output_text,
+            model=self._config.model,
+            metadata=observation,
+        )
 
     def run_tool_calling(
         self,
@@ -80,6 +126,12 @@ class OpenAICompatibleProvider(LLMProvider):
         """Run the local tool-calling loop via the responses API."""
         client = self._get_client()
         if client is None:
+            observation = self._record_observation(
+                operation="tool_calling",
+                started_at=time.perf_counter(),
+                fallback_reason="client_unavailable",
+            )
+            self._attach_observation(context=context, observation=observation)
             return None
 
         if self.provider_name == "groq":
@@ -116,9 +168,13 @@ class OpenAICompatibleProvider(LLMProvider):
         tools = tool_registry.get_tool_definitions(tool_names)
         citations: list[dict[str, object]] = []
         executed_tools: list[str] = []
+        usage = self._empty_usage()
+        retry_count = 0
+        started_at = time.perf_counter()
 
         try:
-            response = client.responses.create(
+            response, retries = self._call_with_retries(
+                client.responses.create,
                 model=self._config.model,
                 input=[
                     {"role": "system", "content": prompt},
@@ -133,8 +189,10 @@ class OpenAICompatibleProvider(LLMProvider):
                 ],
                 tools=tools,
             )
+            retry_count += retries
+            self._merge_usage(usage, self._extract_usage(response))
 
-            while True:
+            for _ in range(self._max_tool_iterations()):
                 tool_calls = [
                     item
                     for item in getattr(response, "output", [])
@@ -180,22 +238,63 @@ class OpenAICompatibleProvider(LLMProvider):
                         }
                     )
 
-                response = client.responses.create(
+                response, retries = self._call_with_retries(
+                    client.responses.create,
                     model=self._config.model,
                     previous_response_id=response.id,
                     input=tool_outputs,
                 )
-        except Exception:
+                retry_count += retries
+                self._merge_usage(usage, self._extract_usage(response))
+            else:
+                observation = self._record_observation(
+                    operation="tool_calling",
+                    started_at=started_at,
+                    fallback_reason="max_tool_iterations",
+                    retry_count=retry_count,
+                    usage=usage,
+                    extra={"executed_tools": executed_tools},
+                )
+                self._attach_observation(context=context, observation=observation)
+                return None
+        except Exception as exc:
+            observation = self._record_observation(
+                operation="tool_calling",
+                started_at=started_at,
+                fallback_reason="provider_exception",
+                retry_count=retry_count,
+                usage=usage,
+                error=exc,
+                extra={"executed_tools": executed_tools},
+            )
+            self._attach_observation(context=context, observation=observation)
             return None
 
         text = (getattr(response, "output_text", "") or "").strip()
         if not text:
+            observation = self._record_observation(
+                operation="tool_calling",
+                started_at=started_at,
+                fallback_reason="empty_output",
+                retry_count=retry_count,
+                usage=usage,
+                extra={"executed_tools": executed_tools},
+            )
+            self._attach_observation(context=context, observation=observation)
             return None
+        observation = self._record_observation(
+            operation="tool_calling",
+            started_at=started_at,
+            retry_count=retry_count,
+            usage=usage,
+            extra={"executed_tools": executed_tools},
+        )
+        self._attach_observation(context=context, observation=observation)
         return ProviderToolCallResult(
             text=text,
             model=self._config.model,
             citations=citations,
-            metadata={"tool_mode": True, "executed_tools": executed_tools},
+            metadata={"tool_mode": True, "executed_tools": executed_tools, **observation},
         )
 
     def _run_tool_calling_with_chat_completions(
@@ -213,6 +312,9 @@ class OpenAICompatibleProvider(LLMProvider):
         tools = self._as_chat_completion_tools(tool_registry.get_tool_definitions(tool_names))
         citations: list[dict[str, object]] = []
         executed_tools: list[str] = []
+        usage = self._empty_usage()
+        retry_count = 0
+        started_at = time.perf_counter()
         messages: list[dict[str, object]] = [
             {"role": "system", "content": prompt},
             {
@@ -226,19 +328,40 @@ class OpenAICompatibleProvider(LLMProvider):
         ]
 
         try:
-            for _ in range(8):
-                response = client.chat.completions.create(
+            for _ in range(self._max_tool_iterations()):
+                response, retries = self._call_with_retries(
+                    client.chat.completions.create,
                     model=self._config.model,
                     messages=messages,
                     tools=tools,
                     tool_choice="auto",
                 )
+                retry_count += retries
+                self._merge_usage(usage, self._extract_usage(response))
                 choices = list(getattr(response, "choices", []) or [])
                 if not choices:
+                    observation = self._record_observation(
+                        operation="tool_calling",
+                        started_at=started_at,
+                        fallback_reason="missing_choices",
+                        retry_count=retry_count,
+                        usage=usage,
+                        extra={"executed_tools": executed_tools},
+                    )
+                    self._attach_observation(context=context, observation=observation)
                     return None
 
                 response_message = getattr(choices[0], "message", None)
                 if response_message is None:
+                    observation = self._record_observation(
+                        operation="tool_calling",
+                        started_at=started_at,
+                        fallback_reason="missing_message",
+                        retry_count=retry_count,
+                        usage=usage,
+                        extra={"executed_tools": executed_tools},
+                    )
+                    self._attach_observation(context=context, observation=observation)
                     return None
                 messages.append(self._chat_completion_message_to_dict(response_message))
 
@@ -246,12 +369,33 @@ class OpenAICompatibleProvider(LLMProvider):
                 if not tool_calls:
                     text = self._extract_message_text(response_message)
                     if not text:
+                        observation = self._record_observation(
+                            operation="tool_calling",
+                            started_at=started_at,
+                            fallback_reason="empty_output",
+                            retry_count=retry_count,
+                            usage=usage,
+                            extra={"executed_tools": executed_tools},
+                        )
+                        self._attach_observation(context=context, observation=observation)
                         return None
+                    observation = self._record_observation(
+                        operation="tool_calling",
+                        started_at=started_at,
+                        retry_count=retry_count,
+                        usage=usage,
+                        extra={"executed_tools": executed_tools},
+                    )
+                    self._attach_observation(context=context, observation=observation)
                     return ProviderToolCallResult(
                         text=text,
                         model=self._config.model,
                         citations=citations,
-                        metadata={"tool_mode": True, "executed_tools": executed_tools},
+                        metadata={
+                            "tool_mode": True,
+                            "executed_tools": executed_tools,
+                            **observation,
+                        },
                     )
 
                 for call in tool_calls:
@@ -305,10 +449,157 @@ class OpenAICompatibleProvider(LLMProvider):
                             "content": json.dumps(result, ensure_ascii=True),
                         }
                     )
-        except Exception:
+        except Exception as exc:
+            observation = self._record_observation(
+                operation="tool_calling",
+                started_at=started_at,
+                fallback_reason="provider_exception",
+                retry_count=retry_count,
+                usage=usage,
+                error=exc,
+                extra={"executed_tools": executed_tools},
+            )
+            self._attach_observation(context=context, observation=observation)
             return None
 
+        observation = self._record_observation(
+            operation="tool_calling",
+            started_at=started_at,
+            fallback_reason="max_tool_iterations",
+            retry_count=retry_count,
+            usage=usage,
+            extra={"executed_tools": executed_tools},
+        )
+        self._attach_observation(context=context, observation=observation)
         return None
+
+    def _call_with_retries(self, callable_obj: Any, **kwargs: object) -> tuple[Any, int]:
+        """Call a provider endpoint and retry transient failures with bounded backoff."""
+        max_retries = max(int(getattr(settings, "AI_PROVIDER_MAX_RETRIES", 2)), 0)
+        base_seconds = max(
+            float(getattr(settings, "AI_PROVIDER_RETRY_BASE_SECONDS", 0.25)), 0.0
+        )
+        retry_count = 0
+        while True:
+            try:
+                return callable_obj(**kwargs), retry_count
+            except Exception as exc:
+                if retry_count >= max_retries or not self._is_retryable_error(exc):
+                    raise _ProviderCallError(exc, retry_count) from exc
+                retry_count += 1
+                logger.warning(
+                    "ai_provider_retry",
+                    provider=self.provider_name,
+                    model=self._config.model,
+                    retry_count=retry_count,
+                    error_type=type(exc).__name__,
+                )
+                if base_seconds:
+                    time.sleep(base_seconds * (2 ** (retry_count - 1)))
+
+    def _is_retryable_error(self, exc: Exception) -> bool:
+        """Return whether an SDK/network error is safe to retry."""
+        status_code = getattr(exc, "status_code", None)
+        if status_code in {408, 409, 429} or (
+            isinstance(status_code, int) and status_code >= 500
+        ):
+            return True
+        error_name = type(exc).__name__.lower()
+        return any(
+            marker in error_name
+            for marker in ("timeout", "connection", "ratelimit", "internalserver")
+        )
+
+    def _max_tool_iterations(self) -> int:
+        """Return the configured hard limit for model/tool round trips."""
+        return max(int(getattr(settings, "AI_PROVIDER_MAX_TOOL_ITERATIONS", 8)), 1)
+
+    def _empty_usage(self) -> dict[str, int]:
+        """Return an empty normalized token usage accumulator."""
+        return {"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}
+
+    def _extract_usage(self, response: Any) -> dict[str, int]:
+        """Normalize token usage from Responses or Chat Completions envelopes."""
+        usage = getattr(response, "usage", None)
+        input_tokens = self._usage_value(usage, "input_tokens", "prompt_tokens")
+        output_tokens = self._usage_value(usage, "output_tokens", "completion_tokens")
+        total_tokens = self._usage_value(usage, "total_tokens")
+        if not total_tokens:
+            total_tokens = input_tokens + output_tokens
+        return {
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "total_tokens": total_tokens,
+        }
+
+    def _usage_value(self, usage: Any, *names: str) -> int:
+        """Read one integer usage field from an object or mapping."""
+        for name in names:
+            value = usage.get(name) if isinstance(usage, dict) else getattr(usage, name, None)
+            if isinstance(value, int):
+                return value
+        return 0
+
+    def _merge_usage(self, accumulator: dict[str, int], usage: dict[str, int]) -> None:
+        """Add one provider response's token counts to the request accumulator."""
+        for key in accumulator:
+            accumulator[key] += usage.get(key, 0)
+
+    def _estimated_cost_usd(self, usage: dict[str, int]) -> float | None:
+        """Estimate cost when deployment-specific token prices are configured."""
+        input_rate = float(getattr(settings, "AI_INPUT_COST_PER_1M_TOKENS_USD", 0))
+        output_rate = float(getattr(settings, "AI_OUTPUT_COST_PER_1M_TOKENS_USD", 0))
+        if input_rate <= 0 and output_rate <= 0:
+            return None
+        cost = (
+            usage["input_tokens"] * input_rate + usage["output_tokens"] * output_rate
+        ) / 1_000_000
+        return round(cost, 8)
+
+    def _record_observation(
+        self,
+        *,
+        operation: str,
+        started_at: float,
+        fallback_reason: str | None = None,
+        retry_count: int = 0,
+        usage: dict[str, int] | None = None,
+        error: Exception | None = None,
+        extra: dict[str, object] | None = None,
+    ) -> dict[str, object]:
+        """Create and emit a safe, structured provider observation."""
+        if isinstance(error, _ProviderCallError):
+            retry_count += error.retry_count
+            error = error.cause
+        normalized_usage = usage or self._empty_usage()
+        observation: dict[str, object] = {
+            "provider_observability": {
+                "provider": self.provider_name,
+                "model": self._config.model,
+                "operation": operation,
+                "status": "fallback" if fallback_reason else "succeeded",
+                "latency_ms": int((time.perf_counter() - started_at) * 1000),
+                "retry_count": retry_count,
+                "fallback_reason": fallback_reason,
+                "error_type": type(error).__name__ if error else None,
+                "token_usage": normalized_usage,
+                "estimated_cost_usd": self._estimated_cost_usd(normalized_usage),
+                **(extra or {}),
+            }
+        }
+        self.last_observation = observation
+        event_data = cast(dict[str, object], observation["provider_observability"])
+        if fallback_reason:
+            logger.warning("ai_provider_fallback", **event_data)
+        else:
+            logger.info("ai_provider_succeeded", **event_data)
+        return observation
+
+    def _attach_observation(
+        self, *, context: ToolContext, observation: dict[str, object]
+    ) -> None:
+        """Keep provider telemetry on the run even when orchestration falls back."""
+        context.run.metadata = {**context.run.metadata, **observation}
 
     def _get_client(self):
         """Instantiate the OpenAI SDK client lazily."""

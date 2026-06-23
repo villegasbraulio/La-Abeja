@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { aiApi } from "../../api/ai";
 import { Button } from "../../components/ui/Button";
-import { formatARS, formatDate } from "../../lib/utils";
+import { formatDate } from "../../lib/utils";
 import type { AIApproval, AIConversationTurn, AIToolExecution } from "../../types/ai";
 
 const fallbackSuggestions = [
@@ -134,7 +134,6 @@ export function BackofficeCopilotPage() {
       setDraft("");
       void queryClient.invalidateQueries({ queryKey: ["ai-copilot-overview"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-tasks"] });
-      void queryClient.invalidateQueries({ queryKey: ["ai-leads"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-approvals"] });
     },
   });
@@ -186,7 +185,6 @@ export function BackofficeCopilotPage() {
       void queryClient.invalidateQueries({ queryKey: ["ai-cancellation-approvals"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-copilot-overview"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-tasks"] });
-      void queryClient.invalidateQueries({ queryKey: ["ai-leads"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-stock-reservations"] });
     },
   };
@@ -258,7 +256,7 @@ export function BackofficeCopilotPage() {
         <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
-              AI Support & Operations Agent
+              Asistente de soporte y operaciones
             </p>
             <h3 className="mt-3 font-serif text-4xl text-burgundy-950">
               Copilot operativo para pedidos, ventas, tareas, knowledge y coordinación interna.
@@ -276,11 +274,7 @@ export function BackofficeCopilotPage() {
                 value: overviewQuery.data?.metrics.open_tasks ?? 0,
               },
               {
-                label: "Leads nuevos",
-                value: overviewQuery.data?.metrics.new_leads ?? 0,
-              },
-              {
-                label: "Approvals pendientes",
+                label: "Aprobaciones pendientes",
                 value: overviewQuery.data?.metrics.pending_approvals ?? 0,
               },
               {
@@ -309,17 +303,20 @@ export function BackofficeCopilotPage() {
           </div>
         </div>
         <div className="mt-6 flex flex-wrap gap-3">
-          <Link to="/backoffice/tareas-ai">
-            <Button variant="ghost">Tareas AI</Button>
+          <Link to="/backoffice/metricas">
+            <Button variant="ghost">Métricas</Button>
           </Link>
-          <Link to="/backoffice/approvals-ai">
-            <Button variant="ghost">Approvals AI</Button>
+          <Link to="/backoffice/tareas">
+            <Button variant="ghost">Tareas</Button>
           </Link>
-          <Link to="/backoffice/reservas-stock-ai">
-            <Button variant="ghost">Reservas AI</Button>
+          <Link to="/backoffice/aprobaciones">
+            <Button variant="ghost">Aprobaciones</Button>
           </Link>
-          <Link to="/backoffice/cancelaciones-ai">
-            <Button variant="ghost">Cancelaciones AI</Button>
+          <Link to="/backoffice/reservas-stock">
+            <Button variant="ghost">Reservas de stock</Button>
+          </Link>
+          <Link to="/backoffice/cancelaciones">
+            <Button variant="ghost">Cancelaciones</Button>
           </Link>
         </div>
       </section>
@@ -459,14 +456,14 @@ export function BackofficeCopilotPage() {
               <Button type="submit" disabled={mutation.isPending}>
                 {mutation.isPending ? "Consultando..." : "Enviar al copilot"}
               </Button>
-              <Link to="/backoffice/tareas-ai">
+              <Link to="/backoffice/tareas">
                 <Button type="button" variant="ghost">
-                  Ver tareas AI
+                  Ver tareas
                 </Button>
               </Link>
-              <Link to="/backoffice/reservas-stock-ai">
+              <Link to="/backoffice/reservas-stock">
                 <Button type="button" variant="ghost">
-                  Ver reservas AI
+                  Ver reservas de stock
                 </Button>
               </Link>
               {mutation.isError ? (
@@ -587,10 +584,10 @@ export function BackofficeCopilotPage() {
                 </div>
               ) : null}
               <div className="mt-4 flex flex-wrap gap-3">
-                <Link to="/backoffice/approvals-ai" className="inline-flex text-sm font-semibold text-burgundy-900">
-                  Abrir approvals
+                <Link to="/backoffice/aprobaciones" className="inline-flex text-sm font-semibold text-burgundy-900">
+                  Abrir aprobaciones
                 </Link>
-                <Link to="/backoffice/cancelaciones-ai" className="inline-flex text-sm font-semibold text-burgundy-900">
+                <Link to="/backoffice/cancelaciones" className="inline-flex text-sm font-semibold text-burgundy-900">
                   Ver cancelaciones
                 </Link>
               </div>
@@ -648,7 +645,7 @@ export function BackofficeCopilotPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
               Tareas recientes
             </p>
-            <Link to="/backoffice/tareas-ai" className="text-sm font-semibold text-burgundy-800">
+            <Link to="/backoffice/tareas" className="text-sm font-semibold text-burgundy-800">
               Ver todas
             </Link>
           </div>
@@ -676,7 +673,7 @@ export function BackofficeCopilotPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
               Reservas recientes
             </p>
-            <Link to="/backoffice/reservas-stock-ai" className="text-sm font-semibold text-burgundy-800">
+            <Link to="/backoffice/reservas-stock" className="text-sm font-semibold text-burgundy-800">
               Ver todas
             </Link>
           </div>
@@ -702,42 +699,9 @@ export function BackofficeCopilotPage() {
         <section className="rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
-              Leads recientes
+              Aprobaciones pendientes
             </p>
-            <Link to="/backoffice/leads-ai" className="text-sm font-semibold text-burgundy-800">
-              Ver todos
-            </Link>
-          </div>
-          <div className="mt-5 space-y-3">
-            {overviewQuery.data?.recent_leads.length ? (
-              overviewQuery.data.recent_leads.map((lead) => (
-                <article key={lead.id} className="rounded-[20px] border border-burgundy-100 bg-cream-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
-                    {lead.status}
-                  </p>
-                  <p className="mt-2 font-semibold text-burgundy-950">{lead.full_name}</p>
-                  <p className="mt-2 text-sm text-burgundy-700">
-                    {lead.company || lead.email || "Sin empresa"}
-                  </p>
-                  {lead.estimated_order_value ? (
-                    <p className="mt-2 text-sm font-semibold text-burgundy-900">
-                      Ticket estimado {formatARS(lead.estimated_order_value)}
-                    </p>
-                  ) : null}
-                </article>
-              ))
-            ) : (
-              <p className="text-sm text-burgundy-700">Todavía no hay leads creados por el agente.</p>
-            )}
-          </div>
-        </section>
-
-        <section className="rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
-          <div className="flex items-center justify-between gap-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
-              Approvals pendientes
-            </p>
-            <Link to="/backoffice/approvals-ai" className="text-sm font-semibold text-burgundy-800">
+            <Link to="/backoffice/aprobaciones" className="text-sm font-semibold text-burgundy-800">
               Abrir cola
             </Link>
           </div>
@@ -753,7 +717,7 @@ export function BackofficeCopilotPage() {
                 </article>
               ))
             ) : (
-              <p className="text-sm text-burgundy-700">No hay approvals pendientes ahora mismo.</p>
+              <p className="text-sm text-burgundy-700">No hay aprobaciones pendientes ahora mismo.</p>
             )}
           </div>
         </section>
@@ -763,7 +727,7 @@ export function BackofficeCopilotPage() {
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
               Cancelaciones pendientes
             </p>
-            <Link to="/backoffice/cancelaciones-ai" className="text-sm font-semibold text-burgundy-800">
+            <Link to="/backoffice/cancelaciones" className="text-sm font-semibold text-burgundy-800">
               Abrir cola
             </Link>
           </div>

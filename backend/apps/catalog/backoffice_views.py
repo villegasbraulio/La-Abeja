@@ -2,13 +2,30 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
+from typing import cast
+
 import structlog
 from django.db.models import Count, F, QuerySet
+from django.utils import timezone
 from rest_framework import filters, generics, permissions, status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.ai.models import AgentRun
+from apps.ai.tools.analytics_tools import (
+    get_conversion_funnel,
+    get_margin_estimate_by_product,
+    get_repeat_customers_metrics,
+    get_returns_and_incidents_metrics,
+    get_sales_by_bottle,
+    get_sales_by_channel,
+    get_sales_by_varietal,
+    get_sales_over_period,
+    get_sales_summary,
+)
+from apps.ai.tools.base import ToolContext
 from apps.authentication.permissions import IsStaffUser
 from apps.orders.models import Order
 
@@ -24,6 +41,53 @@ from .backoffice_serializers import (
 from .models import Category, Varietal, Wine
 
 logger = structlog.get_logger(__name__)
+
+
+class BackofficeSalesMetricsView(APIView):
+    """Return a complete sales dashboard without coupling the UI to the copilot."""
+
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def get(self, request: Request) -> Response:
+        """Aggregate sales, customer, product, channel, and funnel indicators."""
+        period = str(request.query_params.get("period") or "last_30_days")
+        grain = str(request.query_params.get("grain") or "day")
+        payload: dict[str, object] = {"period": period, "grain": grain, "limit": 10}
+
+        if period == "current_year":
+            today = timezone.localdate()
+            payload.update(
+                start_date=today.replace(month=1, day=1).isoformat(),
+                end_date=today.isoformat(),
+                grain="month",
+            )
+        elif period == "last_12_months":
+            today = timezone.localdate()
+            payload.update(
+                start_date=(today - timedelta(days=365)).isoformat(),
+                end_date=today.isoformat(),
+                grain="month",
+            )
+
+        context = ToolContext(
+            run=cast(AgentRun, None),
+            user_id=request.user.id,
+            is_staff=True,
+        )
+        return Response(
+            {
+                "summary": get_sales_summary(payload, context),
+                "timeline": get_sales_over_period(payload, context),
+                "by_varietal": get_sales_by_varietal(payload, context),
+                "by_product": get_sales_by_bottle(payload, context),
+                "by_channel": get_sales_by_channel(payload, context),
+                "margins": get_margin_estimate_by_product(payload, context),
+                "repeat_customers": get_repeat_customers_metrics(payload, context),
+                "funnel": get_conversion_funnel(payload, context),
+                "incidents": get_returns_and_incidents_metrics(payload, context),
+            }
+        )
+
 
 class BackofficeDashboardView(APIView):
     """Return operational summary cards for the custom backoffice."""

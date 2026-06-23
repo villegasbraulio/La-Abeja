@@ -19,6 +19,7 @@ class OrderFactory(factory.django.DjangoModelFactory):
         model = Order
 
     user = factory.SubFactory(UserFactory)
+    customer_email = factory.LazyAttribute(lambda obj: obj.user.email if obj.user else "guest@example.com")
     status = Order.Status.PENDING_PAYMENT
     subtotal = Decimal("4500.00")
     discount_amount = Decimal("0.00")

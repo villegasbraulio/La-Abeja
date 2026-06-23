@@ -85,14 +85,14 @@ export function BackofficeCancellationApprovalsPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
-              Cancelaciones AI
+              Cancelaciones
             </p>
             <h3 className="mt-3 font-serif text-4xl text-burgundy-950">
               Cola específica para pedidos que el Copilot preparó para cancelar y todavía requieren decisión humana.
             </h3>
           </div>
-          <Link to="/backoffice/approvals-ai">
-            <Button variant="secondary">Ver approvals generales</Button>
+          <Link to="/backoffice/aprobaciones">
+            <Button variant="secondary">Ver aprobaciones</Button>
           </Link>
         </div>
       </section>

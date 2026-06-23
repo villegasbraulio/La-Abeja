@@ -1,4 +1,5 @@
 import { type FormEvent, useEffect, useMemo, useState } from "react";
+import { initMercadoPago, Wallet } from "@mercadopago/sdk-react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 import { Link } from "react-router-dom";
@@ -10,17 +11,32 @@ import { useCart } from "../../hooks/useCart";
 import { applyWineImageFallback, wineImageSrc } from "../../lib/assets";
 import { formatARS, formatDate } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
+import { useToastStore } from "../../store/toastStore";
 import type { Order, ShippingMethod } from "../../types/orders";
+import type { CheckoutPreferenceResponse } from "../../types/payments";
+
+const mercadoPagoPublicKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY || "";
+
+if (mercadoPagoPublicKey) {
+  initMercadoPago(mercadoPagoPublicKey);
+}
 
 export function CheckoutPage() {
   const { items, subtotal, subtotalFormatted } = useCart();
   const accessToken = useAuthStore((state) => state.accessToken);
   const user = useAuthStore((state) => state.user);
   const setSession = useAuthStore((state) => state.setSession);
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const showToast = useToastStore((state) => state.showToast);
+  const [authMode, setAuthMode] = useState<"login" | "register" | "guest">("guest");
   const [authError, setAuthError] = useState<string | null>(null);
   const [paymentError, setPaymentError] = useState<string | null>(null);
   const [createdOrder, setCreatedOrder] = useState<Order | null>(null);
+  const [checkoutPreference, setCheckoutPreference] = useState<CheckoutPreferenceResponse | null>(
+    null,
+  );
+  const [guestForm, setGuestForm] = useState({
+    email: "",
+  });
   const [loginForm, setLoginForm] = useState({
     email: "",
     password: "",
@@ -106,6 +122,11 @@ export function CheckoutPage() {
 
   const shippingCost = selectedShipping ? Number.parseFloat(selectedShipping.shipping_cost) : 0;
   const total = subtotal + shippingCost;
+  const checkoutUrl = checkoutPreference?.init_point ?? checkoutPreference?.sandbox_init_point ?? null;
+  const walletReady = Boolean(checkoutPreference?.preference_id);
+  const walletUnavailable = walletReady && !mercadoPagoPublicKey;
+  const isGuestCheckout = (!accessToken || !user) && authMode === "guest";
+  const canCheckout = Boolean(accessToken && user) || isGuestCheckout;
 
   const loginMutation = useMutation({
     mutationFn: () => authApi.login(loginForm),
@@ -121,6 +142,11 @@ export function CheckoutPage() {
         phone: session.user.phone || current.phone,
       }));
       setAuthError(null);
+      showToast({
+        variant: "success",
+        title: "Sesión lista para comprar",
+        description: `Continuamos el checkout con ${session.user.email}.`,
+      });
     },
     onError: (error) => {
       const axiosError = error as AxiosError<{ detail?: string }>;
@@ -150,6 +176,11 @@ export function CheckoutPage() {
         phone: session.user.phone || registerForm.phone,
       }));
       setAuthError(null);
+      showToast({
+        variant: "success",
+        title: "Cuenta creada con éxito",
+        description: "Ya podés seguir con el envío y el pago de la orden.",
+      });
     },
     onError: (error) => {
       const axiosError = error as AxiosError<{ email?: string[]; password?: string[] }>;
@@ -173,7 +204,7 @@ export function CheckoutPage() {
   const checkoutMutation = useMutation({
     mutationFn: async () => {
       if (!selectedShipping) {
-        throw new Error("Necesitamos una cotización válida antes de enviarte a Mercado Pago.");
+        throw new Error("Necesitamos una cotización válida antes de prepararte el pago.");
       }
       const order = await ordersApi.create({
         items: items.map((item) => ({
@@ -192,29 +223,44 @@ export function CheckoutPage() {
           country: shippingForm.country,
           phone: shippingForm.phone,
         },
+        customer_email: isGuestCheckout ? guestForm.email.trim() : undefined,
         notes: shippingForm.notes,
       });
-      setCreatedOrder(order);
-      const preference = await paymentsApi.createPreference(order.id);
-      const redirectUrl = preference.init_point ?? preference.sandbox_init_point;
-      if (!redirectUrl) {
-        throw new Error("Mercado Pago no devolvió una URL válida para continuar el pago.");
+      const preference = await paymentsApi.createPreference(order.id, order.guest_access_token);
+      if (!preference.preference_id) {
+        throw new Error("Mercado Pago no devolvió una preferencia válida para continuar el pago.");
       }
-      return redirectUrl;
+      return { order, preference };
     },
-    onSuccess: (redirectUrl) => {
-      window.location.assign(redirectUrl);
+    onSuccess: ({ order, preference }) => {
+      setCreatedOrder(order);
+      setCheckoutPreference(preference);
+      showToast({
+        variant: "success",
+        title: "Pedido listo para pagar",
+        description: `Preparamos ${order.order_number} para abrir Mercado Pago.`,
+      });
     },
     onError: (error) => {
       if (error instanceof Error) {
         setPaymentError(error.message);
+        showToast({
+          variant: "error",
+          title: "No pudimos preparar el pago",
+          description: error.message,
+        });
         return;
       }
       const axiosError = error as AxiosError<{ detail?: string }>;
-      setPaymentError(
+      const message =
         axiosError.response?.data?.detail ??
-          "No pudimos generar la orden o iniciar el pago en Mercado Pago.",
-      );
+        "No pudimos generar la orden o iniciar el pago en Mercado Pago.";
+      setPaymentError(message);
+      showToast({
+        variant: "error",
+        title: "No pudimos preparar el pago",
+        description: message,
+      });
     },
   });
 
@@ -230,6 +276,9 @@ export function CheckoutPage() {
 
   function handleCheckoutSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (checkoutPreference) {
+      return;
+    }
     setPaymentError(null);
     checkoutMutation.mutate();
   }
@@ -298,14 +347,28 @@ export function CheckoutPage() {
                 >
                   Crear cuenta
                 </button>
+                <button
+                  type="button"
+                  className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                    authMode === "guest"
+                      ? "bg-burgundy-900 text-gold-300"
+                      : "bg-cream-50 text-burgundy-800"
+                  }`}
+                  onClick={() => setAuthMode("guest")}
+                >
+                  Comprar como invitado
+                </button>
               </div>
 
               <h2 className="mt-6 font-serif text-3xl text-burgundy-950">
-                Necesitamos una cuenta para crear la orden.
+                {authMode === "guest"
+                  ? "Podés comprar sin registrarte."
+                  : "Podés entrar con tu cuenta o crear una nueva."}
               </h2>
               <p className="mt-3 text-burgundy-700">
-                En esta fase 1 dejamos el checkout real con órdenes persistidas e historial de
-                compra. Por eso el pedido queda asociado a un cliente autenticado.
+                {authMode === "guest"
+                  ? "Solo necesitamos tu email para enviarte el detalle del pedido, las novedades del pago y el seguimiento de Andreani."
+                  : "Si no querés crear una cuenta, podés cambiar a compra invitada y recibir todo por email."}
               </p>
 
               <form className="mt-8 space-y-5" onSubmit={handleCustomerAuthSubmit}>
@@ -383,7 +446,7 @@ export function CheckoutPage() {
                       />
                     </label>
                   </div>
-                ) : (
+                ) : authMode === "login" ? (
                   <div className="grid gap-5 md:grid-cols-2">
                     <label className="grid gap-2 md:col-span-2">
                       <span className="text-sm font-semibold text-burgundy-800">Email</span>
@@ -416,6 +479,24 @@ export function CheckoutPage() {
                       />
                     </label>
                   </div>
+                ) : (
+                  <div className="grid gap-5">
+                    <label className="grid gap-2">
+                      <span className="text-sm font-semibold text-burgundy-800">Email</span>
+                      <input
+                        type="email"
+                        value={guestForm.email}
+                        onChange={(event) =>
+                          setGuestForm((current) => ({
+                            ...current,
+                            email: event.target.value,
+                          }))
+                        }
+                        className="rounded-2xl border border-burgundy-200 bg-cream-50 px-4 py-3"
+                        required
+                      />
+                    </label>
+                  </div>
                 )}
 
                 {authError ? (
@@ -424,22 +505,26 @@ export function CheckoutPage() {
                   </div>
                 ) : null}
 
-                <Button
-                  className="w-full"
-                  type="submit"
-                  disabled={loginMutation.isPending || registerMutation.isPending}
-                >
-                  {authMode === "login"
-                    ? loginMutation.isPending
-                      ? "Ingresando..."
-                      : "Continuar con esta cuenta"
-                    : registerMutation.isPending
-                      ? "Creando cuenta..."
-                      : "Crear cuenta y seguir"}
-                </Button>
+                {authMode === "guest" ? null : (
+                  <Button
+                    className="w-full"
+                    type="submit"
+                    disabled={loginMutation.isPending || registerMutation.isPending}
+                  >
+                    {authMode === "login"
+                      ? loginMutation.isPending
+                        ? "Ingresando..."
+                        : "Continuar con esta cuenta"
+                      : registerMutation.isPending
+                        ? "Creando cuenta..."
+                        : "Crear cuenta y seguir"}
+                  </Button>
+                )}
               </form>
             </section>
-          ) : (
+          ) : null}
+
+          {canCheckout ? (
             <form
               className="space-y-6 rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet"
               onSubmit={handleCheckoutSubmit}
@@ -449,9 +534,29 @@ export function CheckoutPage() {
                   Datos de entrega
                 </p>
                 <h2 className="mt-3 font-serif text-3xl text-burgundy-950">
-                  Tu orden va a quedar a nombre de {user.full_name || user.email}.
+                  {user
+                    ? `Tu orden va a quedar a nombre de ${user.full_name || user.email}.`
+                    : `Tu orden va a quedar asociada al email ${guestForm.email || "que cargues abajo"}.`}
                 </h2>
               </div>
+
+              {isGuestCheckout ? (
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-burgundy-800">Email de contacto</span>
+                  <input
+                    type="email"
+                    value={guestForm.email}
+                    onChange={(event) =>
+                      setGuestForm((current) => ({
+                        ...current,
+                        email: event.target.value,
+                      }))
+                    }
+                    className="rounded-2xl border border-burgundy-200 bg-cream-50 px-4 py-3"
+                    required
+                  />
+                </label>
+              ) : null}
 
               <div className="grid gap-5 md:grid-cols-2">
                 <label className="grid gap-2 md:col-span-2">
@@ -647,7 +752,14 @@ export function CheckoutPage() {
                     <>
                       {" "}
                       La orden ya fue creada y podés retomarla desde{" "}
-                      <Link to={`/pedidos/${createdOrder.id}`} className="font-semibold underline">
+                      <Link
+                        to={
+                          createdOrder.guest_access_token && !accessToken
+                            ? `/pedidos/${createdOrder.id}?guest_access_token=${encodeURIComponent(createdOrder.guest_access_token)}`
+                            : `/pedidos/${createdOrder.id}`
+                        }
+                        className="font-semibold underline"
+                      >
                         este detalle
                       </Link>
                       .
@@ -656,6 +768,62 @@ export function CheckoutPage() {
                 </div>
               ) : null}
 
+              {checkoutPreference ? (
+                <div className="space-y-4 rounded-[28px] border border-burgundy-200 bg-cream-50 p-5">
+                  <div>
+                    <p className="text-sm font-semibold uppercase tracking-[0.18em] text-burgundy-500">
+                      Pago listo
+                    </p>
+                    <h3 className="mt-2 font-serif text-2xl text-burgundy-950">
+                      Tu pedido ya tiene una preferencia creada en Mercado Pago.
+                    </h3>
+                    <p className="mt-2 text-sm leading-6 text-burgundy-700">
+                      {createdOrder ? `Pedido ${createdOrder.order_number}. ` : ""}
+                      Ahora completá el cobro desde el botón oficial de Mercado Pago.
+                    </p>
+                  </div>
+
+                  {walletUnavailable ? (
+                    <div className="rounded-[22px] border border-burgundy-200 bg-white px-4 py-3 text-sm text-burgundy-800">
+                      Falta configurar <code>VITE_MERCADOPAGO_PUBLIC_KEY</code> en el frontend para
+                      renderizar el botón Wallet.
+                    </div>
+                  ) : (
+                    <div className="rounded-[22px] border border-burgundy-100 bg-white px-4 py-5">
+                      <Wallet initialization={{ preferenceId: checkoutPreference.preference_id }} />
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-3">
+                    {checkoutUrl ? (
+                      <a href={checkoutUrl} target="_blank" rel="noreferrer">
+                        <Button type="button" variant="secondary">
+                          Abrir checkout de Mercado Pago
+                        </Button>
+                      </a>
+                    ) : null}
+                    {createdOrder ? (
+                      <Link
+                        to={
+                          createdOrder.guest_access_token && !accessToken
+                            ? `/pedidos/${createdOrder.id}?guest_access_token=${encodeURIComponent(createdOrder.guest_access_token)}`
+                            : `/pedidos/${createdOrder.id}`
+                        }
+                      >
+                        <Button type="button" variant="ghost">
+                          Ver detalle del pedido
+                        </Button>
+                      </Link>
+                    ) : null}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-[22px] border border-burgundy-100 bg-cream-50 px-4 py-3 text-sm text-burgundy-700">
+                  Al confirmar el pedido preparamos la preferencia y mostramos el botón oficial de
+                  Mercado Pago para completar el cobro.
+                </div>
+              )}
+
               <Button
                 className="w-full"
                 type="submit"
@@ -663,17 +831,23 @@ export function CheckoutPage() {
                   checkoutMutation.isPending ||
                   shippingQuoteQuery.isLoading ||
                   Boolean(shippingQuoteError) ||
-                  !selectedShipping
+                  !selectedShipping ||
+                  (isGuestCheckout && !guestForm.email.trim()) ||
+                  Boolean(checkoutPreference)
                 }
               >
                 {checkoutMutation.isPending
                   ? "Generando orden y preparando pago..."
-                  : shippingQuoteQuery.isLoading
-                    ? "Cotizando envío..."
-                    : "Confirmar pedido y pagar con Mercado Pago"}
+                  : checkoutPreference
+                    ? "Preferencia de pago preparada"
+                    : shippingQuoteQuery.isLoading
+                      ? "Cotizando envío..."
+                      : isGuestCheckout
+                        ? "Confirmar pedido como invitado"
+                        : "Confirmar pedido y mostrar botón de Mercado Pago"}
               </Button>
             </form>
-          )}
+          ) : null}
         </div>
 
         <aside className="space-y-5">
@@ -736,8 +910,9 @@ export function CheckoutPage() {
             <div className="mt-5 space-y-3 text-sm leading-6 text-cream-100/80">
               <p>1. Creamos la orden en el backend con sus ítems, totales y dirección.</p>
               <p>2. Generamos la preferencia de Checkout Pro en Mercado Pago.</p>
-              <p>3. Mercado Pago procesa el cobro y nos notifica vía webhook.</p>
-              <p>4. El pedido queda disponible en tu historial con su estado real.</p>
+              <p>3. Renderizamos el botón Wallet oficial para abrir el checkout seguro.</p>
+              <p>4. Mercado Pago procesa el cobro y nos notifica vía webhook.</p>
+              <p>5. El pedido queda disponible en tu historial con su estado real.</p>
             </div>
           </div>
         </aside>

@@ -45,7 +45,6 @@ export function BackofficeApprovalsPage() {
       void queryClient.invalidateQueries({ queryKey: ["ai-approvals"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-copilot-overview"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-tasks"] });
-      void queryClient.invalidateQueries({ queryKey: ["ai-leads"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-stock-reservations"] });
     },
   });
@@ -56,7 +55,6 @@ export function BackofficeApprovalsPage() {
       void queryClient.invalidateQueries({ queryKey: ["ai-approvals"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-copilot-overview"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-tasks"] });
-      void queryClient.invalidateQueries({ queryKey: ["ai-leads"] });
       void queryClient.invalidateQueries({ queryKey: ["ai-stock-reservations"] });
     },
   });
@@ -79,7 +77,7 @@ export function BackofficeApprovalsPage() {
     <div className="space-y-8">
       <section className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
         <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
-          Approvals AI
+          Aprobaciones
         </p>
         <h3 className="mt-3 font-serif text-4xl text-burgundy-950">
           Cola de decisiones humanas para cualquier workflow que el agente no deba cerrar solo.

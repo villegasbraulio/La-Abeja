@@ -29,7 +29,7 @@ export function ContactPage() {
       <PageHero
         eyebrow="Contacto"
         title="Una pagina para consultas reales, no solo un mail escondido."
-        description="Sumamos canales visibles, razon de consulta y una forma simple de capturar leads de visitas, regalos, envios y eventos."
+        description="Sumamos canales visibles y una forma simple de ordenar consultas sobre visitas, regalos, envíos y eventos."
         aside={
           <div className="space-y-4">
             {contactChannels.map((channel) => (

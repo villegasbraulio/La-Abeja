@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from time import perf_counter
 from typing import cast
 from uuid import UUID
 
+import structlog
+from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
@@ -17,6 +20,8 @@ from apps.ai.models import AgentRun, Conversation, ConversationTurn
 from apps.ai.services.llm_client import LLMClient
 from apps.ai.tools.base import ToolContext
 from apps.ai.tools.registry import ToolRegistry
+
+logger = structlog.get_logger(__name__)
 
 ORDER_NUMBER_RE = re.compile(r"LAB-\d{4}-\d{3,}", re.IGNORECASE)
 EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+", re.IGNORECASE)
@@ -54,6 +59,15 @@ class AIOrchestrator:
         is_staff: bool,
     ) -> OrchestratorResult:
         """Persist the user message, run the orchestration, and store the assistant reply."""
+        started_at = perf_counter()
+        if settings.AI_LOG_CONSOLE_DETAILS:
+            logger.info(
+                "AI_RUN_STARTED",
+                conversation_id=str(conversation.id),
+                mode=conversation.mode,
+                actor_type="staff" if is_staff else "customer",
+                message_chars=len(message),
+            )
         user_turn = ConversationTurn.objects.create(
             conversation=conversation,
             role=ConversationTurn.Role.USER,
@@ -73,6 +87,13 @@ class AIOrchestrator:
         )
         context = ToolContext(run=run, user_id=user_id, is_staff=is_staff)
         intent, payload = self._detect_intent(message=message, is_staff=is_staff)
+        if settings.AI_LOG_CONSOLE_DETAILS:
+            logger.info(
+                "AI_INTENT_DETECTED",
+                run_id=str(run.id),
+                intent=intent,
+                payload_keys=sorted(payload.keys()),
+            )
         conversation.last_intent = intent
         conversation.save(update_fields=["last_intent", "updated_at"])
         run.intent = intent
@@ -89,6 +110,13 @@ class AIOrchestrator:
             tool_registry=self.tool_registry,
             prompt=prompt,
         )
+        agent_attempt_observation = run.metadata.get("provider_observability", {})
+        if not isinstance(agent_attempt_observation, dict):
+            agent_attempt_observation = {}
+        if tool_calling_result is None and not agent_attempt_observation:
+            agent_attempt_observation = {
+                "fallback_reason": "tool_calling_disabled_or_unavailable"
+            }
         if tool_calling_result is not None:
             has_pending_approvals = bool(run.metadata.get("pending_approval_ids"))
             assistant_turn = ConversationTurn.objects.create(
@@ -113,6 +141,7 @@ class AIOrchestrator:
                 **run.metadata,
                 "tool_payload": payload,
                 "used_llm": tool_calling_result.used_llm,
+                "execution_path": "agent",
                 **tool_calling_result.metadata,
             }
             run.save(
@@ -130,6 +159,11 @@ class AIOrchestrator:
             )
             conversation.summary = assistant_turn.content[:500]
             conversation.save(update_fields=["summary", "updated_at"])
+            self._log_run_completion(
+                run=run,
+                execution_path="agent",
+                started_at=started_at,
+            )
             return OrchestratorResult(assistant_turn=assistant_turn, run=run)
 
         citations: list[dict[str, object]] = []
@@ -325,6 +359,7 @@ class AIOrchestrator:
                 "intent": intent,
                 "used_llm": llm_response.used_llm,
                 "model": llm_response.model,
+                **llm_response.metadata,
             },
         )
 
@@ -336,7 +371,16 @@ class AIOrchestrator:
         run.needs_human = bool(run.metadata.get("pending_approval_ids")) or (
             not citations and intent == "knowledge_search"
         )
-        run.metadata = {**run.metadata, "tool_payload": payload, "used_llm": llm_response.used_llm}
+        run.metadata = {
+            **run.metadata,
+            "tool_payload": payload,
+            "used_llm": llm_response.used_llm,
+            "execution_path": (
+                "grounded_llm" if llm_response.used_llm else "deterministic_fallback"
+            ),
+            "agent_attempt_observability": agent_attempt_observation,
+            **llm_response.metadata,
+        }
         run.save(
             update_fields=[
                 "intent",
@@ -352,7 +396,63 @@ class AIOrchestrator:
         )
         conversation.summary = assistant_turn.content[:500]
         conversation.save(update_fields=["summary", "updated_at"])
+        self._log_run_completion(
+            run=run,
+            execution_path=(
+                "grounded_llm" if llm_response.used_llm else "deterministic_fallback"
+            ),
+            started_at=started_at,
+        )
         return OrchestratorResult(assistant_turn=assistant_turn, run=run)
+
+    def _log_run_completion(
+        self,
+        *,
+        run: AgentRun,
+        execution_path: str,
+        started_at: float,
+    ) -> None:
+        """Emit one safe console summary that makes agent versus fallback obvious."""
+        if not settings.AI_LOG_CONSOLE_DETAILS:
+            return
+        provider_observation = run.metadata.get("provider_observability", {})
+        observation = (
+            provider_observation if isinstance(provider_observation, dict) else {}
+        )
+        agent_attempt = run.metadata.get("agent_attempt_observability", {})
+        if not isinstance(agent_attempt, dict):
+            agent_attempt = {}
+        tool_executions = list(
+            run.tool_executions.values_list("tool_name", "status")
+        )
+        is_agent = execution_path == "agent"
+        logger.info(
+            "AI_AGENT_COMPLETED" if is_agent else "AI_FALLBACK_COMPLETED",
+            run_id=str(run.id),
+            conversation_id=str(run.conversation_id),
+            execution_path=execution_path,
+            agent_active=is_agent,
+            fallback_used=not is_agent,
+            intent=run.intent,
+            model=run.model,
+            total_latency_ms=int((perf_counter() - started_at) * 1000),
+            provider_latency_ms=observation.get("latency_ms"),
+            retry_count=observation.get("retry_count", 0),
+            agent_fallback_reason=agent_attempt.get("fallback_reason"),
+            fallback_reason=(
+                observation.get("fallback_reason")
+                or (
+                    "llm_disabled_or_unavailable"
+                    if execution_path == "deterministic_fallback"
+                    else None
+                )
+            ),
+            token_usage=observation.get("token_usage", {}),
+            estimated_cost_usd=observation.get("estimated_cost_usd"),
+            tools=[{"name": name, "status": status} for name, status in tool_executions],
+            citation_count=len(run.citations),
+            needs_human=run.needs_human,
+        )
 
     def _detect_intent(self, *, message: str, is_staff: bool) -> tuple[str, dict[str, object]]:
         """Infer a narrow intent from the message using business heuristics."""

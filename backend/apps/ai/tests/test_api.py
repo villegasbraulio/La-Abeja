@@ -166,12 +166,6 @@ def test_staff_can_fetch_copilot_overview_with_recent_artifacts(authenticated_cl
         created_by=user,
         workflow_run=workflow,
     )
-    Lead.objects.create(
-        full_name="Lucia Gomez",
-        email="lucia@example.com",
-        source_channel=Conversation.Channel.WHATSAPP,
-        created_by=user,
-    )
     ApprovalRequest.objects.create(
         workflow_run=workflow,
         action_name="send_refund",
@@ -196,7 +190,6 @@ def test_staff_can_fetch_copilot_overview_with_recent_artifacts(authenticated_cl
 
     assert response.status_code == status.HTTP_200_OK
     assert response.data["metrics"]["open_tasks"] == 1
-    assert response.data["metrics"]["new_leads"] == 1
     assert response.data["metrics"]["pending_approvals"] == 2
     assert response.data["metrics"]["active_stock_reservations"] == 1
     assert response.data["metrics"]["pending_cancellation_approvals"] == 1

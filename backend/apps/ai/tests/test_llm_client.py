@@ -11,8 +11,9 @@ from apps.ai.services.llm_client import LLMClient
 class _FakeResponse:
     """Minimal fake response object with only output_text."""
 
-    def __init__(self, output_text: str) -> None:
+    def __init__(self, output_text: str, usage: object | None = None) -> None:
         self.output_text = output_text
+        self.usage = usage
 
 
 class _FakeResponsesAPI:
@@ -43,6 +44,23 @@ class _FakeOpenAIClient:
     ) -> None:
         del api_key, base_url
         self.responses = _FakeResponsesAPI(output_text=output_text, should_raise=should_raise)
+
+
+class _RetryingResponsesAPI:
+    """Fail once with a transient error and then return a metered response."""
+
+    def __init__(self) -> None:
+        self.call_count = 0
+
+    def create(self, **kwargs: object) -> _FakeResponse:
+        del kwargs
+        self.call_count += 1
+        if self.call_count == 1:
+            raise TimeoutError("temporary timeout")
+        return _FakeResponse(
+            "Respuesta luego del retry",
+            usage=SimpleNamespace(input_tokens=120, output_tokens=30, total_tokens=150),
+        )
 
 
 def test_llm_client_returns_fallback_when_disabled(settings) -> None:
@@ -112,6 +130,9 @@ def test_llm_client_returns_fallback_on_api_exception(settings, monkeypatch) -> 
 
     assert result.text == "fallback"
     assert result.used_llm is False
+    observation = result.metadata["provider_observability"]
+    assert observation["fallback_reason"] == "provider_exception"
+    assert observation["error_type"] == "RuntimeError"
 
 
 def test_llm_client_returns_fallback_on_empty_output(settings, monkeypatch) -> None:
@@ -168,6 +189,45 @@ def test_llm_client_returns_model_text_when_openai_succeeds(settings, monkeypatc
     assert result.text == "Respuesta remota"
     assert result.model == "gpt-test"
     assert result.used_llm is True
+
+
+def test_llm_client_records_tokens_cost_latency_and_retries(settings, monkeypatch) -> None:
+    """Successful calls should expose metering and bounded retry telemetry."""
+    settings.AI_LLM_PROVIDER = "openai"
+    settings.AI_USE_LLM = True
+    settings.OPENAI_API_KEY = "test-key"
+    settings.AI_CHAT_MODEL = "gpt-test"
+    settings.AI_PROVIDER_MAX_RETRIES = 2
+    settings.AI_PROVIDER_RETRY_BASE_SECONDS = 0
+    settings.AI_INPUT_COST_PER_1M_TOKENS_USD = 2.0
+    settings.AI_OUTPUT_COST_PER_1M_TOKENS_USD = 8.0
+    responses_api = _RetryingResponsesAPI()
+    monkeypatch.setitem(
+        sys.modules,
+        "openai",
+        SimpleNamespace(
+            OpenAI=lambda *, api_key: SimpleNamespace(responses=responses_api),
+        ),
+    )
+
+    result = LLMClient().generate_grounded_response(
+        system_prompt="system",
+        user_message="hola",
+        evidence=["doc"],
+        fallback_text="fallback",
+    )
+
+    observation = result.metadata["provider_observability"]
+    assert result.used_llm is True
+    assert responses_api.call_count == 2
+    assert observation["retry_count"] == 1
+    assert observation["token_usage"] == {
+        "input_tokens": 120,
+        "output_tokens": 30,
+        "total_tokens": 150,
+    }
+    assert observation["estimated_cost_usd"] == 0.00048
+    assert observation["latency_ms"] >= 0
 
 
 def test_llm_client_supports_groq_with_openai_compatible_sdk(settings, monkeypatch) -> None:

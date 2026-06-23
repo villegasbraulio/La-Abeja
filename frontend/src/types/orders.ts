@@ -28,6 +28,7 @@ export interface OrderCreatePayload {
   items: CheckoutItemPayload[];
   shipping_method: ShippingMethod;
   shipping_address: CheckoutShippingAddressPayload;
+  customer_email?: string;
   notes?: string;
 }
 
@@ -86,13 +87,16 @@ export interface Order {
   total: string;
   shipping_method: ShippingMethod;
   shipping_method_label: string;
+  customer_email: string;
   shipping_address: CheckoutShippingAddressPayload;
   shipping_quote: ShippingQuote | null;
   tracking_number: string;
+  tracking_url: string | null;
   estimated_delivery: string | null;
   notes: string;
   items: OrderItem[];
   payment: OrderPaymentSummary | null;
+  guest_access_token: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from apps.ai.tools.base import ToolContext
 from apps.ai.tools.registry import ToolRegistry
@@ -15,6 +15,7 @@ class ProviderTextResponse:
 
     text: str
     model: str
+    metadata: dict[str, object] = field(default_factory=dict)
 
 
 @dataclass(slots=True)

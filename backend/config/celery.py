@@ -22,4 +22,12 @@ app.conf.beat_schedule = {
         "task": "apps.automations.tasks.marketing_tasks.send_birthday_discounts",
         "schedule": crontab(hour=9, minute=0),
     },
+    "dispatch-transactional-outbox": {
+        "task": "apps.automations.tasks.outbox_tasks.dispatch_pending_outbox_events",
+        "schedule": crontab(minute="*"),
+    },
+    "reconcile-payments-and-shipments": {
+        "task": "apps.automations.tasks.reconciliation_tasks.reconcile_external_operations",
+        "schedule": crontab(minute="*/10"),
+    },
 }

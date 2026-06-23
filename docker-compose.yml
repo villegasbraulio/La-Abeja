@@ -56,6 +56,20 @@ services:
       - backend
       - redis
 
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: development
+    env_file:
+      - .env
+    command: celery -A config beat -l info
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - backend
+      - redis
+
   frontend:
     build:
       context: ./frontend
@@ -66,6 +80,7 @@ services:
       - /app/node_modules
     environment:
       VITE_API_URL: http://localhost:8000/api/v1
+      VITE_MERCADOPAGO_PUBLIC_KEY: ${VITE_MERCADOPAGO_PUBLIC_KEY}
     command: npm run dev -- --host 0.0.0.0 --port 3000
     ports:
       - "3000:3000"

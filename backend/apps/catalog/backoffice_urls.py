@@ -10,6 +10,7 @@ from .backoffice_views import (
     BackofficeDashboardView,
     BackofficeOrderDetailView,
     BackofficeOrderListView,
+    BackofficeSalesMetricsView,
     BackofficeVarietalDetailView,
     BackofficeVarietalListCreateView,
     BackofficeWineDetailView,
@@ -20,6 +21,7 @@ app_name = "backoffice"
 
 urlpatterns = [
     path("dashboard/", BackofficeDashboardView.as_view(), name="dashboard"),
+    path("sales-metrics/", BackofficeSalesMetricsView.as_view(), name="sales-metrics"),
     path("categories/", BackofficeCategoryListCreateView.as_view(), name="category-list"),
     path(
         "categories/<int:pk>/",

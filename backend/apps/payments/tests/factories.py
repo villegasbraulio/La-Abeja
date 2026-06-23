@@ -18,6 +18,9 @@ class PaymentFactory(factory.django.DjangoModelFactory):
         model = Payment
 
     order = factory.SubFactory(OrderFactory)
+    idempotency_key = factory.LazyAttribute(
+        lambda obj: f"mercadopago:preference:{obj.order.id}"
+    )
     mp_preference_id = factory.Sequence(lambda n: f"pref_{n}")
     status = Payment.Status.PENDING
     amount = Decimal("8000.00")

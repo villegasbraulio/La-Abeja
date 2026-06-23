@@ -64,6 +64,66 @@ services:
         sync: false
       - key: MERCADOPAGO_WEBHOOK_SECRET
         sync: false
+      - key: MERCADOPAGO_COLLECTOR_ID
+        sync: false
+
+  - type: worker
+    name: la-abeja-celery-worker
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements/production.txt
+    startCommand: celery -A config worker -l info
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      - key: SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: la-abeja-db
+          property: connectionString
+      - key: REDIS_HOST
+        fromService:
+          type: keyvalue
+          name: la-abeja-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: keyvalue
+          name: la-abeja-redis
+          property: port
+      - key: MERCADOPAGO_ACCESS_TOKEN
+        sync: false
+      - key: MERCADOPAGO_COLLECTOR_ID
+        sync: false
+      - key: ANDREANI_API_KEY
+        sync: false
+
+  - type: worker
+    name: la-abeja-celery-beat
+    runtime: python
+    rootDir: backend
+    buildCommand: pip install -r requirements/production.txt
+    startCommand: celery -A config beat -l info
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: config.settings.production
+      - key: SECRET_KEY
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: la-abeja-db
+          property: connectionString
+      - key: REDIS_HOST
+        fromService:
+          type: keyvalue
+          name: la-abeja-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: keyvalue
+          name: la-abeja-redis
+          property: port
 
   - type: keyvalue
     name: la-abeja-redis

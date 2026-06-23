@@ -51,6 +51,25 @@ def test_backoffice_dashboard_returns_summary(staff_client: tuple[APIClient, obj
 
 
 @pytest.mark.django_db
+def test_backoffice_sales_metrics_returns_commercial_dashboard(
+    staff_client: tuple[APIClient, object],
+) -> None:
+    """Staff should receive sales KPIs and grouped commercial indicators."""
+    client, _ = staff_client
+    order = OrderFactory(status="delivered")
+    OrderItemFactory(order=order, quantity=3)
+    PaymentFactory(order=order, status="approved")
+
+    response = client.get("/api/v1/backoffice/sales-metrics/?period=last_30_days")
+
+    assert response.status_code == 200
+    assert response.data["summary"]["order_count"] == 1
+    assert response.data["summary"]["bottles_sold"] == 3
+    assert response.data["by_product"]["results"]
+    assert response.data["timeline"]["results"]
+
+
+@pytest.mark.django_db
 def test_staff_can_create_category(staff_client: tuple[APIClient, object]) -> None:
     """Staff can create categories through the backoffice API."""
     client, _ = staff_client

@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 
+from django.conf import settings
 from django.utils import timezone
 
 from apps.catalog.models import Wine
@@ -117,7 +118,7 @@ def _estimate_delivery(days: int) -> date:
 class CheckoutShippingService:
     """Small backend-driven shipping quote engine for checkout."""
 
-    provider_name = "manual"
+    provider_name = "andreani"
 
     def quote(
         self,
@@ -144,8 +145,8 @@ class CheckoutShippingService:
         return [
             ShippingQuote(
                 shipping_method=Order.ShippingMethod.STANDARD,
-                label="Envío estándar",
-                description="Despacho nacional con seguimiento y entrega estimada según zona.",
+                label=Order.ShippingMethod.STANDARD.label,
+                description="Despacho nacional con Andreani, seguimiento y entrega estimada según zona.",
                 shipping_cost=standard_amount,
                 provider=self.provider_name,
                 service_level="standard",
@@ -153,9 +154,9 @@ class CheckoutShippingService:
             ),
             ShippingQuote(
                 shipping_method=Order.ShippingMethod.EXPRESS,
-                label="Envío express",
+                label=Order.ShippingMethod.EXPRESS.label,
                 description=(
-                    "Preparación prioritaria y despacho acelerado "
+                    "Preparación prioritaria y despacho acelerado con Andreani "
                     "cuando la cobertura lo permite."
                 ),
                 shipping_cost=express_amount,
@@ -165,7 +166,7 @@ class CheckoutShippingService:
             ),
             ShippingQuote(
                 shipping_method=Order.ShippingMethod.PICKUP,
-                label="Retiro en bodega",
+                label=Order.ShippingMethod.PICKUP.label,
                 description="Retiro coordinado en San Rafael, Mendoza.",
                 shipping_cost=Decimal("0.00"),
                 provider="pickup",
@@ -192,3 +193,11 @@ class CheckoutShippingService:
             if quote.shipping_method == shipping_method:
                 return quote
         raise ShippingQuoteError("No pudimos cotizar el método de envío seleccionado.")
+
+
+def build_tracking_url(tracking_number: str) -> str | None:
+    """Return the public Andreani tracking URL when a code is available."""
+    normalized_tracking = tracking_number.strip()
+    if not normalized_tracking:
+        return None
+    return settings.ANDREANI_TRACKING_URL_TEMPLATE.format(tracking_number=normalized_tracking)

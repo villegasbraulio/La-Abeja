@@ -229,15 +229,21 @@ def test_tool_calling_agent_returns_none_on_empty_final_output(settings, monkeyp
         ),
     )
 
+    context = _context()
     result = OpenAIToolCallingAgent().run(
         message="hola",
         mode=Conversation.Mode.SUPPORT,
-        context=_context(),
+        context=context,
         tool_registry=ToolRegistry(),
         prompt=PromptManager().support_prompt(),
     )
 
     assert result is None
+    observation = context.run.metadata["provider_observability"]
+    assert observation["status"] == "fallback"
+    assert observation["fallback_reason"] == "empty_output"
+    assert observation["error_type"] is None
+    assert observation["retry_count"] == 0
 
 
 @pytest.mark.django_db
@@ -320,12 +326,18 @@ def test_tool_calling_agent_returns_none_on_openai_exception(settings, monkeypat
         ),
     )
 
+    context = _context()
     result = OpenAIToolCallingAgent().run(
         message="hola",
         mode=Conversation.Mode.SUPPORT,
-        context=_context(),
+        context=context,
         tool_registry=ToolRegistry(),
         prompt=PromptManager().support_prompt(),
     )
 
     assert result is None
+    observation = context.run.metadata["provider_observability"]
+    assert observation["status"] == "fallback"
+    assert observation["fallback_reason"] == "provider_exception"
+    assert observation["error_type"] == "RuntimeError"
+    assert observation["retry_count"] == 0

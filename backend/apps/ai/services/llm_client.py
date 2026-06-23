@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from apps.ai.providers import LLMProvider, LLMProviderFactory
 
@@ -14,6 +14,7 @@ class LLMResponse:
     text: str
     model: str
     used_llm: bool
+    metadata: dict[str, object] = field(default_factory=dict)
 
 
 class LLMClient:
@@ -38,5 +39,16 @@ class LLMClient:
             evidence=evidence,
         )
         if response is None:
-            return LLMResponse(text=fallback_text, model="deterministic-fallback", used_llm=False)
-        return LLMResponse(text=response.text, model=response.model, used_llm=True)
+            observation = getattr(self.provider, "last_observation", {})
+            return LLMResponse(
+                text=fallback_text,
+                model="deterministic-fallback",
+                used_llm=False,
+                metadata=dict(observation) if isinstance(observation, dict) else {},
+            )
+        return LLMResponse(
+            text=response.text,
+            model=response.model,
+            used_llm=True,
+            metadata=response.metadata,
+        )

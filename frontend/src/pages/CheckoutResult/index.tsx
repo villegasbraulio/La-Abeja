@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useSearchParams } from "react-router-dom";
 import { ordersApi } from "../../api/orders";
@@ -6,13 +6,28 @@ import { Button } from "../../components/ui/Button";
 import { formatARS } from "../../lib/utils";
 import { useAuthStore } from "../../store/authStore";
 import { useCartStore } from "../../store/cartStore";
+import { useToastStore } from "../../store/toastStore";
+
+function resolveCheckoutStatus(searchParams: URLSearchParams): string | null {
+  return (
+    searchParams.get("collection_status") ??
+    searchParams.get("status") ??
+    searchParams.get("payment_status")
+  );
+}
 
 export function CheckoutResultPage() {
   const accessToken = useAuthStore((state) => state.accessToken);
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get("order_id");
-  const checkoutStatus = searchParams.get("status");
+  const checkoutStatus = resolveCheckoutStatus(searchParams);
+  const paymentId = searchParams.get("payment_id") ?? searchParams.get("collection_id");
+  const merchantOrderId = searchParams.get("merchant_order_id");
+  const preferenceId = searchParams.get("preference_id");
+  const externalReference = searchParams.get("external_reference");
   const clearCart = useCartStore((state) => state.clearCart);
+  const showToast = useToastStore((state) => state.showToast);
+  const handledStatusRef = useRef<string | null>(null);
 
   const { data } = useQuery({
     queryKey: ["order-detail", orderId, "checkout-result"],
@@ -21,10 +36,37 @@ export function CheckoutResultPage() {
   });
 
   useEffect(() => {
+    if (!checkoutStatus || handledStatusRef.current === checkoutStatus) {
+      return;
+    }
+
+    handledStatusRef.current = checkoutStatus;
+
     if (checkoutStatus === "approved") {
       clearCart();
+      showToast({
+        variant: "success",
+        title: "Pago confirmado",
+        description: "Vaciamos el carrito y dejamos el pedido en seguimiento.",
+      });
+      return;
     }
-  }, [checkoutStatus, clearCart]);
+
+    if (checkoutStatus === "pending") {
+      showToast({
+        variant: "info",
+        title: "Pago pendiente",
+        description: "Mercado Pago todavía no confirmó la operación.",
+      });
+      return;
+    }
+
+    showToast({
+      variant: "error",
+      title: "Pago no finalizado",
+      description: "Podés revisar el pedido y reintentar el cobro cuando quieras.",
+    });
+  }, [checkoutStatus, clearCart, showToast]);
 
   const title =
     checkoutStatus === "approved"
@@ -37,7 +79,7 @@ export function CheckoutResultPage() {
     checkoutStatus === "approved"
       ? "Mercado Pago nos devolvió una confirmación positiva. El webhook del backend termina de consolidar el estado real del pedido."
       : checkoutStatus === "pending"
-        ? "La operación quedó pendiente. Vas a poder revisar el estado real desde tu historial de pedidos."
+        ? "La operación quedó pendiente. Si elegiste un medio offline, seguí las instrucciones del comprobante y revisá luego el estado real del pedido."
         : "El flujo de pago no terminó aprobado. Podés reintentar desde el detalle del pedido.";
 
   return (
@@ -63,6 +105,51 @@ export function CheckoutResultPage() {
               <p className="text-xs uppercase tracking-[0.16em] text-burgundy-500">Total</p>
               <p className="mt-2 text-lg font-semibold text-burgundy-950">{formatARS(data.total)}</p>
             </div>
+          </div>
+        ) : null}
+
+        {paymentId || merchantOrderId || preferenceId || externalReference ? (
+          <div className="mt-6 grid gap-4 rounded-[24px] border border-burgundy-100 bg-cream-50 p-6 md:grid-cols-2">
+            {paymentId ? (
+              <div>
+                <p className="text-xs uppercase tracking-[0.16em] text-burgundy-500">
+                  Payment ID
+                </p>
+                <p className="mt-2 break-all text-sm font-semibold text-burgundy-950">
+                  {paymentId}
+                </p>
+              </div>
+            ) : null}
+            {merchantOrderId ? (
+              <div>
+                <p className="text-xs uppercase tracking-[0.16em] text-burgundy-500">
+                  Merchant Order ID
+                </p>
+                <p className="mt-2 break-all text-sm font-semibold text-burgundy-950">
+                  {merchantOrderId}
+                </p>
+              </div>
+            ) : null}
+            {preferenceId ? (
+              <div>
+                <p className="text-xs uppercase tracking-[0.16em] text-burgundy-500">
+                  Preference ID
+                </p>
+                <p className="mt-2 break-all text-sm font-semibold text-burgundy-950">
+                  {preferenceId}
+                </p>
+              </div>
+            ) : null}
+            {externalReference ? (
+              <div>
+                <p className="text-xs uppercase tracking-[0.16em] text-burgundy-500">
+                  Referencia externa
+                </p>
+                <p className="mt-2 break-all text-sm font-semibold text-burgundy-950">
+                  {externalReference}
+                </p>
+              </div>
+            ) : null}
           </div>
         ) : null}
 

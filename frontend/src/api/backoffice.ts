@@ -13,6 +13,7 @@ import type {
   BackofficeWineDetail,
   BackofficeWineListItem,
   BackofficeWinePayload,
+  SalesMetricsDashboard,
 } from "../types/backoffice";
 
 interface PaginatedResponse<T> {
@@ -25,6 +26,12 @@ interface PaginatedResponse<T> {
 export const backofficeApi = {
   dashboard: async (): Promise<BackofficeDashboard> => {
     const response = await apiClient.get<BackofficeDashboard>("/backoffice/dashboard/");
+    return response.data;
+  },
+  salesMetrics: async (period: string): Promise<SalesMetricsDashboard> => {
+    const response = await apiClient.get<SalesMetricsDashboard>(
+      `/backoffice/sales-metrics/?period=${encodeURIComponent(period)}`,
+    );
     return response.data;
   },
   categories: {

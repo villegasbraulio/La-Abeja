@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import { Layout } from "./components/layout/Layout";
+import { ToastViewport } from "./components/ui/ToastViewport";
 import { AboutPage } from "./pages/About";
 import { BackofficeApprovalsPage } from "./pages/Backoffice/ApprovalsPage";
 import { BackofficeLayout } from "./pages/Backoffice/BackofficeLayout";
@@ -7,9 +8,9 @@ import { BackofficeCancellationApprovalsPage } from "./pages/Backoffice/Cancella
 import { CategoriesPage } from "./pages/Backoffice/CategoriesPage";
 import { BackofficeCopilotPage } from "./pages/Backoffice/CopilotPage";
 import { BackofficeDashboardPage } from "./pages/Backoffice/DashboardPage";
-import { BackofficeLeadsPage } from "./pages/Backoffice/LeadsPage";
 import { BackofficeLoginPage } from "./pages/Backoffice/LoginPage";
 import { BackofficeOrdersPage } from "./pages/Backoffice/OrdersPage";
+import { BackofficeSalesMetricsPage } from "./pages/Backoffice/SalesMetricsPage";
 import { BackofficeStockReservationsPage } from "./pages/Backoffice/StockReservationsPage";
 import { BackofficeTasksPage } from "./pages/Backoffice/TasksPage";
 import { BackofficeVisitsPage } from "./pages/Backoffice/VisitsPage";
@@ -30,37 +31,40 @@ import { VisitPage } from "./pages/Visit";
 
 export default function App() {
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/vinos" element={<CatalogPage />} />
-        <Route path="/vinos/:slug" element={<ProductDetailPage />} />
-        <Route path="/visitas" element={<VisitPage />} />
-        <Route path="/historia" element={<AboutPage />} />
-        <Route path="/regalos" element={<GiftsPage />} />
-        <Route path="/guia-de-compra" element={<GuidePage />} />
-        <Route path="/contacto" element={<ContactPage />} />
-        <Route path="/carrito" element={<CartPage />} />
-        <Route path="/checkout" element={<CheckoutPage />} />
-        <Route path="/checkout/resultado" element={<CheckoutResultPage />} />
-        <Route path="/pedidos" element={<OrdersPage />} />
-        <Route path="/pedidos/:id" element={<OrderDetailPage />} />
-      </Route>
-      <Route path="/backoffice/login" element={<BackofficeLoginPage />} />
-      <Route path="/backoffice" element={<BackofficeLayout />}>
-        <Route index element={<BackofficeDashboardPage />} />
-        <Route path="copilot" element={<BackofficeCopilotPage />} />
-        <Route path="tareas-ai" element={<BackofficeTasksPage />} />
-        <Route path="leads-ai" element={<BackofficeLeadsPage />} />
-        <Route path="approvals-ai" element={<BackofficeApprovalsPage />} />
-        <Route path="reservas-stock-ai" element={<BackofficeStockReservationsPage />} />
-        <Route path="cancelaciones-ai" element={<BackofficeCancellationApprovalsPage />} />
-        <Route path="visitas" element={<BackofficeVisitsPage />} />
-        <Route path="pedidos" element={<BackofficeOrdersPage />} />
-        <Route path="vinos" element={<WinesPage />} />
-        <Route path="categorias" element={<CategoriesPage />} />
-        <Route path="varietales" element={<VarietalsPage />} />
-      </Route>
-    </Routes>
+    <>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/vinos" element={<CatalogPage />} />
+          <Route path="/vinos/:slug" element={<ProductDetailPage />} />
+          <Route path="/visitas" element={<VisitPage />} />
+          <Route path="/historia" element={<AboutPage />} />
+          <Route path="/regalos" element={<GiftsPage />} />
+          <Route path="/guia-de-compra" element={<GuidePage />} />
+          <Route path="/contacto" element={<ContactPage />} />
+          <Route path="/carrito" element={<CartPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/checkout/resultado" element={<CheckoutResultPage />} />
+          <Route path="/pedidos" element={<OrdersPage />} />
+          <Route path="/pedidos/:id" element={<OrderDetailPage />} />
+        </Route>
+        <Route path="/backoffice/login" element={<BackofficeLoginPage />} />
+        <Route path="/backoffice" element={<BackofficeLayout />}>
+          <Route index element={<BackofficeDashboardPage />} />
+          <Route path="copilot" element={<BackofficeCopilotPage />} />
+          <Route path="metricas" element={<BackofficeSalesMetricsPage />} />
+          <Route path="tareas" element={<BackofficeTasksPage />} />
+          <Route path="aprobaciones" element={<BackofficeApprovalsPage />} />
+          <Route path="reservas-stock" element={<BackofficeStockReservationsPage />} />
+          <Route path="cancelaciones" element={<BackofficeCancellationApprovalsPage />} />
+          <Route path="visitas" element={<BackofficeVisitsPage />} />
+          <Route path="pedidos" element={<BackofficeOrdersPage />} />
+          <Route path="vinos" element={<WinesPage />} />
+          <Route path="categorias" element={<CategoriesPage />} />
+          <Route path="varietales" element={<VarietalsPage />} />
+        </Route>
+      </Routes>
+      <ToastViewport />
+    </>
   );
 }

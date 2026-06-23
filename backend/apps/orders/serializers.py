@@ -10,10 +10,17 @@ from django.db import transaction
 from rest_framework import serializers
 
 from apps.catalog.models import Wine
+from apps.notifications.email import EmailService
 from apps.payments.models import Payment
 
+from .access import build_guest_access_token
 from .models import Order, OrderItem
-from .shipping import CheckoutShippingService, ShippingQuote, ShippingQuoteError
+from .shipping import (
+    CheckoutShippingService,
+    ShippingQuote,
+    ShippingQuoteError,
+    build_tracking_url,
+)
 
 
 class CheckoutItemSerializer(serializers.Serializer):
@@ -94,6 +101,7 @@ class OrderCreateSerializer(serializers.Serializer):
     items = CheckoutItemSerializer(many=True, allow_empty=False)
     shipping_method = serializers.ChoiceField(choices=Order.ShippingMethod.choices)
     shipping_address = CheckoutShippingAddressSerializer()
+    customer_email = serializers.EmailField(required=False)
     notes = serializers.CharField(required=False, allow_blank=True)
 
     def validate_items(
@@ -111,11 +119,12 @@ class OrderCreateSerializer(serializers.Serializer):
     def create(self, validated_data: dict[str, object]) -> Order:
         """Persist the order and its immutable line item snapshots."""
         request = self.context["request"]
-        user = request.user
+        user = request.user if request.user.is_authenticated else None
         checkout_items = cast(list[dict[str, object]], validated_data["items"])
         shipping_method = str(validated_data["shipping_method"])
         shipping_address = dict(cast(dict[str, object], validated_data["shipping_address"]))
         notes = cast(str, validated_data.get("notes", ""))
+        customer_email = self._resolve_customer_email(validated_data)
         quantities_by_wine_id, wines = _load_checkout_wines(checkout_items)
         wine_map = {wine.id: wine for wine in wines}
 
@@ -163,6 +172,7 @@ class OrderCreateSerializer(serializers.Serializer):
 
         order = Order.objects.create(
             user=user,
+            customer_email=customer_email,
             subtotal=subtotal,
             discount_amount=Decimal("0.00"),
             shipping_cost=shipping_cost,
@@ -177,11 +187,26 @@ class OrderCreateSerializer(serializers.Serializer):
             order_item.order = order
         OrderItem.objects.bulk_create(order_items)
 
-        return (
+        hydrated_order = (
             Order.objects.select_related("user")
             .prefetch_related("items__wine__images")
             .get(pk=order.pk)
         )
+        _send_order_confirmation_email(hydrated_order)
+        return hydrated_order
+
+    def _resolve_customer_email(self, validated_data: dict[str, object]) -> str:
+        """Return the notification email for the current checkout."""
+        request = self.context["request"]
+        if request.user.is_authenticated:
+            return str(request.user.email).strip().lower()
+
+        customer_email = str(validated_data.get("customer_email") or "").strip().lower()
+        if not customer_email:
+            raise serializers.ValidationError(
+                {"customer_email": "Necesitamos un email para enviarte el detalle del pedido."}
+            )
+        return customer_email
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -242,6 +267,8 @@ class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     payment = serializers.SerializerMethodField()
     shipping_quote = serializers.SerializerMethodField()
+    guest_access_token = serializers.SerializerMethodField()
+    tracking_url = serializers.SerializerMethodField()
     status_label = serializers.CharField(source="get_status_display", read_only=True)
     shipping_method_label = serializers.CharField(
         source="get_shipping_method_display",
@@ -261,13 +288,16 @@ class OrderSerializer(serializers.ModelSerializer):
             "total",
             "shipping_method",
             "shipping_method_label",
+            "customer_email",
             "shipping_address",
             "shipping_quote",
             "tracking_number",
+            "tracking_url",
             "estimated_delivery",
             "notes",
             "items",
             "payment",
+            "guest_access_token",
             "created_at",
             "updated_at",
         ]
@@ -289,6 +319,14 @@ class OrderSerializer(serializers.ModelSerializer):
         if serializer.is_valid(raise_exception=False):
             return serializer.data
         return shipping_quote
+
+    def get_guest_access_token(self, obj: Order) -> str | None:
+        """Return a signed guest token when the order has no authenticated owner."""
+        return build_guest_access_token(obj)
+
+    def get_tracking_url(self, obj: Order) -> str | None:
+        """Expose the public tracking URL when one exists."""
+        return build_tracking_url(obj.tracking_number)
 
 
 def _load_checkout_wines(
@@ -325,3 +363,28 @@ def _build_shipping_snapshot(shipping_quote: ShippingQuote) -> dict[str, object]
             else None
         ),
     }
+
+
+def _send_order_confirmation_email(order: Order) -> None:
+    """Send the confirmation email once the order items already exist."""
+    if not order.customer_email:
+        return
+
+    items_summary = " | ".join(
+        f"{item.quantity}x {item.wine_name} ({item.subtotal})"
+        for item in order.items.all()
+    )
+    EmailService.send_transactional(
+        to=order.customer_email,
+        template="order_confirmation",
+        context={
+            "order_number": order.order_number,
+            "status": order.get_status_display(),
+            "total": order.total,
+            "shipping_method": order.get_shipping_method_display(),
+            "estimated_delivery": order.estimated_delivery or "A coordinar",
+            "tracking_number": order.tracking_number or "Pendiente de asignación",
+            "tracking_url": build_tracking_url(order.tracking_number) or "Pendiente",
+            "items": items_summary,
+        },
+    )

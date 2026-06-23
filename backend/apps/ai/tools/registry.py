@@ -6,6 +6,9 @@ from __future__ import annotations
 
 from time import perf_counter
 
+import structlog
+from django.conf import settings
+
 from apps.ai.models import ToolExecution
 from apps.ai.services.approval_service import ApprovalService
 from apps.ai.services.audit_service import AuditService
@@ -65,6 +68,8 @@ from .operations_tools import (
 from .ops_tools import list_low_stock_items, list_pending_orders
 from .order_tools import get_order_by_number
 from .visit_tools import search_visit_context
+
+logger = structlog.get_logger(__name__)
 
 
 class ToolRegistry:
@@ -1076,6 +1081,15 @@ class ToolRegistry:
         """Execute a registered tool and audit the result."""
         spec = self._tools[tool_name]
         started_at = perf_counter()
+        if settings.AI_LOG_CONSOLE_DETAILS:
+            logger.info(
+                "AI_TOOL_STARTED",
+                run_id=str(context.run.id),
+                tool=tool_name,
+                risk_level=spec.risk_level,
+                requires_approval=spec.requires_approval,
+                payload_keys=sorted(payload.keys()),
+            )
         if spec.requires_approval and not bypass_approval:
             approval = self._approval_service.request_tool_approval(
                 spec=spec, payload=payload, context=context
@@ -1106,6 +1120,14 @@ class ToolRegistry:
                 "pending_approval_ids": pending_approvals,
             }
             context.run.save(update_fields=["needs_human", "metadata", "updated_at"])
+            if settings.AI_LOG_CONSOLE_DETAILS:
+                logger.warning(
+                    "AI_TOOL_BLOCKED_FOR_APPROVAL",
+                    run_id=str(context.run.id),
+                    tool=tool_name,
+                    latency_ms=latency_ms,
+                    approval_request_id=str(approval.id),
+                )
             return result
         try:
             result = spec.handler(payload, context)
@@ -1119,6 +1141,14 @@ class ToolRegistry:
                 latency_ms=latency_ms,
                 status=ToolExecution.Status.SUCCEEDED,
             )
+            if settings.AI_LOG_CONSOLE_DETAILS:
+                logger.info(
+                    "AI_TOOL_SUCCEEDED",
+                    run_id=str(context.run.id),
+                    tool=tool_name,
+                    latency_ms=latency_ms,
+                    result_keys=sorted(result.keys()),
+                )
             return result
         except Exception as exc:
             latency_ms = int((perf_counter() - started_at) * 1000)
@@ -1132,6 +1162,14 @@ class ToolRegistry:
                 status=ToolExecution.Status.FAILED,
                 error=str(exc),
             )
+            if settings.AI_LOG_CONSOLE_DETAILS:
+                logger.error(
+                    "AI_TOOL_FAILED",
+                    run_id=str(context.run.id),
+                    tool=tool_name,
+                    latency_ms=latency_ms,
+                    error_type=type(exc).__name__,
+                )
             raise
 
     def get_tool_definitions(self, tool_names: list[str] | None = None) -> list[dict[str, object]]:

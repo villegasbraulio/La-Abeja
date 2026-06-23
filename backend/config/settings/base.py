@@ -11,6 +11,36 @@ import dj_database_url
 import structlog
 
 BASE_DIR = Path(__file__).resolve().parents[2]
+PROJECT_DIR = BASE_DIR.parent
+
+
+def load_env_file(path: Path) -> None:
+    """Load simple KEY=VALUE pairs from a local .env file."""
+    if not path.exists():
+        return
+
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        normalized_key = key.strip()
+        if not normalized_key:
+            continue
+
+        normalized_value = value.strip()
+        if (
+            len(normalized_value) >= 2
+            and normalized_value[0] == normalized_value[-1]
+            and normalized_value[0] in {'"', "'"}
+        ):
+            normalized_value = normalized_value[1:-1]
+
+        os.environ.setdefault(normalized_key, normalized_value)
+
+
+load_env_file(PROJECT_DIR / ".env")
 
 
 def get_list_env(name: str, default: str) -> list[str]:
@@ -132,6 +162,23 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = Path(os.getenv("MEDIA_ROOT", str(BASE_DIR / "media")))
+
+CACHE_URL = os.getenv("CACHE_URL", "").strip()
+CACHES = {
+    "default": (
+        {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": CACHE_URL,
+        }
+        if CACHE_URL
+        else {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "la-abeja-cache",
+        }
+    )
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "authentication.CustomUser"
@@ -143,6 +190,17 @@ REDIS_URL = get_redis_url(default_db=0)
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", REDIS_URL)
 CELERY_RESULT_BACKEND = os.getenv("CELERY_RESULT_BACKEND", get_redis_url(default_db=1))
 CELERY_TASK_ALWAYS_EAGER = os.getenv("CELERY_TASK_ALWAYS_EAGER", "False").lower() == "true"
+OUTBOX_MAX_ATTEMPTS = int(os.getenv("OUTBOX_MAX_ATTEMPTS", "8"))
+OUTBOX_PROCESSING_TIMEOUT_MINUTES = int(
+    os.getenv("OUTBOX_PROCESSING_TIMEOUT_MINUTES", "15")
+)
+OUTBOX_DISPATCH_BATCH_SIZE = int(os.getenv("OUTBOX_DISPATCH_BATCH_SIZE", "100"))
+PAYMENT_RECONCILIATION_AGE_MINUTES = int(
+    os.getenv("PAYMENT_RECONCILIATION_AGE_MINUTES", "10")
+)
+SHIPMENT_RECONCILIATION_AGE_MINUTES = int(
+    os.getenv("SHIPMENT_RECONCILIATION_AGE_MINUTES", "10")
+)
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
@@ -182,10 +240,54 @@ CSRF_TRUSTED_ORIGINS = get_origin_list_env(
 SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY", "")
 DEFAULT_FROM_EMAIL = os.getenv("DEFAULT_FROM_EMAIL", "reservas@bodegelaabeja.com.ar")
 DEFAULT_FROM_NAME = os.getenv("DEFAULT_FROM_NAME", "Bodega La Abeja")
+EMAIL_BACKEND = os.getenv("EMAIL_BACKEND", "django.core.mail.backends.smtp.EmailBackend")
 
 MERCADOPAGO_ACCESS_TOKEN = os.getenv("MERCADOPAGO_ACCESS_TOKEN", "")
 MERCADOPAGO_PUBLIC_KEY = os.getenv("MERCADOPAGO_PUBLIC_KEY", "")
 MERCADOPAGO_WEBHOOK_SECRET = os.getenv("MERCADOPAGO_WEBHOOK_SECRET", "")
+MERCADOPAGO_COLLECTOR_ID = os.getenv("MERCADOPAGO_COLLECTOR_ID", "")
+ANDREANI_API_KEY = os.getenv("ANDREANI_API_KEY", "")
+ANDREANI_API_BASE_URL = os.getenv(
+    "ANDREANI_API_BASE_URL",
+    "https://apisqa.andreani.com",
+)
+ANDREANI_ORDER_PATH = os.getenv("ANDREANI_ORDER_PATH", "/v2/ordenes-de-envio")
+ANDREANI_MAX_ATTEMPTS = int(os.getenv("ANDREANI_MAX_ATTEMPTS", "3"))
+ANDREANI_RETRY_BASE_SECONDS = float(os.getenv("ANDREANI_RETRY_BASE_SECONDS", "0.25"))
+ANDREANI_REQUEST_TIMEOUT_SECONDS = float(
+    os.getenv("ANDREANI_REQUEST_TIMEOUT_SECONDS", "20")
+)
+ANDREANI_MASTER_DATA_CACHE_SECONDS = int(
+    os.getenv("ANDREANI_MASTER_DATA_CACHE_SECONDS", "86400")
+)
+ANDREANI_LABEL_ALLOWED_HOSTS = get_list_env(
+    "ANDREANI_LABEL_ALLOWED_HOSTS",
+    "apis.andreani.com,apisqa.andreani.com,apietiqueta.com",
+)
+ANDREANI_CONTRACT = os.getenv("ANDREANI_CONTRACT", "")
+ANDREANI_CUSTOMER_BRANCH_ID = int(os.getenv("ANDREANI_CUSTOMER_BRANCH_ID", "0"))
+ANDREANI_SERVICE_TYPE_STANDARD = os.getenv("ANDREANI_SERVICE_TYPE_STANDARD", "standard")
+ANDREANI_SERVICE_TYPE_EXPRESS = os.getenv("ANDREANI_SERVICE_TYPE_EXPRESS", "express")
+ANDREANI_COST_CENTER = os.getenv("ANDREANI_COST_CENTER", "ECOMMERCE")
+ANDREANI_PRODUCT_TYPE = os.getenv("ANDREANI_PRODUCT_TYPE", "VINOS")
+ANDREANI_BILLING_CATEGORY = os.getenv("ANDREANI_BILLING_CATEGORY", "B2C")
+ANDREANI_ORIGIN_POSTAL_CODE = os.getenv("ANDREANI_ORIGIN_POSTAL_CODE", "5600")
+ANDREANI_ORIGIN_STREET = os.getenv("ANDREANI_ORIGIN_STREET", "Av. Hipolito Yrigoyen")
+ANDREANI_ORIGIN_NUMBER = os.getenv("ANDREANI_ORIGIN_NUMBER", "238")
+ANDREANI_ORIGIN_FLOOR = os.getenv("ANDREANI_ORIGIN_FLOOR", "")
+ANDREANI_ORIGIN_APARTMENT = os.getenv("ANDREANI_ORIGIN_APARTMENT", "")
+ANDREANI_ORIGIN_CITY = os.getenv("ANDREANI_ORIGIN_CITY", "San Rafael")
+ANDREANI_ORIGIN_REGION = os.getenv("ANDREANI_ORIGIN_REGION", "Mendoza")
+ANDREANI_ORIGIN_COUNTRY = os.getenv("ANDREANI_ORIGIN_COUNTRY", "Argentina")
+ANDREANI_SENDER_NAME = os.getenv("ANDREANI_SENDER_NAME", DEFAULT_FROM_NAME)
+ANDREANI_SENDER_EMAIL = os.getenv("ANDREANI_SENDER_EMAIL", DEFAULT_FROM_EMAIL)
+ANDREANI_SENDER_DOCUMENT_TYPE = os.getenv("ANDREANI_SENDER_DOCUMENT_TYPE", "CUIT")
+ANDREANI_SENDER_DOCUMENT_NUMBER = os.getenv("ANDREANI_SENDER_DOCUMENT_NUMBER", "")
+ANDREANI_SENDER_PHONE = os.getenv("ANDREANI_SENDER_PHONE", "")
+ANDREANI_TRACKING_URL_TEMPLATE = os.getenv(
+    "ANDREANI_TRACKING_URL_TEMPLATE",
+    "https://www.andreani.com/#!/informacionEnvio/{tracking_number}",
+)
 
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
@@ -225,6 +327,16 @@ AI_USE_TOOL_CALLING = os.getenv("AI_USE_TOOL_CALLING", "True").lower() == "true"
 AI_ENABLE_PGVECTOR = os.getenv("AI_ENABLE_PGVECTOR", "True").lower() == "true"
 AI_EMBEDDING_DIMENSIONS = int(os.getenv("AI_EMBEDDING_DIMENSIONS", "1536"))
 AI_PGVECTOR_DIMENSIONS = min(AI_EMBEDDING_DIMENSIONS, 1536)
+AI_PROVIDER_MAX_RETRIES = int(os.getenv("AI_PROVIDER_MAX_RETRIES", "2"))
+AI_PROVIDER_RETRY_BASE_SECONDS = float(os.getenv("AI_PROVIDER_RETRY_BASE_SECONDS", "0.25"))
+AI_PROVIDER_MAX_TOOL_ITERATIONS = int(os.getenv("AI_PROVIDER_MAX_TOOL_ITERATIONS", "8"))
+AI_INPUT_COST_PER_1M_TOKENS_USD = float(
+    os.getenv("AI_INPUT_COST_PER_1M_TOKENS_USD", "0")
+)
+AI_OUTPUT_COST_PER_1M_TOKENS_USD = float(
+    os.getenv("AI_OUTPUT_COST_PER_1M_TOKENS_USD", "0")
+)
+AI_LOG_CONSOLE_DETAILS = os.getenv("AI_LOG_CONSOLE_DETAILS", "True").lower() == "true"
 
 LOGGING = {
     "version": 1,

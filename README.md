@@ -466,8 +466,7 @@ Nota importante:
 .venv/bin/pip install -r backend/requirements/development.txt
 cd backend
 ../.venv/bin/python manage.py migrate
-../.venv/bin/python manage.py seed_demo_data
-../.venv/bin/python manage.py seed_ai_knowledge
+../.venv/bin/python manage.py seed_ai_demo_data
 ../.venv/bin/python manage.py runserver 127.0.0.1:8000
 ```
 
@@ -563,6 +562,16 @@ Si corres `seed_demo_data` con los defaults de [`.env.example`](/Users/braulio/L
 - contrasena: `LaAbejaAdmin2026!`
 
 ## Comandos utiles para AI
+
+### Seed completo para métricas y tools
+
+Este comando incluye catálogo, conocimiento, 96 pedidos históricos, pagos, clientes,
+carritos, visitas y escenarios operativos. Es idempotente y puede ejecutarse nuevamente.
+
+```bash
+cd backend
+../.venv/bin/python manage.py seed_ai_demo_data
+```
 
 ### Seed de conocimiento
 

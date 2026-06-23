@@ -17,6 +17,91 @@ export interface BackofficeDashboard {
   }>;
 }
 
+export interface SalesMetricsDashboard {
+  summary: {
+    period: string;
+    start_at: string;
+    end_at: string;
+    order_count: number;
+    total_revenue: string;
+    average_order_value: string;
+    bottles_sold: number;
+  };
+  timeline: {
+    period: string;
+    grain: string;
+    results: Array<{
+      period: string;
+      order_count: number;
+      total_revenue: string;
+      bottles_sold: number;
+    }>;
+  };
+  by_varietal: {
+    results: Array<{
+      varietal: string;
+      bottles_sold: number;
+      revenue: string;
+      order_count: number;
+    }>;
+  };
+  by_product: {
+    results: Array<{
+      sku: string;
+      wine_name: string;
+      bottles_sold: number;
+      revenue: string;
+      order_count: number;
+    }>;
+  };
+  by_channel: {
+    results: Array<{
+      channel: string;
+      order_count: number;
+      total_revenue: string;
+    }>;
+  };
+  margins: {
+    results: Array<{
+      sku: string;
+      wine_name: string;
+      bottles_sold: number;
+      revenue: string;
+      estimated_cost: string;
+      estimated_margin: string;
+    }>;
+  };
+  repeat_customers: {
+    unique_customers: number;
+    repeat_customers: number;
+    repeat_rate: number;
+    average_revenue_per_customer: string;
+    top_repeat_customers: Array<{
+      customer_email: string;
+      order_count: number;
+      revenue: string;
+      last_order_at: string | null;
+    }>;
+  };
+  funnel: {
+    cart_count: number;
+    order_count: number;
+    paid_order_count: number;
+    rejected_payment_count: number;
+    cart_to_order_rate: number;
+    order_to_paid_rate: number;
+    cart_abandonment_rate: number;
+  };
+  incidents: {
+    total_orders: number;
+    refunded_orders: number;
+    cancelled_orders: number;
+    payment_failed_orders: number;
+    incident_task_count: number;
+    incident_rate: number;
+  };
+}
+
 export interface BackofficeCategory {
   id: number;
   name: string;

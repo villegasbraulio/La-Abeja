@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { ordersApi } from "../../api/orders";
 import { paymentsApi } from "../../api/payments";
 import { Button } from "../../components/ui/Button";
@@ -11,17 +11,19 @@ import { useAuthStore } from "../../store/authStore";
 export function OrderDetailPage() {
   const { id = "" } = useParams();
   const accessToken = useAuthStore((state) => state.accessToken);
+  const [searchParams] = useSearchParams();
+  const guestAccessToken = searchParams.get("guest_access_token");
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["order-detail", id],
-    queryFn: () => ordersApi.detail(id),
-    enabled: Boolean(accessToken && id),
+    queryKey: ["order-detail", id, guestAccessToken],
+    queryFn: () => ordersApi.detail(id, guestAccessToken),
+    enabled: Boolean((accessToken || guestAccessToken) && id),
   });
 
   const payMutation = useMutation({
     mutationFn: async () => {
-      const preference = await paymentsApi.createPreference(id);
+      const preference = await paymentsApi.createPreference(id, guestAccessToken);
       const redirectUrl = preference.init_point ?? preference.sandbox_init_point;
       if (!redirectUrl) {
         throw new Error("Mercado Pago no devolvió una URL válida para reintentar el pago.");
@@ -34,16 +36,16 @@ export function OrderDetailPage() {
   });
 
   const cancelMutation = useMutation({
-    mutationFn: () => ordersApi.cancel(id),
+    mutationFn: () => ordersApi.cancel(id, guestAccessToken),
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["order-detail", id] }),
+        queryClient.invalidateQueries({ queryKey: ["order-detail", id, guestAccessToken] }),
         queryClient.invalidateQueries({ queryKey: ["orders-history"] }),
       ]);
     },
   });
 
-  if (!accessToken) {
+  if (!accessToken && !guestAccessToken) {
     return (
       <section className="mx-auto max-w-4xl px-6 py-16">
         <div className="rounded-[32px] border border-burgundy-100 bg-white p-10 shadow-velvet">
@@ -96,10 +98,17 @@ export function OrderDetailPage() {
           <p className="mt-3 text-burgundy-700">
             {data.status_label} · creado el {formatDate(data.created_at)}
           </p>
+          <p className="mt-1 text-sm text-burgundy-600">{data.customer_email}</p>
         </div>
-        <Link to="/pedidos">
-          <Button variant="ghost">Volver al historial</Button>
-        </Link>
+        {accessToken ? (
+          <Link to="/pedidos">
+            <Button variant="ghost">Volver al historial</Button>
+          </Link>
+        ) : (
+          <Link to="/vinos">
+            <Button variant="ghost">Volver al catálogo</Button>
+          </Link>
+        )}
       </div>
 
       <div className="grid gap-8 lg:grid-cols-[1fr_360px]">
@@ -159,6 +168,23 @@ export function OrderDetailPage() {
                 <p className="mt-2">Estado técnico: {data.payment.status}</p>
                 {data.payment.payment_method ? (
                   <p className="mt-1">Medio: {data.payment.payment_method}</p>
+                ) : null}
+              </div>
+            ) : null}
+
+            {data.tracking_number ? (
+              <div className="mt-6 rounded-[22px] border border-burgundy-100 bg-cream-50 p-4 text-sm text-burgundy-800">
+                <p className="font-semibold text-burgundy-950">Seguimiento</p>
+                <p className="mt-2">Código: {data.tracking_number}</p>
+                {data.tracking_url ? (
+                  <a
+                    href={data.tracking_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 inline-flex text-sm font-semibold text-burgundy-900"
+                  >
+                    Seguir envío en Andreani
+                  </a>
                 ) : null}
               </div>
             ) : null}

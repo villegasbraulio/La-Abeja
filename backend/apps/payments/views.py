@@ -4,46 +4,22 @@ from __future__ import annotations
 
 import hashlib
 import hmac
-from datetime import timedelta
+import json
 from typing import Any
 
 import structlog
 from django.conf import settings
-from django.db import models, transaction
-from django.utils import timezone
 from rest_framework import permissions, status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.catalog.models import Wine
-from apps.orders.models import Order
-from apps.orders.state_machine import can_transition
-
 from .mercadopago import MercadoPagoAPIError, MercadoPagoClient
 from .models import Payment, PaymentWebhookLog
 from .serializers import CreatePreferenceSerializer
+from .services import PaymentIntegrityError, sync_payment
 
 logger = structlog.get_logger(__name__)
-
-PAYMENT_STATUS_MAP: dict[str, str] = {
-    "approved": Payment.Status.APPROVED,
-    "in_process": Payment.Status.IN_PROCESS,
-    "pending": Payment.Status.PENDING,
-    "authorized": Payment.Status.PENDING,
-    "rejected": Payment.Status.REJECTED,
-    "cancelled": Payment.Status.CANCELLED,
-    "refunded": Payment.Status.REFUNDED,
-    "charged_back": Payment.Status.REFUNDED,
-}
-
-ORDER_STATUS_MAP: dict[str, str] = {
-    Payment.Status.APPROVED: Order.Status.PAID,
-    Payment.Status.REJECTED: Order.Status.PAYMENT_FAILED,
-    Payment.Status.CANCELLED: Order.Status.PAYMENT_FAILED,
-    Payment.Status.REFUNDED: Order.Status.REFUNDED,
-}
-
 
 def parse_signature_header(signature_header: str) -> tuple[str | None, str | None]:
     """Split Mercado Pago's x-signature header into timestamp and digest."""
@@ -82,20 +58,24 @@ def has_valid_signature(request: Request, payload: dict[str, Any]) -> bool:
     return hmac.compare_digest(expected_signature, received_signature)
 
 
-def resolve_order_status(current_order_status: str, payment_status: str) -> str:
-    """Map payment state into an allowed order state transition."""
-    next_status = ORDER_STATUS_MAP.get(payment_status, current_order_status)
-    if next_status == current_order_status:
-        return current_order_status
-    if can_transition(current_order_status, next_status):
-        return next_status
-    return current_order_status
+def build_webhook_deduplication_key(
+    *,
+    topic: str,
+    notification_id: str,
+    payment_resource_id: str,
+    payload: dict[str, Any],
+) -> str:
+    """Build a stable key for repeated deliveries of the same notification."""
+    identity = f"{topic}:{notification_id}:{payment_resource_id}"
+    if notification_id == "unknown" and not payment_resource_id:
+        identity = json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(identity.encode("utf-8")).hexdigest()
 
 
 class CreatePreferenceView(APIView):
     """Create a Mercado Pago Checkout Pro preference for an order."""
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request: Request) -> Response:
         """Return the redirect URL for Mercado Pago Checkout Pro."""
@@ -125,11 +105,25 @@ class PaymentWebhookView(APIView):
             or (payload.get("data") or {}).get("id")
             or "unknown"
         )
-        webhook_log = PaymentWebhookLog.objects.create(
-            mp_notification_id=notification_id,
+        payment_resource_id = request.query_params.get("data.id") or str(
+            (payload.get("data") or {}).get("id", "")
+        )
+        deduplication_key = build_webhook_deduplication_key(
             topic=topic or "unknown",
+            notification_id=notification_id,
+            payment_resource_id=payment_resource_id,
             payload=payload,
         )
+        webhook_log, created = PaymentWebhookLog.objects.get_or_create(
+            deduplication_key=deduplication_key,
+            defaults={
+                "mp_notification_id": notification_id,
+                "topic": topic or "unknown",
+                "payload": payload,
+            },
+        )
+        if not created and webhook_log.processed:
+            return Response(status=status.HTTP_200_OK)
 
         try:
             if not has_valid_signature(request, payload):
@@ -146,9 +140,6 @@ class PaymentWebhookView(APIView):
                 webhook_log.save(update_fields=["processed"])
                 return Response(status=status.HTTP_200_OK)
 
-            payment_resource_id = request.query_params.get("data.id") or str(
-                (payload.get("data") or {}).get("id", "")
-            )
             if not payment_resource_id:
                 webhook_log.error = "missing_payment_id"
                 webhook_log.save(update_fields=["error"])
@@ -166,9 +157,24 @@ class PaymentWebhookView(APIView):
                 )
                 return Response(status=status.HTTP_200_OK)
 
-            self._sync_payment(payment, payment_data)
+            sync_payment(payment.pk, payment_data)
             webhook_log.processed = True
-            webhook_log.save(update_fields=["processed"])
+            webhook_log.error = ""
+            webhook_log.save(update_fields=["processed", "error"])
+        except PaymentIntegrityError as exc:
+            Payment.objects.filter(pk=payment.pk).update(
+                status_detail="integrity_validation_failed"
+            )
+            webhook_log.error = f"payment_integrity_error: {exc}"
+            webhook_log.processed = True
+            webhook_log.save(update_fields=["error", "processed"])
+            logger.error(
+                "mercadopago_payment_integrity_failed",
+                notification_id=notification_id,
+                payment_id=payment_resource_id,
+                error=str(exc),
+            )
+            return Response(status=status.HTTP_200_OK)
         except MercadoPagoAPIError as exc:
             webhook_log.error = str(exc)
             webhook_log.save(update_fields=["error"])
@@ -198,57 +204,3 @@ class PaymentWebhookView(APIView):
                 .first()
             )
         return None
-
-    @transaction.atomic
-    def _sync_payment(self, payment: Payment, payment_data: dict[str, Any]) -> None:
-        """Apply Mercado Pago payment state to local payment and order records."""
-        raw_status = str(payment_data.get("status") or "pending").lower()
-        mapped_payment_status = PAYMENT_STATUS_MAP.get(raw_status, Payment.Status.PENDING)
-        order = payment.order
-        next_order_status = resolve_order_status(order.status, mapped_payment_status)
-
-        payment.mp_payment_id = str(payment_data.get("id") or payment.mp_payment_id)
-        payment.mp_merchant_order_id = str(
-            (payment_data.get("order") or {}).get("id") or payment.mp_merchant_order_id
-        )
-        payment.status = mapped_payment_status
-        payment.status_detail = str(payment_data.get("status_detail") or "")
-        payment.payment_method = str(payment_data.get("payment_method_id") or "")
-        payment.payment_type = str(payment_data.get("payment_type_id") or "")
-        payment.installments = int(payment_data.get("installments") or payment.installments or 1)
-        payment.save(
-            update_fields=[
-                "mp_payment_id",
-                "mp_merchant_order_id",
-                "status",
-                "status_detail",
-                "payment_method",
-                "payment_type",
-                "installments",
-                "updated_at",
-            ]
-        )
-
-        if next_order_status != order.status:
-            previous_status = order.status
-            order.status = next_order_status
-            if next_order_status == Order.Status.PAID and not order.estimated_delivery:
-                if order.shipping_method == Order.ShippingMethod.STANDARD:
-                    order.estimated_delivery = timezone.localdate() + timedelta(days=7)
-                elif order.shipping_method == Order.ShippingMethod.EXPRESS:
-                    order.estimated_delivery = timezone.localdate() + timedelta(days=3)
-            order.save(update_fields=["status", "estimated_delivery", "updated_at"])
-
-            if previous_status != Order.Status.PAID and next_order_status == Order.Status.PAID:
-                for item in order.items.select_related("wine").all():
-                    Wine.objects.filter(id=item.wine_id).update(
-                        stock=models.F("stock") - item.quantity
-                    )
-
-        logger.info(
-            "mercadopago_payment_synced",
-            order_id=str(order.id),
-            payment_id=payment.mp_payment_id,
-            payment_status=payment.status,
-            order_status=order.status,
-        )

@@ -150,8 +150,11 @@ class Order(models.Model):
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name="orders",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
     )
+    customer_email = models.EmailField(blank=True)
     status = models.CharField(max_length=30, choices=Status.choices, default=Status.PENDING_PAYMENT)
     subtotal = models.DecimalField(max_digits=10, decimal_places=2)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
@@ -204,3 +207,42 @@ class OrderItem(models.Model):
     def __str__(self) -> str:
         """Return the purchased line item label."""
         return f"{self.wine_name} x{self.quantity}"
+
+
+class AndreaniShipment(models.Model):
+    """Persistent, idempotent record of an Andreani shipment request."""
+
+    class Status(models.TextChoices):
+        PROCESSING = "processing", "Procesando"
+        CREATED = "created", "Creado"
+        FAILED = "failed", "Fallido"
+
+    order = models.OneToOneField(
+        Order,
+        related_name="andreani_shipment",
+        on_delete=models.PROTECT,
+    )
+    idempotency_key = models.CharField(max_length=100, unique=True)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PROCESSING,
+    )
+    tracking_number = models.CharField(max_length=100, blank=True)
+    request_payload = models.JSONField(default=dict, blank=True)
+    raw_response = models.JSONField(default=dict, blank=True)
+    response_status_code = models.PositiveSmallIntegerField(null=True, blank=True)
+    attempt_count = models.PositiveSmallIntegerField(default=0)
+    label_source_url = models.URLField(max_length=1000, blank=True)
+    label = models.FileField(upload_to="andreani/labels/%Y/%m/%d", blank=True)
+    label_error = models.TextField(blank=True)
+    last_error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        """Return the local order and current Andreani state."""
+        return f"{self.order.order_number} - {self.get_status_display()}"

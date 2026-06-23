@@ -59,14 +59,14 @@ export function BackofficeStockReservationsPage() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
-              Reservas AI
+              Reservas de stock
             </p>
             <h3 className="mt-3 font-serif text-4xl text-burgundy-950">
               Vista operativa de stock reservado, liberaciones parciales y contexto por pedido.
             </h3>
           </div>
-          <Link to="/backoffice/approvals-ai">
-            <Button variant="secondary">Abrir approvals generales</Button>
+          <Link to="/backoffice/aprobaciones">
+            <Button variant="secondary">Abrir aprobaciones</Button>
           </Link>
         </div>
       </section>
