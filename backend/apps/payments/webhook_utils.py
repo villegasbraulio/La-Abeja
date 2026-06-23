@@ -27,13 +27,22 @@ def parse_signature_header(signature_header: str) -> tuple[str | None, str | Non
 
 def has_valid_signature(request: Request, payload: dict[str, Any]) -> bool:
     """Validate webhook origin when a secret key is configured."""
-    secret = settings.MERCADOPAGO_WEBHOOK_SECRET
+    secret = str(settings.MERCADOPAGO_WEBHOOK_SECRET or "").strip()
     if not secret:
         return True
 
     signature_header = request.headers.get("x-signature", "")
     request_id = request.headers.get("x-request-id", "")
+    topic = str(
+        request.query_params.get("type")
+        or request.query_params.get("topic")
+        or payload.get("type")
+        or payload.get("topic")
+        or ""
+    ).strip()
     data_id = request.query_params.get("data.id") or str((payload.get("data") or {}).get("id", ""))
+    if not data_id and topic == "payment":
+        data_id = str(request.query_params.get("id") or payload.get("id") or "")
     ts_value, received_signature = parse_signature_header(signature_header)
 
     if not data_id or not request_id or not ts_value or not received_signature:

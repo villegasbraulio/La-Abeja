@@ -265,3 +265,33 @@ def test_staff_can_retrieve_order_detail(staff_client: tuple[APIClient, object])
     assert response.data["order_number"] == order.order_number
     assert response.data["customer_email"] == order.user.email
     assert response.data["payment"]["mp_preference_id"].startswith("pref_")
+
+
+@pytest.mark.django_db
+def test_staff_can_list_guest_orders_without_crashing(staff_client: tuple[APIClient, object]) -> None:
+    """Guest orders should render in backoffice using checkout contact fallbacks."""
+    client, _ = staff_client
+    order = OrderFactory(
+        user=None,
+        customer_email="guest@example.com",
+        shipping_address={
+            "recipient_name": "Maria Guest",
+            "street": "Av. San Martin",
+            "number": "450",
+            "floor_apt": "",
+            "city": "San Rafael",
+            "province": "Mendoza",
+            "postal_code": "5600",
+            "country": "Argentina",
+            "phone": "+5492604555555",
+        },
+    )
+    OrderItemFactory(order=order, quantity=1)
+
+    response = client.get("/api/v1/backoffice/orders/")
+
+    assert response.status_code == 200
+    assert response.data["results"][0]["id"] == str(order.id)
+    assert response.data["results"][0]["customer_name"] == "Maria Guest"
+    assert response.data["results"][0]["customer_email"] == "guest@example.com"
+    assert response.data["results"][0]["customer_phone"] == "+5492604555555"

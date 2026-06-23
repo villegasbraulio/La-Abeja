@@ -48,7 +48,13 @@ class PaymentWebhookView(APIView):
     def post(self, request: Request) -> Response:
         """Persist the raw webhook, validate it and sync payment state."""
         payload = request.data if isinstance(request.data, dict) else {}
-        topic = str(request.query_params.get("type") or payload.get("type") or "")
+        topic = str(
+            request.query_params.get("type")
+            or request.query_params.get("topic")
+            or payload.get("type")
+            or payload.get("topic")
+            or ""
+        )
         notification_id = str(
             payload.get("id")
             or request.query_params.get("id")
@@ -56,9 +62,9 @@ class PaymentWebhookView(APIView):
             or (payload.get("data") or {}).get("id")
             or "unknown"
         )
-        payment_resource_id = request.query_params.get("data.id") or str(
-            (payload.get("data") or {}).get("id", "")
-        )
+        payment_resource_id = request.query_params.get("data.id") or str((payload.get("data") or {}).get("id", ""))
+        if not payment_resource_id and topic == "payment":
+            payment_resource_id = str(request.query_params.get("id") or payload.get("id") or "")
         deduplication_key = build_webhook_deduplication_key(
             topic=topic or "unknown",
             notification_id=notification_id,

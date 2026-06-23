@@ -221,8 +221,8 @@ class BackofficeOrderListSerializer(serializers.ModelSerializer):
     """Lightweight order serializer for the internal operations queue."""
 
     customer_name = serializers.SerializerMethodField()
-    customer_email = serializers.EmailField(source="user.email", read_only=True)
-    customer_phone = serializers.CharField(source="user.phone", read_only=True)
+    customer_email = serializers.SerializerMethodField()
+    customer_phone = serializers.SerializerMethodField()
     item_count = serializers.SerializerMethodField()
     payment_status = serializers.SerializerMethodField()
     payment_status_label = serializers.SerializerMethodField()
@@ -254,8 +254,29 @@ class BackofficeOrderListSerializer(serializers.ModelSerializer):
 
     def get_customer_name(self, obj: Order) -> str:
         """Return a business-friendly customer display name."""
-        full_name = f"{obj.user.first_name} {obj.user.last_name}".strip()
-        return full_name or obj.user.email
+        if obj.user_id and obj.user:
+            full_name = f"{obj.user.first_name} {obj.user.last_name}".strip()
+            if full_name:
+                return full_name
+            if obj.user.email:
+                return obj.user.email
+
+        recipient_name = str(obj.shipping_address.get("recipient_name", "")).strip()
+        if recipient_name:
+            return recipient_name
+        return obj.customer_email or "Sin cliente"
+
+    def get_customer_email(self, obj: Order) -> str:
+        """Return the authenticated email or the guest checkout contact."""
+        if obj.user_id and obj.user and obj.user.email:
+            return obj.user.email
+        return obj.customer_email
+
+    def get_customer_phone(self, obj: Order) -> str:
+        """Return the authenticated phone or the shipping contact phone."""
+        if obj.user_id and obj.user and obj.user.phone:
+            return obj.user.phone
+        return str(obj.shipping_address.get("phone", "")).strip()
 
     def get_item_count(self, obj: Order) -> int:
         """Return the total number of bottles in the order."""
@@ -280,8 +301,8 @@ class BackofficeOrderDetailSerializer(OrderSerializer):
     """Detailed order serializer for the custom backoffice panel."""
 
     customer_name = serializers.SerializerMethodField()
-    customer_email = serializers.EmailField(source="user.email", read_only=True)
-    customer_phone = serializers.CharField(source="user.phone", read_only=True)
+    customer_email = serializers.SerializerMethodField()
+    customer_phone = serializers.SerializerMethodField()
 
     class Meta(OrderSerializer.Meta):
         fields = [
@@ -293,5 +314,12 @@ class BackofficeOrderDetailSerializer(OrderSerializer):
 
     def get_customer_name(self, obj: Order) -> str:
         """Return the customer's full name or fallback to email."""
-        full_name = f"{obj.user.first_name} {obj.user.last_name}".strip()
-        return full_name or obj.user.email
+        return BackofficeOrderListSerializer.get_customer_name(self, obj)
+
+    def get_customer_email(self, obj: Order) -> str:
+        """Return the best contact email for the order."""
+        return BackofficeOrderListSerializer.get_customer_email(self, obj)
+
+    def get_customer_phone(self, obj: Order) -> str:
+        """Return the best contact phone for the order."""
+        return BackofficeOrderListSerializer.get_customer_phone(self, obj)
