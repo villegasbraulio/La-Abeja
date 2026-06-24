@@ -39,7 +39,7 @@ export function NewsletterCard({
       </form>
       <p className="mt-3 text-sm text-burgundy-600">
         {isSubmitted
-          ? "Quedaste sumado a la demo de captacion. El siguiente paso es conectarlo a automatizaciones reales."
+          ? "Gracias por sumarte. Te vamos a escribir con novedades, lanzamientos y fechas destacadas."
           : "Sin spam: solo novedades utiles, agendas, etiquetas destacadas y ventanas especiales de compra."}
       </p>
     </div>

@@ -13,8 +13,8 @@ export function FeaturedWines() {
       <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <SectionHeading
           eyebrow="Seleccion destacada"
-          title="Etiquetas con una presentacion mas cercana a una bodega real que a una demo tecnica."
-          description="La capa visual ahora muestra vinos, maridajes, regalos y argumentos de compra en un tono mucho mas comercial."
+          title="Etiquetas emblema para empezar a explorar la coleccion."
+          description="Vinos recomendados por estilo, ocasion y expresion de la casa para elegir con mas confianza."
         />
         <Link to="/vinos" className="shrink-0">
           <Button variant="ghost">Ver la coleccion completa</Button>

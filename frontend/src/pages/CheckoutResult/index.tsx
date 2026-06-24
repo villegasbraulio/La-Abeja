@@ -95,9 +95,9 @@ export function CheckoutResultPage() {
 
   const description =
     checkoutStatus === "approved"
-      ? "Mercado Pago nos devolvió una confirmación positiva. El webhook del backend termina de consolidar el estado real del pedido."
+      ? "Recibimos una confirmacion positiva de Mercado Pago. En breve vas a ver el pedido actualizado con su seguimiento."
       : checkoutStatus === "pending"
-        ? "La operación quedó pendiente. Si elegiste un medio offline, seguí las instrucciones del comprobante y revisá luego el estado real del pedido."
+        ? "La operacion quedo pendiente. Si elegiste un medio offline, segui las instrucciones del comprobante y revisa luego el estado del pedido."
         : "El flujo de pago no terminó aprobado. Podés reintentar desde el detalle del pedido.";
 
   return (

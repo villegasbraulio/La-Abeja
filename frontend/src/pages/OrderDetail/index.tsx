@@ -68,7 +68,7 @@ export function OrderDetailPage() {
         <div className="rounded-[32px] border border-burgundy-100 bg-white p-10 shadow-velvet">
           <h1 className="font-serif text-4xl text-burgundy-950">Necesitás iniciar sesión.</h1>
           <p className="mt-4 text-burgundy-800">
-            Entrá por checkout para consultar el detalle real de tus pedidos.
+            Ingresá desde checkout o desde el enlace de seguimiento para consultar tu pedido.
           </p>
           <Link to="/checkout" className="mt-8 inline-flex">
             <Button>Ir al checkout</Button>

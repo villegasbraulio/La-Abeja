@@ -24,8 +24,8 @@ export function ConciergeSection() {
         <div className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
           <SectionHeading
             eyebrow="Concierge"
-            title="La parte utilitaria tambien importa: envios, retiro, contacto y soporte."
-            description="Una bodega que quiere convertir mejor necesita despejar dudas de logistica, tiempos, regalos y atencion humana. Esa capa ahora ya esta visible."
+            title="Envios, retiro, regalos y contacto resueltos con informacion clara."
+            description="Una compra fluye mejor cuando la logistica, los tiempos y el acompanamiento estan visibles desde el primer clic."
           />
           <div className="mt-8 flex flex-wrap gap-4">
             <Link to="/guia-de-compra">

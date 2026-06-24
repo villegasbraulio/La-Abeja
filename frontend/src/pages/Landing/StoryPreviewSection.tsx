@@ -10,8 +10,8 @@ export function StoryPreviewSection() {
         <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr]">
           <SectionHeading
             eyebrow="Nuestra historia"
-            title="El sitio ahora cuenta la bodega como una marca, no solo como un backend conectado."
-            description="Sumamos una narrativa mas editorial sobre legado, territorio y hospitalidad para que el producto se sostenga tambien desde el deseo."
+            title="Una historia de origen, oficio y hospitalidad que sigue viva en cada visita."
+            description="La coleccion se entiende mejor cuando se la conecta con el territorio, la cava y el caracter de la bodega."
             tone="light"
           />
           <div className="space-y-5">

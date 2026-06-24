@@ -9,8 +9,8 @@ export function GiftsPage() {
     <div>
       <PageHero
         eyebrow="Regalos y cajas"
-        title="Una capa comercial nueva para regalos, agasajos y compras corporativas."
-        description="La referencia trabaja muy bien regalos, wine gifting y ocasiones. Aca dejamos un frente propio para vender cajas y consultas especiales con mejor contexto."
+        title="Cajas de vino, obsequios corporativos y selecciones pensadas para celebrar."
+        description="Reunimos propuestas para empresas, aniversarios, eventos y agradecimientos con presentacion cuidada y asesoramiento personalizado."
         aside={
           <div className="space-y-4 text-burgundy-900">
             <p className="rounded-[22px] bg-cream-50 px-5 py-4">
@@ -56,8 +56,8 @@ export function GiftsPage() {
         <div className="rounded-[36px] border border-white/70 bg-burgundy-950 px-8 py-10 text-cream-50 shadow-velvet">
           <SectionHeading
             eyebrow="Gift Concierge"
-            title="Un area dedicada a regalos mejora conversion y tambien eleva la marca."
-            description="En vez de esconder este caso de uso dentro del catalogo, la pagina lo vuelve visible, aspiracional y comercialmente claro."
+            title="Un canal dedicado a regalos ayuda a elegir mejor y cuidar cada detalle."
+            description="Desde una caja para agasajar hasta un programa corporativo completo, el equipo acompana la seleccion, el mensaje y la entrega."
             tone="light"
           />
           <div className="mt-8 flex flex-wrap gap-4">

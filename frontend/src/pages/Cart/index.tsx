@@ -114,8 +114,8 @@ export function CartPage() {
               <span className="text-2xl font-bold text-burgundy-950">{subtotalFormatted}</span>
             </div>
             <p className="mt-4 text-sm leading-6 text-burgundy-700">
-              El checkout fase 1 ya crea órdenes reales en backend y deriva el pago a Mercado Pago
-              con Checkout Pro.
+              Revisa tu seleccion, elegi la modalidad de entrega y continua el pago online con
+              confirmacion posterior en tu historial.
             </p>
             <div className="mt-6 space-y-3">
               <Link to="/checkout" className="block">

@@ -21,7 +21,7 @@ export function HeroSection() {
           transition={{ delay: 0.12, duration: 0.75, ease: "easeOut" }}
           className="max-w-3xl font-serif text-5xl leading-tight text-burgundy-950 md:text-7xl"
         >
-          Una bodega historica convertida en experiencia premium de compra, visita y marca.
+          Vinos de San Rafael, visitas guiadas y regalos con el lenguaje de una bodega que sabe recibir.
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 18 }}
@@ -29,8 +29,8 @@ export function HeroSection() {
           transition={{ delay: 0.24, duration: 0.75, ease: "easeOut" }}
           className="mt-6 max-w-2xl text-lg leading-8 text-burgundy-800"
         >
-          Bodega La Abeja combina hospitalidad cuyana, storytelling enologico y una plataforma
-          digital lista para mostrar catalogo, visitas, regalos y automatizaciones de alto nivel.
+          Bodega La Abeja une legado, terroir y hospitalidad en una experiencia de compra clara:
+          explorar etiquetas, reservar una visita y pedir asesoramiento desde un mismo lugar.
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 18 }}
@@ -75,10 +75,10 @@ export function HeroSection() {
           className="h-[520px] w-full rounded-[26px] object-cover"
         />
         <div className="absolute bottom-12 left-12 max-w-sm rounded-[24px] bg-burgundy-950/88 p-6 text-cream-50">
-          <p className="text-sm uppercase tracking-[0.22em] text-gold-300">Hospitalidad + conversion</p>
+          <p className="text-sm uppercase tracking-[0.22em] text-gold-300">Compra con acompanamiento</p>
           <p className="mt-3 text-lg leading-7">
-            Una arquitectura pensada para vender vino, organizar visitas, disparar seguimiento y
-            sostener una experiencia coherente antes y despues de cada contacto.
+            Etiquetas recomendadas, retiro en bodega, regalos y visitas coordinadas para que cada
+            compra tenga contexto, servicio y continuidad.
           </p>
         </div>
       </motion.div>

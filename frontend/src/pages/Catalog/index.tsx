@@ -1,9 +1,11 @@
 import { startTransition, useMemo } from "react";
+import { motion } from "framer-motion";
 import { Link, useSearchParams } from "react-router-dom";
-import { SectionHeading } from "../../components/common/SectionHeading";
+import { PageHero } from "../../components/common/PageHero";
 import { Button } from "../../components/ui/Button";
 import { WineCard } from "../../components/wine/WineCard";
 import { useCatalog, useCatalogCategories, useCatalogVarietals } from "../../hooks/useCatalog";
+import type { WineListItem } from "../../types/catalog";
 
 function parseNumericParam(value: string | null): number | undefined {
   if (!value) {
@@ -14,11 +16,70 @@ function parseNumericParam(value: string | null): number | undefined {
   return Number.isNaN(parsedValue) ? undefined : parsedValue;
 }
 
+type CollectionId = "gift" | "limited" | "featured" | "ready";
+
+const collectionCards: Array<{
+  id: CollectionId;
+  eyebrow: string;
+  title: string;
+  description: string;
+}> = [
+  {
+    id: "gift",
+    eyebrow: "Para regalar",
+    title: "Selecciones para aniversarios, cenas y obsequios corporativos.",
+    description: "Botellas con gran presentacion, favoritas de la casa y listas para sorprender.",
+  },
+  {
+    id: "limited",
+    eyebrow: "Series especiales",
+    title: "Ediciones limitadas para ocasiones que piden una etiqueta singular.",
+    description: "Producciones acotadas y vinos de perfil mas coleccionable.",
+  },
+  {
+    id: "featured",
+    eyebrow: "Recomendadas",
+    title: "Las etiquetas emblema para empezar a explorar la bodega.",
+    description: "Una puerta de entrada clara para quienes quieren comprar con confianza.",
+  },
+  {
+    id: "ready",
+    eyebrow: "Entrega simple",
+    title: "Disponibles para compra inmediata, retiro en bodega o plan de visita.",
+    description: "Etiquetas en stock para resolver una compra de hoy sin fricciones.",
+  },
+];
+
+function filterByCollection(wines: WineListItem[], collection: string) {
+  switch (collection) {
+    case "gift":
+      return wines.filter(
+        (wine) =>
+          wine.is_in_stock &&
+          (wine.is_featured || wine.compare_at_price !== null || (wine.average_rating ?? 0) >= 4),
+      );
+    case "limited":
+      return wines.filter((wine) => wine.is_limited_edition);
+    case "featured":
+      return wines.filter((wine) => wine.is_featured);
+    case "ready":
+      return wines.filter((wine) => wine.is_in_stock);
+    default:
+      return wines;
+  }
+}
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 22 },
+  visible: { opacity: 1, y: 0 },
+};
+
 export function CatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const search = searchParams.get("search") ?? "";
   const category = searchParams.get("category") ?? "";
   const varietal = searchParams.get("varietal") ?? "";
+  const collection = searchParams.get("collection") ?? "";
   const sort = searchParams.get("sort") ?? "featured";
   const inStockOnly = searchParams.get("in_stock") === "true";
   const minPrice = parseNumericParam(searchParams.get("min_price"));
@@ -38,7 +99,7 @@ export function CatalogPage() {
   const { data: varietals } = useCatalogVarietals();
 
   const wines = useMemo(() => {
-    const results = [...(data?.results ?? [])];
+    const results = [...filterByCollection(data?.results ?? [], collection)];
 
     switch (sort) {
       case "price-asc":
@@ -54,15 +115,35 @@ export function CatalogPage() {
           (left, right) => Number(right.is_featured) - Number(left.is_featured),
         );
     }
-  }, [data?.results, sort]);
+  }, [collection, data?.results, sort]);
 
   const hasActiveFilters =
+    collection.length > 0 ||
     search.length > 0 ||
     category.length > 0 ||
     varietal.length > 0 ||
     inStockOnly ||
     minPrice !== undefined ||
     maxPrice !== undefined;
+
+  const activeFilterLabels = useMemo(() => {
+    const labels: string[] = [];
+    const categoryName = categories?.find((item) => item.slug === category)?.name;
+    const varietalName = varietals?.find((item) => item.slug === varietal)?.name;
+
+    if (collection === "gift") labels.push("Coleccion: Para regalar");
+    if (collection === "limited") labels.push("Coleccion: Ediciones limitadas");
+    if (collection === "featured") labels.push("Coleccion: Recomendadas");
+    if (collection === "ready") labels.push("Coleccion: Entrega simple");
+    if (category) labels.push(`Categoria: ${categoryName ?? category}`);
+    if (varietal) labels.push(`Varietal: ${varietalName ?? varietal}`);
+    if (minPrice !== undefined) labels.push(`Desde ${minPrice}`);
+    if (maxPrice !== undefined) labels.push(`Hasta ${maxPrice}`);
+    if (inStockOnly) labels.push("Solo en stock");
+    if (search) labels.push(`Busqueda: ${search}`);
+
+    return labels;
+  }, [categories, category, collection, inStockOnly, maxPrice, minPrice, search, varietal, varietals]);
 
   function updateParam(key: string, value: string | null) {
     const nextParams = new URLSearchParams(searchParams);
@@ -84,28 +165,26 @@ export function CatalogPage() {
 
   return (
     <div>
-      <section className="mx-auto max-w-7xl px-6 py-16">
-        <div className="grid gap-8 lg:grid-cols-[1fr_0.95fr] lg:items-end">
-          <SectionHeading
-            eyebrow="Wine Shop"
-            title="Una tienda mas completa, con filtros visibles, tono comercial y colecciones explorables."
-            description="Aca es donde mas acercamos el proyecto a una bodega premium real: mejor navegacion, discovery y mas argumentos para comprar."
-          />
-          <div className="rounded-[30px] border border-burgundy-100 bg-white p-6 shadow-velvet">
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
-              Comprar mejor
-            </p>
-            <div className="mt-4 grid gap-3 text-sm text-burgundy-800">
-              <p>Filtra por categoria, varietal, rango de precio y disponibilidad.</p>
-              <p>Descubri etiquetas para regalar, retirar en bodega o sumar a una visita.</p>
-              <p>La interfaz ya no depende solo del listado: tambien orienta la decision.</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Vinos de la bodega"
+        title="Etiquetas para descubrir, regalar o comprar con entrega inmediata."
+        description="Explorá varietales, categorías y rangos de precio con una navegación clara para encontrar la botella indicada."
+        className="pb-10 md:pb-12"
+        titleClassName="max-w-5xl text-4xl md:text-5xl"
+        descriptionClassName="max-w-3xl text-base leading-7 md:text-lg"
+      />
 
-      <section className="mx-auto grid max-w-7xl gap-8 px-6 pb-20 lg:grid-cols-[320px_1fr]">
-        <aside className="h-fit rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+      <motion.section
+        initial="hidden"
+        animate="visible"
+        variants={fadeUp}
+        transition={{ duration: 0.5, ease: "easeOut", delay: 0.08 }}
+        className="mx-auto grid max-w-7xl gap-8 px-6 pb-20 lg:grid-cols-[320px_1fr]"
+      >
+        <motion.aside
+          variants={fadeUp}
+          className="h-fit rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet"
+        >
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
               Filtros
@@ -164,7 +243,7 @@ export function CatalogPage() {
               </select>
             </label>
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+            <div className="grid gap-4">
               <label className="grid gap-2">
                 <span className="text-sm font-semibold text-burgundy-800">Desde</span>
                 <input
@@ -172,7 +251,7 @@ export function CatalogPage() {
                   min={0}
                   value={minPrice ?? ""}
                   onChange={(event) => updateParam("min_price", event.target.value || null)}
-                  className="rounded-2xl border border-burgundy-200 bg-cream-50 px-4 py-3 text-burgundy-950 outline-none focus:border-burgundy-400"
+                  className="w-full min-w-0 rounded-2xl border border-burgundy-200 bg-cream-50 px-4 py-3 text-burgundy-950 outline-none [appearance:textfield] focus:border-burgundy-400"
                 />
               </label>
               <label className="grid gap-2">
@@ -182,7 +261,7 @@ export function CatalogPage() {
                   min={0}
                   value={maxPrice ?? ""}
                   onChange={(event) => updateParam("max_price", event.target.value || null)}
-                  className="rounded-2xl border border-burgundy-200 bg-cream-50 px-4 py-3 text-burgundy-950 outline-none focus:border-burgundy-400"
+                  className="w-full min-w-0 rounded-2xl border border-burgundy-200 bg-cream-50 px-4 py-3 text-burgundy-950 outline-none [appearance:textfield] focus:border-burgundy-400"
                 />
               </label>
             </div>
@@ -193,20 +272,59 @@ export function CatalogPage() {
                 checked={inStockOnly}
                 onChange={(event) => updateParam("in_stock", event.target.checked ? "true" : null)}
               />
-              Mostrar solo etiquetas en stock
+              Mostrar solo etiquetas disponibles hoy
             </label>
-          </div>
-        </aside>
 
-        <div>
-          <div className="mb-8 flex flex-col gap-4 rounded-[30px] border border-burgundy-100 bg-white p-5 shadow-velvet md:flex-row md:items-center md:justify-between">
+            <div className="rounded-[24px] border border-burgundy-100 bg-burgundy-950 px-4 py-5 text-cream-50">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-300">
+                Compra asistida
+              </p>
+              <p className="mt-3 text-sm leading-6 text-cream-100/80">
+                ¿Buscas un regalo, retiro en bodega o una recomendacion para tu visita?
+              </p>
+              <div className="mt-4 flex flex-col gap-3">
+                <Link to="/regalos">
+                  <Button variant="secondary" className="w-full">
+                    Ver regalos
+                  </Button>
+                </Link>
+                <Link to="/visitas">
+                  <Button
+                    variant="ghost"
+                    className="w-full border-white/20 text-cream-50 hover:bg-white/10"
+                  >
+                    Explorar visitas
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </motion.aside>
+
+        <motion.div variants={fadeUp}>
+          <motion.div
+            variants={fadeUp}
+            className="mb-8 flex flex-col gap-4 rounded-[30px] border border-burgundy-100 bg-white p-5 shadow-velvet md:flex-row md:items-center md:justify-between"
+          >
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
                 Resultado de la coleccion
               </p>
               <p className="mt-2 text-burgundy-800">
-                {data?.count ?? 0} etiqueta{(data?.count ?? 0) === 1 ? "" : "s"} disponibles
+                {wines.length} etiqueta{wines.length === 1 ? "" : "s"} para explorar
               </p>
+              {activeFilterLabels.length > 0 ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {activeFilterLabels.map((label) => (
+                    <span
+                      key={label}
+                      className="rounded-full bg-burgundy-50 px-3 py-2 text-xs font-semibold text-burgundy-800"
+                    >
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
 
             <div className="flex flex-col gap-3 md:flex-row md:items-center">
@@ -222,16 +340,16 @@ export function CatalogPage() {
                 <option value="vintage-desc">Añada mas nueva</option>
               </select>
               <Link to="/regalos">
-                <Button variant="ghost">Comprar para regalar</Button>
+                <Button variant="ghost">Ver ideas para regalar</Button>
               </Link>
             </div>
-          </div>
+          </motion.div>
 
           {isLoading ? <p className="text-burgundy-700">Cargando vinos...</p> : null}
           {isError ? (
             <p className="rounded-3xl border border-burgundy-200 bg-white px-6 py-5 text-burgundy-900">
-              No pudimos cargar el catálogo. Si el backend todavía no está levantado, esta vista igual
-              queda lista para conectarse a `/api/v1/catalog/wines/`.
+              No pudimos cargar la coleccion por el momento. Intenta nuevamente en unos minutos o
+              escribinos para recibir asistencia personalizada.
             </p>
           ) : null}
 
@@ -241,8 +359,8 @@ export function CatalogPage() {
                 No encontramos etiquetas con esos filtros.
               </h2>
               <p className="mt-4 max-w-2xl leading-7 text-burgundy-800">
-                Proba ampliar el rango de precio, limpiar la busqueda o consultar una seleccion
-                asistida para regalos, visitas o compras corporativas.
+                Prueba ampliar el rango de precio, limpiar la busqueda o pedir una recomendacion
+                personalizada para regalos, visitas o compras corporativas.
               </p>
               <div className="mt-6 flex flex-wrap gap-4">
                 <Button onClick={clearFilters}>Limpiar filtros</Button>
@@ -252,14 +370,66 @@ export function CatalogPage() {
               </div>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-              {wines.map((wine) => (
-                <WineCard key={wine.id} wine={wine} />
-              ))}
-            </div>
+            <>
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                transition={{ staggerChildren: 0.06, delayChildren: 0.06 }}
+                className="grid gap-6 md:grid-cols-2 xl:grid-cols-3"
+              >
+                {wines.map((wine) => (
+                  <motion.div key={wine.id} variants={fadeUp}>
+                    <WineCard wine={wine} />
+                  </motion.div>
+                ))}
+              </motion.div>
+
+              <motion.div
+                initial="hidden"
+                animate="visible"
+                transition={{ staggerChildren: 0.08, delayChildren: 0.08 }}
+                className="mt-10 grid gap-6 xl:grid-cols-[1.2fr_1.2fr_1.2fr_0.9fr]"
+              >
+                {collectionCards.map((item) => {
+                  const isActive = collection === item.id;
+
+                  return (
+                    <motion.button
+                      key={item.id}
+                      type="button"
+                      onClick={() => updateParam("collection", isActive ? null : item.id)}
+                      variants={fadeUp}
+                      whileHover={{ y: isActive ? 0 : -4 }}
+                      whileTap={{ scale: 0.985 }}
+                      className={`rounded-[30px] border p-6 text-left shadow-velvet transition-all duration-300 ${
+                        isActive
+                          ? "border-burgundy-900 bg-burgundy-950 text-cream-50"
+                          : "border-burgundy-100 bg-white text-burgundy-950 hover:-translate-y-1"
+                      }`}
+                    >
+                      <p
+                        className={`text-xs font-semibold uppercase tracking-[0.2em] ${
+                          isActive ? "text-gold-300" : "text-burgundy-500"
+                        }`}
+                      >
+                        {item.eyebrow}
+                      </p>
+                      <h2 className="mt-3 font-serif text-3xl">{item.title}</h2>
+                      <p
+                        className={`mt-4 leading-7 ${
+                          isActive ? "text-cream-100/80" : "text-burgundy-800"
+                        }`}
+                      >
+                        {item.description}
+                      </p>
+                    </motion.button>
+                  );
+                })}
+              </motion.div>
+            </>
           )}
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
     </div>
   );
 }

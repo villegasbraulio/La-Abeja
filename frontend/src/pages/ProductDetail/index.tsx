@@ -268,9 +268,7 @@ export function ProductDetailPage() {
                       </p>
                     ))
                   ) : (
-                    <p>
-                      Seleccion curada para el portfolio premium sin premios cargados en esta demo.
-                    </p>
+                    <p>Estamos actualizando las menciones y puntajes recientes de esta etiqueta.</p>
                   )}
                 </div>
               </div>
@@ -312,7 +310,7 @@ export function ProductDetailPage() {
                 ))
               ) : (
                 <p className="text-burgundy-700">
-                  Todavia no hay reviews aprobadas para esta etiqueta en la demo.
+                  Todavia no hay opiniones publicadas para esta etiqueta.
                 </p>
               )}
             </div>
@@ -326,8 +324,8 @@ export function ProductDetailPage() {
               Tambien podes convertir esta ficha en regalo, retiro o visita.
             </h2>
             <p className="mt-4 leading-7 text-cream-100/80">
-              La PDP ya no se limita al vino: ahora cruza con logistica, concierge y experiencias
-              para parecerse mas a una bodega premium real.
+              Coordinamos cajas para regalar, retiro en bodega y experiencias para que esta compra
+              se adapte al plan que tengas en mente.
             </p>
             <div className="mt-6 flex flex-wrap gap-4">
               <Link to="/contacto?tipo=regalos">
@@ -353,7 +351,7 @@ export function ProductDetailPage() {
               Tambien te puede gustar
             </p>
             <h2 className="mt-3 font-serif text-4xl text-burgundy-950">
-              Otras etiquetas con una expresion cercana dentro de la coleccion.
+              Otras etiquetas para seguir explorando la coleccion.
             </h2>
           </div>
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">

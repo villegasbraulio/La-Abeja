@@ -8,6 +8,9 @@ interface PageHeroProps extends PropsWithChildren {
   description: string;
   aside?: ReactNode;
   className?: string;
+  titleClassName?: string;
+  descriptionClassName?: string;
+  contentClassName?: string;
 }
 
 export function PageHero({
@@ -16,12 +19,15 @@ export function PageHero({
   description,
   aside,
   className,
+  titleClassName,
+  descriptionClassName,
+  contentClassName,
   children,
 }: PageHeroProps) {
   return (
     <section className={cn("mx-auto max-w-7xl px-6 py-16 md:py-20", className)}>
-      <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-end">
-        <div>
+      <div className={cn("grid gap-10", aside ? "lg:grid-cols-[1.05fr_0.95fr] lg:items-end" : "grid-cols-1")}>
+        <div className={contentClassName}>
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
@@ -34,7 +40,10 @@ export function PageHero({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.12, duration: 0.72, ease: "easeOut" }}
-            className="mt-4 max-w-4xl font-serif text-5xl leading-tight text-burgundy-950 md:text-6xl"
+            className={cn(
+              "mt-4 max-w-4xl font-serif text-5xl leading-tight text-burgundy-950 md:text-6xl",
+              titleClassName,
+            )}
           >
             {title}
           </motion.h1>
@@ -42,7 +51,7 @@ export function PageHero({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.24, duration: 0.72, ease: "easeOut" }}
-            className="mt-6 max-w-2xl text-lg leading-8 text-burgundy-800"
+            className={cn("mt-6 max-w-2xl text-lg leading-8 text-burgundy-800", descriptionClassName)}
           >
             {description}
           </motion.p>

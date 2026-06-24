@@ -11,6 +11,7 @@ import {
   Wine,
   X,
 } from "lucide-react";
+import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { CartDrawer } from "./CartDrawer";
@@ -93,15 +94,26 @@ export function Navbar() {
               <NavLink
                 key={link.href}
                 to={link.href}
-                className={({ isActive }) =>
-                  cn(
-                    "text-xs font-semibold tracking-[0.2em] text-burgundy-700 uppercase transition-colors",
-                    "duration-300",
-                    isActive && "text-burgundy-950",
-                  )
-                }
+                className="relative"
               >
-                {link.label}
+                {({ isActive }) => (
+                  <motion.span
+                    whileTap={{ scale: 0.96 }}
+                    className={cn(
+                      "relative inline-flex px-1 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition-colors duration-300",
+                      isActive ? "text-burgundy-950" : "text-burgundy-700",
+                    )}
+                  >
+                    {link.label}
+                    {isActive ? (
+                      <motion.span
+                        layoutId="site-nav-underline"
+                        className="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-burgundy-900"
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    ) : null}
+                  </motion.span>
+                )}
               </NavLink>
             ))}
           </nav>
@@ -208,13 +220,29 @@ export function Navbar() {
                     )
                   }
                 >
-                  <span className="flex items-center gap-3">
-                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-burgundy-50 text-burgundy-900">
-                      <Icon className="h-5 w-5" strokeWidth={1.8} />
-                    </span>
-                    {link.label}
-                  </span>
-                  <ChevronRight className="h-4 w-4 text-burgundy-400" strokeWidth={1.8} />
+                  {({ isActive }) => (
+                    <motion.div
+                      whileTap={{ scale: 0.98 }}
+                      className="flex w-full items-center justify-between"
+                    >
+                      <span className="flex items-center gap-3">
+                        <motion.span
+                          animate={isActive ? { scale: 1.06 } : { scale: 1 }}
+                          transition={{ type: "spring", stiffness: 320, damping: 22 }}
+                          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-burgundy-50 text-burgundy-900"
+                        >
+                          <Icon className="h-5 w-5" strokeWidth={1.8} />
+                        </motion.span>
+                        {link.label}
+                      </span>
+                      <motion.span
+                        animate={isActive ? { x: 2 } : { x: 0 }}
+                        transition={{ type: "spring", stiffness: 320, damping: 22 }}
+                      >
+                        <ChevronRight className="h-4 w-4 text-burgundy-400" strokeWidth={1.8} />
+                      </motion.span>
+                    </motion.div>
+                  )}
                 </NavLink>
               );
             })}
@@ -263,7 +291,7 @@ export function Navbar() {
               Concierge
             </p>
             <p className="mt-3 text-sm leading-6 text-cream-100/80">
-              Compras, visitas y regalos con una capa mobile mucho mas ligera y elegante.
+              Compras, visitas y regalos con atencion cercana desde cualquier dispositivo.
             </p>
           </div>
         </div>

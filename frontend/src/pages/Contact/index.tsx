@@ -28,8 +28,8 @@ export function ContactPage() {
     <div>
       <PageHero
         eyebrow="Contacto"
-        title="Una pagina para consultas reales, no solo un mail escondido."
-        description="Sumamos canales visibles y una forma simple de ordenar consultas sobre visitas, regalos, envíos y eventos."
+        title="Un canal directo para consultas, reservas y pedidos especiales."
+        description="Canales visibles y un formulario simple para ordenar consultas sobre visitas, regalos, envios y eventos privados."
         aside={
           <div className="space-y-4">
             {contactChannels.map((channel) => (
@@ -50,7 +50,7 @@ export function ContactPage() {
           <div className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
             <SectionHeading
               eyebrow="Formulario de contacto"
-              title="Preparamos un formulario enfocado en las consultas que mas negocio generan."
+              title="Contanos que necesitas y te ayudamos a resolverlo."
             />
             <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
               <div className="grid gap-5 md:grid-cols-2">
@@ -114,7 +114,7 @@ export function ContactPage() {
                 <Button type="submit">Enviar consulta</Button>
                 <p className="text-sm text-burgundy-600">
                   {submitted
-                    ? "La demo registro tu interes. El proximo paso es conectar este formulario con CRM, email y WhatsApp."
+                    ? "Recibimos tu consulta. El equipo te va a responder dentro del horario comercial."
                     : "Respuesta esperada dentro del horario comercial del concierge."}
                 </p>
               </div>
@@ -123,15 +123,15 @@ export function ContactPage() {
 
           <div className="rounded-[32px] border border-white/70 bg-burgundy-950 p-8 text-cream-50 shadow-velvet">
             <SectionHeading
-              eyebrow="Por que importa"
-              title="Las consultas de alto valor necesitan contexto y canales visibles."
-              description="Regalos, eventos, visitas y compras de volumen rara vez convierten bien si el sitio solo ofrece un catalogo. Esta pagina corrige exactamente eso."
+              eyebrow="Atencion personalizada"
+              title="Regalos, eventos y compras de volumen necesitan una conversacion propia."
+              description="Cuando el cliente encuentra contacto, direccion y asistencia clara, la experiencia gana confianza desde el primer mensaje."
               tone="light"
             />
             <ul className="mt-8 space-y-3 text-cream-100/80">
               <li>• Ayuda a capturar demanda corporativa y privada.</li>
               <li>• Ordena mejor el flujo para visitas y regalos.</li>
-              <li>• Refuerza confianza con direccion, horario y soporte real.</li>
+              <li>• Refuerza confianza con direccion, horario y soporte directo.</li>
             </ul>
           </div>
         </div>

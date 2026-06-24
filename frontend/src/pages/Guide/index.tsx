@@ -9,12 +9,12 @@ export function GuidePage() {
     <div>
       <PageHero
         eyebrow="Guia de compra y envios"
-        title="La capa de confianza que ayuda a comprar sin dudar."
-        description="Agregamos una pagina utilitaria para envios, retiro, preguntas frecuentes y criterios de atencion, algo que las bodegas maduras muestran de forma muy visible."
+        title="Todo lo necesario para comprar con tranquilidad."
+        description="Envios, retiro en bodega, preguntas frecuentes y criterios de atencion para resolver dudas antes de confirmar el pedido."
         aside={
           <div className="space-y-4 text-burgundy-900">
             <p>
-              <span className="font-semibold">Cobertura demo:</span> Cuyo y AMBA priorizados
+              <span className="font-semibold">Cobertura:</span> Cuyo y AMBA priorizados
             </p>
             <p>
               <span className="font-semibold">Retiro:</span> disponible con coordinacion previa
@@ -52,12 +52,11 @@ export function GuidePage() {
           <div className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
             <SectionHeading
               eyebrow="Retiro en bodega"
-              title="Una opcion simple, clara y visible para quienes pasan por San Rafael."
+              title="Una opcion simple y visible para quienes pasan por San Rafael."
             />
             <p className="mt-6 leading-8 text-burgundy-800">
-              Esta pagina ahora contempla algo que en negocios reales suele pesar mucho: poder
-              comprar online y retirar en finca. Eso reduce dudas, suma conveniencia y mejora la
-              integracion entre hospitalidad y ecommerce.
+              Comprar online y retirar en bodega permite sumar flexibilidad, evitar esperas y
+              aprovechar la visita para descubrir nuevas etiquetas con el equipo.
             </p>
           </div>
           <div className="rounded-[32px] border border-white/70 bg-burgundy-950 p-8 text-cream-50 shadow-velvet">
@@ -77,7 +76,7 @@ export function GuidePage() {
         <div className="rounded-[36px] border border-burgundy-100 bg-white px-8 py-10 shadow-velvet md:px-10">
           <SectionHeading
             eyebrow="FAQ"
-            title="Preguntas frecuentes pensadas como capa de conversion."
+            title="Preguntas frecuentes para resolver la compra con claridad."
           />
           <div className="mt-8 space-y-4">
             {guideFaqs.map((item) => (

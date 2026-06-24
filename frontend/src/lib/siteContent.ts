@@ -45,7 +45,7 @@ export const siteLinks: SiteLink[] = [
   { label: "Visitas", href: "/visitas" },
   { label: "Historia", href: "/historia" },
   { label: "Regalos", href: "/regalos" },
-  { label: "Guia", href: "/guia-de-compra" },
+  { label: "Compras", href: "/guia-de-compra" },
   { label: "Contacto", href: "/contacto" },
 ];
 
@@ -74,7 +74,7 @@ export const estateFacts: FactItem[] = [
   {
     label: "Legado",
     value: "1883",
-    description: "Una de las bodegas pioneras de San Rafael, reinterpretada en clave digital.",
+    description: "Una de las bodegas pioneras de San Rafael, con identidad cuyana y vocacion anfitriona.",
   },
   {
     label: "Hospitalidad",
@@ -82,17 +82,17 @@ export const estateFacts: FactItem[] = [
     description: "Catas, recorridos, maridajes y formatos privados pensados para turismo premium.",
   },
   {
-    label: "Conversión",
-    value: "Shop + visitas",
-    description: "Tienda, reservas, seguimiento post compra y automatizaciones visibles en un solo flujo.",
+    label: "Compra directa",
+    value: "Tienda + visitas",
+    description: "Coleccion online, reservas y atencion personalizada en una misma experiencia.",
   },
 ];
 
 export const hospitalityPromises: FactItem[] = [
   {
-    label: "Pickup",
+    label: "Retiro",
     value: "Sin costo",
-    description: "Retiro coordinado en bodega con ventana de 48 horas y atención personalizada.",
+    description: "Retiro coordinado en bodega con ventana de 48 horas y atencion personalizada.",
   },
   {
     label: "Despachos",
@@ -145,9 +145,9 @@ export const storyMilestones = [
   },
   {
     year: "2000+",
-    title: "Nuevo lenguaje de marca",
+    title: "Hospitalidad contemporanea",
     description:
-      "La experiencia se reimagina con hospitalidad, diseño, comercio digital y automatizaciones medibles.",
+      "La experiencia suma tienda online, reservas y servicio personalizado sin perder su caracter fundacional.",
   },
 ];
 
@@ -218,7 +218,7 @@ export const guideFaqs: FaqItem[] = [
   {
     question: "¿A que provincias envian hoy?",
     answer:
-      "La propuesta de demo muestra cobertura prioritaria en Cuyo y AMBA, con coordinacion especial para el resto del pais segun volumen y ventana climatica.",
+      "Hoy coordinamos despachos con cobertura prioritaria en Cuyo y AMBA, y asistencia especial para otras plazas segun volumen, temporada y ventana climatica.",
   },
   {
     question: "¿Puedo retirar mi compra en la bodega?",
@@ -231,9 +231,9 @@ export const guideFaqs: FaqItem[] = [
       "Si. Regalos corporativos, cajas a medida y experiencias privadas se canalizan desde contacto con respuesta personalizada.",
   },
   {
-    question: "¿La web ya procesa pagos reales?",
+    question: "¿Puedo pagar online desde la tienda?",
     answer:
-      "El sitio esta preparado como showcase premium; el siguiente paso del roadmap es conectar checkout, pagos y ordenes reales end to end.",
+      "Si. La tienda permite avanzar con el pedido, elegir modalidad de entrega y continuar el pago online con seguimiento posterior desde el historial.",
   },
 ];
 
@@ -292,8 +292,8 @@ export const aboutPillars = [
       "La experiencia no termina en la etiqueta: incluye recepcion, recorrido, lenguaje de servicio y postventa con seguimiento real.",
   },
   {
-    title: "Automatizacion visible",
+    title: "Atencion conectada",
     description:
-      "Este portfolio muestra como una bodega tradicional puede ampliar conversion y retencion sin perder humanidad.",
+      "La tienda, las visitas y el canal de contacto funcionan como una sola conversacion para acompanar mejor cada compra.",
   },
 ];

@@ -10,7 +10,7 @@ export function AboutPage() {
       <PageHero
         eyebrow="Historia y marca"
         title="La bodega se cuenta desde el legado, el terroir y la hospitalidad."
-        description="Una de las diferencias mas claras con la referencia estaba en el peso del storytelling. Esta pagina suma ese espesor editorial para que la experiencia tenga memoria y posicionamiento."
+        description="La coleccion nace de una historia concreta: viñas, cava, recepcion y una forma mendocina de recibir que sigue guiando la experiencia."
         aside={
           <img
             src="https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?auto=format&fit=crop&w=1200&q=80"
@@ -45,7 +45,7 @@ export function AboutPage() {
         <div className="rounded-[36px] border border-burgundy-100 bg-white px-8 py-10 shadow-velvet md:px-10">
           <SectionHeading
             eyebrow="Linea de tiempo"
-            title="Una cronologia breve para darle espesor emocional y contexto historico a la marca."
+            title="Una cronologia breve para entender como se fue formando la identidad de la bodega."
           />
           <div className="mt-10 grid gap-6 lg:grid-cols-3">
             {storyMilestones.map((item) => (

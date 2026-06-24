@@ -8,8 +8,8 @@ export function EditorialSection() {
       <div className="mb-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
         <SectionHeading
           eyebrow="Notas de marca"
-          title="Mas contenido editorial para sostener deseo, contexto y autoridad."
-          description="La referencia trabaja muy bien la mezcla entre ecommerce y relato. Estas piezas acercan tu sitio a esa sensacion."
+          title="Contenido para elegir mejor, regalar con criterio y conocer la bodega."
+          description="Notas breves que acompañan la compra con ideas de servicio, maridaje y hospitalidad."
         />
       </div>
       <div className="grid gap-6 lg:grid-cols-3">

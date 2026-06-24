@@ -39,6 +39,8 @@ export default function App() {
           <Route path="/vinos" element={<CatalogPage />} />
           <Route path="/vinos/:slug" element={<ProductDetailPage />} />
           <Route path="/visitas" element={<VisitPage />} />
+          <Route path="/visitas/horarios" element={<VisitPage />} />
+          <Route path="/visitas/pago" element={<VisitPage />} />
           <Route path="/visitas/resultado" element={<VisitBookingResultPage />} />
           <Route path="/historia" element={<AboutPage />} />
           <Route path="/regalos" element={<GiftsPage />} />

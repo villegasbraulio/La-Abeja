@@ -22,8 +22,8 @@ export function Footer() {
             </p>
             <p className="mt-2 font-serif text-2xl text-gold-300 md:text-3xl">Bodega La Abeja</p>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-cream-100/75">
-              Informacion institucional, navegacion y soporte comercial a un click, sin dejar el
-              footer siempre desplegado.
+              Informacion institucional, navegacion y soporte comercial disponibles cuando los
+              necesites, sin sobrecargar la pagina.
             </p>
           </div>
           <span className="inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-cream-50">
@@ -63,8 +63,8 @@ export function Footer() {
             <div className="max-w-md">
               <p className="font-serif text-3xl text-gold-300">Bodega La Abeja</p>
               <p className="mt-4 leading-7 text-cream-100/80">
-                Una bodega de San Rafael reinterpretada como experiencia digital premium: vinos,
-                hospitalidad, regalos y automatizaciones visibles en una misma plataforma.
+                Vinos de San Rafael, hospitalidad, regalos y visitas en una experiencia de marca
+                pensada para comprar con calma y volver.
               </p>
               <div className="mt-6 space-y-2 text-sm text-cream-100/75">
                 <p>Av. Hipolito Yrigoyen 9500 · San Rafael · Mendoza</p>
@@ -99,15 +99,15 @@ export function Footer() {
               <div className="mt-5 space-y-3 text-sm text-cream-100/80">
                 <p>Envios coordinados, retiro en bodega y soporte humano para compras complejas.</p>
                 <p>Asistencia para regalos, eventos privados y selecciones a medida.</p>
-                <p>Roadmap listo para checkout, pagos y automatizaciones post compra reales.</p>
+                <p>Seguimiento de pedidos y atencion personalizada antes y despues de la compra.</p>
               </div>
             </div>
           </div>
 
           <div className="border-t border-white/10">
             <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-5 text-xs uppercase tracking-[0.18em] text-cream-100/60 md:flex-row md:items-center md:justify-between">
-              <p>Portfolio premium para e-commerce vitivinicola y automatizaciones.</p>
-              <p>Disenado para mostrar conversion, hospitalidad y experiencia de marca.</p>
+              <p>Bodega La Abeja · San Rafael · Mendoza</p>
+              <p>Compra online, visitas y regalos con acompanamiento humano.</p>
             </div>
           </div>
         </div>

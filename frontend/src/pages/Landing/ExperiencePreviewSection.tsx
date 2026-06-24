@@ -8,9 +8,9 @@ export function ExperiencePreviewSection() {
     <section className="mx-auto max-w-7xl px-6 py-20">
       <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
         <SectionHeading
-          eyebrow="Plan Your Visit"
-          title="Visitas, catas y formatos privados que merecen una pagina propia."
-          description="La referencia que analizamos vende la visita como un producto completo. Aca ya dejamos esa capa visible con experiencias, detalles y CTA claros."
+          eyebrow="Visitas"
+          title="Recorridos, catas y experiencias privadas para vivir la bodega de cerca."
+          description="Cada visita tiene propuesta, detalle y reserva propia para que planearla sea tan simple como elegir una etiqueta."
         />
         <div className="grid gap-5">
           {featuredExperiences.map((experience) => (
