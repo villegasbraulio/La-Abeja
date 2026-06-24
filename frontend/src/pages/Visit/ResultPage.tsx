@@ -42,16 +42,16 @@ export function VisitBookingResultPage() {
 
   return (
     <section className="mx-auto max-w-4xl px-6 py-20">
-      <div className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
+      <div className="rounded-lg border border-burgundy-100 bg-white p-8 shadow-velvet">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-burgundy-500">
           Resultado de la reserva
         </p>
-        <h1 className="mt-3 font-serif text-5xl text-burgundy-950">{statusMeta.title}</h1>
+        <h1 className="mt-3 font-serif text-3xl text-burgundy-950 sm:text-4xl">{statusMeta.title}</h1>
         <p className="mt-4 max-w-2xl leading-7 text-burgundy-800">{statusMeta.description}</p>
 
         {booking ? (
           <div className="mt-8 grid gap-4 md:grid-cols-2">
-            <div className="rounded-[24px] border border-burgundy-100 bg-cream-50 p-5">
+            <div className="rounded-lg border border-burgundy-100 bg-cream-50 p-5">
               <p className="text-sm uppercase tracking-[0.18em] text-burgundy-500">Reserva</p>
               <p className="mt-3 font-serif text-3xl text-burgundy-950">{booking.confirmation_code}</p>
               <p className="mt-2 text-sm text-burgundy-700">{booking.experience_name}</p>
@@ -63,7 +63,7 @@ export function VisitBookingResultPage() {
               </p>
             </div>
 
-            <div className="rounded-[24px] border border-burgundy-100 bg-cream-50 p-5">
+            <div className="rounded-lg border border-burgundy-100 bg-cream-50 p-5">
               <p className="text-sm uppercase tracking-[0.18em] text-burgundy-500">Estado</p>
               <p className="mt-3 font-semibold text-burgundy-950">{booking.status_label}</p>
               <p className="mt-2 text-sm text-burgundy-700">

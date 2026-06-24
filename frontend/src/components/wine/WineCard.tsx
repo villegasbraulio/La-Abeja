@@ -18,7 +18,7 @@ export function WineCard({ wine, variant = "grid" }: WineCardProps) {
   return (
     <motion.article
       className={cn(
-        "group relative overflow-hidden rounded-[28px] border border-white/70 bg-white/90 shadow-velvet",
+        "group relative overflow-hidden rounded-lg border border-white/70 bg-white/90 shadow-velvet",
         variant === "featured" && "md:col-span-2",
       )}
       whileHover={{ y: -6 }}

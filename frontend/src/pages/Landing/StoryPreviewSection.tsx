@@ -6,7 +6,7 @@ import { storyMilestones } from "../../lib/siteContent";
 export function StoryPreviewSection() {
   return (
     <section className="mx-auto max-w-7xl px-6 py-20">
-      <div className="rounded-[36px] border border-white/70 bg-burgundy-950 px-8 py-10 text-cream-50 shadow-velvet md:px-10 md:py-12">
+      <div className="rounded-lg border border-white/70 bg-burgundy-950 px-8 py-10 text-cream-50 shadow-velvet md:px-10 md:py-12">
         <div className="grid gap-10 lg:grid-cols-[0.85fr_1.15fr]">
           <SectionHeading
             eyebrow="Nuestra historia"
@@ -16,7 +16,7 @@ export function StoryPreviewSection() {
           />
           <div className="space-y-5">
             {storyMilestones.map((item) => (
-              <div key={item.year} className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+              <div key={item.year} className="rounded-lg border border-white/10 bg-white/5 p-6">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gold-300">
                   {item.year}
                 </p>

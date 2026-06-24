@@ -16,8 +16,8 @@ export function SectionHeading({
       <p
         className={
           tone === "light"
-            ? "text-sm font-semibold uppercase tracking-[0.3em] text-gold-300"
-            : "text-sm font-semibold uppercase tracking-[0.3em] text-burgundy-600"
+            ? "text-xs font-semibold uppercase tracking-[0.22em] text-gold-300"
+            : "text-xs font-semibold uppercase tracking-[0.22em] text-burgundy-600"
         }
       >
         {eyebrow}
@@ -25,8 +25,8 @@ export function SectionHeading({
       <h2
         className={
           tone === "light"
-            ? "mt-3 font-serif text-4xl leading-tight text-white md:text-5xl"
-            : "mt-3 font-serif text-4xl leading-tight text-burgundy-950 md:text-5xl"
+            ? "mt-2 font-serif text-2xl leading-tight text-white sm:text-3xl"
+            : "mt-2 font-serif text-2xl leading-tight text-burgundy-950 sm:text-3xl"
         }
       >
         {title}
@@ -35,8 +35,8 @@ export function SectionHeading({
         <p
           className={
             tone === "light"
-              ? "mt-4 text-lg leading-8 text-cream-100/80"
-              : "mt-4 text-lg leading-8 text-burgundy-800"
+              ? "mt-3 text-base leading-7 text-cream-100/80"
+              : "mt-3 text-base leading-7 text-burgundy-800"
           }
         >
           {description}

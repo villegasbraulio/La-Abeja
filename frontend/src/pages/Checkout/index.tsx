@@ -286,11 +286,11 @@ export function CheckoutPage() {
   if (items.length === 0) {
     return (
       <section className="mx-auto max-w-4xl px-6 py-16">
-        <div className="rounded-[32px] border border-burgundy-100 bg-white p-10 text-center shadow-velvet">
+        <div className="rounded-lg border border-burgundy-100 bg-white p-10 text-center shadow-velvet">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-burgundy-500">
             Checkout
           </p>
-          <h1 className="mt-3 font-serif text-5xl text-burgundy-950">
+          <h1 className="mt-3 font-serif text-3xl text-burgundy-950 sm:text-4xl">
             No hay vinos para procesar.
           </h1>
           <p className="mt-4 text-burgundy-800">
@@ -311,7 +311,7 @@ export function CheckoutPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-burgundy-500">
             Checkout
           </p>
-          <h1 className="mt-2 font-serif text-5xl text-burgundy-950">
+          <h1 className="mt-2 font-serif text-3xl text-burgundy-950 sm:text-4xl">
             Cerrá la compra y pagá con Mercado Pago.
           </h1>
         </div>
@@ -323,7 +323,7 @@ export function CheckoutPage() {
       <div className="grid gap-8 xl:grid-cols-[1.05fr_0.95fr]">
         <div className="space-y-6">
           {!accessToken || !user ? (
-            <section className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
+            <section className="rounded-lg border border-burgundy-100 bg-white p-8 shadow-velvet">
               <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
@@ -500,7 +500,7 @@ export function CheckoutPage() {
                 )}
 
                 {authError ? (
-                  <div className="rounded-[22px] border border-burgundy-200 bg-burgundy-50 px-4 py-3 text-sm text-burgundy-800">
+                  <div className="rounded-lg border border-burgundy-200 bg-burgundy-50 px-4 py-3 text-sm text-burgundy-800">
                     {authError}
                   </div>
                 ) : null}
@@ -526,7 +526,7 @@ export function CheckoutPage() {
 
           {canCheckout ? (
             <form
-              className="space-y-6 rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet"
+              className="space-y-6 rounded-lg border border-burgundy-100 bg-white p-8 shadow-velvet"
               onSubmit={handleCheckoutSubmit}
             >
               <div>
@@ -668,13 +668,13 @@ export function CheckoutPage() {
                 </p>
                 <div className="mt-4 grid gap-4">
                   {shippingQuoteQuery.isLoading ? (
-                    <div className="rounded-[24px] border border-burgundy-100 bg-cream-50 px-5 py-4 text-sm text-burgundy-700">
+                    <div className="rounded-lg border border-burgundy-100 bg-cream-50 px-5 py-4 text-sm text-burgundy-700">
                       Calculando opciones de envío con la dirección cargada...
                     </div>
                   ) : null}
 
                   {!shippingQuoteQuery.isLoading && shippingQuoteError ? (
-                    <div className="rounded-[24px] border border-burgundy-200 bg-burgundy-50 px-5 py-4 text-sm text-burgundy-800">
+                    <div className="rounded-lg border border-burgundy-200 bg-burgundy-50 px-5 py-4 text-sm text-burgundy-800">
                       {shippingQuoteError}
                     </div>
                   ) : null}
@@ -682,7 +682,7 @@ export function CheckoutPage() {
                   {!shippingQuoteQuery.isLoading &&
                   !shippingQuoteError &&
                   shippingOptions.length === 0 ? (
-                    <div className="rounded-[24px] border border-burgundy-100 bg-cream-50 px-5 py-4 text-sm text-burgundy-700">
+                    <div className="rounded-lg border border-burgundy-100 bg-cream-50 px-5 py-4 text-sm text-burgundy-700">
                       Completá ciudad, provincia y código postal para cotizar el envío.
                     </div>
                   ) : null}
@@ -690,7 +690,7 @@ export function CheckoutPage() {
                   {shippingOptions.map((option) => (
                     <label
                       key={option.shipping_method}
-                      className={`rounded-[24px] border px-5 py-4 ${
+                      className={`rounded-lg border px-5 py-4 ${
                         shippingForm.shipping_method === option.shipping_method
                           ? "border-burgundy-300 bg-burgundy-50"
                           : "border-burgundy-100 bg-cream-50"
@@ -740,13 +740,13 @@ export function CheckoutPage() {
                   onChange={(event) =>
                     setShippingForm((current) => ({ ...current, notes: event.target.value }))
                   }
-                  className="min-h-28 rounded-[24px] border border-burgundy-200 bg-cream-50 px-4 py-3"
+                  className="min-h-28 rounded-lg border border-burgundy-200 bg-cream-50 px-4 py-3"
                   placeholder="Indicaciones de entrega, regalo o coordinación especial."
                 />
               </label>
 
               {paymentError ? (
-                <div className="rounded-[22px] border border-burgundy-200 bg-burgundy-50 px-4 py-3 text-sm text-burgundy-800">
+                <div className="rounded-lg border border-burgundy-200 bg-burgundy-50 px-4 py-3 text-sm text-burgundy-800">
                   {paymentError}
                   {createdOrder ? (
                     <>
@@ -769,7 +769,7 @@ export function CheckoutPage() {
               ) : null}
 
               {checkoutPreference ? (
-                <div className="space-y-4 rounded-[28px] border border-burgundy-200 bg-cream-50 p-5">
+                <div className="space-y-4 rounded-lg border border-burgundy-200 bg-cream-50 p-5">
                   <div>
                     <p className="text-sm font-semibold uppercase tracking-[0.18em] text-burgundy-500">
                       Pago listo
@@ -784,12 +784,12 @@ export function CheckoutPage() {
                   </div>
 
                   {walletUnavailable ? (
-                    <div className="rounded-[22px] border border-burgundy-200 bg-white px-4 py-3 text-sm text-burgundy-800">
+                    <div className="rounded-lg border border-burgundy-200 bg-white px-4 py-3 text-sm text-burgundy-800">
                       Falta configurar <code>VITE_MERCADOPAGO_PUBLIC_KEY</code> en el frontend para
                       renderizar el botón Wallet.
                     </div>
                   ) : (
-                    <div className="rounded-[22px] border border-burgundy-100 bg-white px-4 py-5">
+                    <div className="rounded-lg border border-burgundy-100 bg-white px-4 py-5">
                       <Wallet initialization={{ preferenceId: checkoutPreference.preference_id }} />
                     </div>
                   )}
@@ -818,7 +818,7 @@ export function CheckoutPage() {
                   </div>
                 </div>
               ) : (
-                <div className="rounded-[22px] border border-burgundy-100 bg-cream-50 px-4 py-3 text-sm text-burgundy-700">
+                <div className="rounded-lg border border-burgundy-100 bg-cream-50 px-4 py-3 text-sm text-burgundy-700">
                   Al confirmar el pedido preparamos la preferencia y mostramos el botón oficial de
                   Mercado Pago para completar el cobro.
                 </div>
@@ -851,7 +851,7 @@ export function CheckoutPage() {
         </div>
 
         <aside className="space-y-5">
-          <div className="rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+          <div className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-velvet">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
               Resumen del pedido
             </p>
@@ -859,13 +859,13 @@ export function CheckoutPage() {
               {items.map((item) => (
                 <div
                   key={item.wineId}
-                  className="flex items-start gap-4 rounded-[22px] border border-burgundy-100 bg-cream-50 p-4"
+                  className="flex items-start gap-4 rounded-lg border border-burgundy-100 bg-cream-50 p-4"
                 >
                   <img
                     src={wineImageSrc(item.primaryImage)}
                     alt={item.name}
                     onError={applyWineImageFallback}
-                    className="h-20 w-16 rounded-[16px] object-cover"
+                    className="h-20 w-16 rounded-lg object-cover"
                   />
                   <div className="flex-1">
                     <p className="font-semibold text-burgundy-950">{item.name}</p>
@@ -903,7 +903,7 @@ export function CheckoutPage() {
             </div>
           </div>
 
-          <div className="rounded-[32px] border border-white/70 bg-burgundy-950 p-6 text-cream-50 shadow-velvet">
+          <div className="rounded-lg border border-white/70 bg-burgundy-950 p-6 text-cream-50 shadow-velvet">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-gold-300">
               Qué pasa ahora
             </p>

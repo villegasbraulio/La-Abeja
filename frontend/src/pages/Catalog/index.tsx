@@ -183,7 +183,7 @@ export function CatalogPage() {
       >
         <motion.aside
           variants={fadeUp}
-          className="h-fit rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet"
+          className="h-fit rounded-lg border border-burgundy-100 bg-white p-6 shadow-velvet"
         >
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
@@ -275,7 +275,7 @@ export function CatalogPage() {
               Mostrar solo etiquetas disponibles hoy
             </label>
 
-            <div className="rounded-[24px] border border-burgundy-100 bg-burgundy-950 px-4 py-5 text-cream-50">
+            <div className="rounded-lg border border-burgundy-100 bg-burgundy-950 px-4 py-5 text-cream-50">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold-300">
                 Compra asistida
               </p>
@@ -304,7 +304,7 @@ export function CatalogPage() {
         <motion.div variants={fadeUp}>
           <motion.div
             variants={fadeUp}
-            className="mb-8 flex flex-col gap-4 rounded-[30px] border border-burgundy-100 bg-white p-5 shadow-velvet md:flex-row md:items-center md:justify-between"
+            className="mb-8 flex flex-col gap-4 rounded-lg border border-burgundy-100 bg-white p-5 shadow-velvet md:flex-row md:items-center md:justify-between"
           >
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
@@ -354,7 +354,7 @@ export function CatalogPage() {
           ) : null}
 
           {!isLoading && !isError && wines.length === 0 ? (
-            <div className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
+            <div className="rounded-lg border border-burgundy-100 bg-white p-8 shadow-velvet">
               <h2 className="font-serif text-3xl text-burgundy-950">
                 No encontramos etiquetas con esos filtros.
               </h2>
@@ -401,7 +401,7 @@ export function CatalogPage() {
                       variants={fadeUp}
                       whileHover={{ y: isActive ? 0 : -4 }}
                       whileTap={{ scale: 0.985 }}
-                      className={`rounded-[30px] border p-6 text-left shadow-velvet transition-all duration-300 ${
+                      className={`rounded-lg border p-6 text-left shadow-velvet transition-all duration-300 ${
                         isActive
                           ? "border-burgundy-900 bg-burgundy-950 text-cream-50"
                           : "border-burgundy-100 bg-white text-burgundy-950 hover:-translate-y-1"

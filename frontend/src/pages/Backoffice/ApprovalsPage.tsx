@@ -74,17 +74,15 @@ export function BackofficeApprovalsPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
-        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
+    <div className="space-y-6">
+      <section className="rounded-lg border border-burgundy-100 bg-white p-5 shadow-[0_16px_48px_rgba(66,13,21,0.07)] md:p-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-burgundy-500">
           Aprobaciones
         </p>
-        <h3 className="mt-3 font-serif text-4xl text-burgundy-950">
-          Cola de decisiones humanas para cualquier workflow que el agente no deba cerrar solo.
-        </h3>
+        <h1 className="mt-1.5 text-2xl font-semibold text-burgundy-950">Decisiones humanas</h1>
       </section>
 
-      <section className="rounded-[28px] border border-burgundy-100 bg-white p-5 shadow-velvet">
+      <section className="rounded-lg border border-burgundy-100 bg-white p-5 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
         <label className="space-y-2 text-sm font-semibold text-burgundy-900">
           Estado
           <select
@@ -105,7 +103,7 @@ export function BackofficeApprovalsPage() {
         <section className="space-y-4">
           {approvalsQuery.isLoading ? <p className="text-burgundy-700">Cargando approvals...</p> : null}
           {approvalsQuery.isError ? (
-            <div className="rounded-[24px] border border-burgundy-200 bg-white p-6 text-burgundy-800 shadow-velvet">
+            <div className="rounded-lg border border-burgundy-200 bg-white p-6 text-burgundy-800 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
               No pudimos cargar la cola de approvals por ahora.
             </div>
           ) : null}
@@ -114,7 +112,7 @@ export function BackofficeApprovalsPage() {
               key={approval.id}
               type="button"
               onClick={() => setSelectedApprovalId(approval.id)}
-              className={`w-full rounded-[28px] border p-5 text-left shadow-velvet transition ${
+              className={`w-full rounded-lg border p-5 text-left shadow-[0_16px_48px_rgba(66,13,21,0.07)] transition ${
                 selectedApprovalId === approval.id
                   ? "border-burgundy-900 bg-burgundy-950 text-cream-50"
                   : "border-burgundy-100 bg-white text-burgundy-950"
@@ -123,7 +121,7 @@ export function BackofficeApprovalsPage() {
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-current/70">
                 {approval.workflow_type}
               </p>
-              <h4 className="mt-2 font-serif text-2xl">{approval.action_name}</h4>
+              <h4 className="mt-2 text-lg font-semibold">{approval.action_name}</h4>
               <div className="mt-3 flex flex-wrap gap-3 text-sm text-current/70">
                 <span>{approval.status}</span>
                 <span>{formatDate(approval.created_at)}</span>
@@ -131,13 +129,13 @@ export function BackofficeApprovalsPage() {
             </button>
           ))}
           {!approvalsQuery.isLoading && approvals.length === 0 ? (
-            <div className="rounded-[24px] border border-burgundy-100 bg-white p-6 text-burgundy-800 shadow-velvet">
+            <div className="rounded-lg border border-burgundy-100 bg-white p-6 text-burgundy-800 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
               No hay approvals para ese estado.
             </div>
           ) : null}
         </section>
 
-        <section className="rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+        <section className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
           {!selectedApproval ? (
             <p className="text-burgundy-700">Seleccioná una solicitud para revisar su detalle.</p>
           ) : null}
@@ -147,7 +145,7 @@ export function BackofficeApprovalsPage() {
                 <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
                   {selectedApproval.workflow_type}
                 </p>
-                <h3 className="mt-2 font-serif text-4xl text-burgundy-950">
+                <h3 className="mt-2 text-2xl font-semibold text-burgundy-950">
                   {selectedApproval.action_name}
                 </h3>
                 <p className="mt-3 text-sm text-burgundy-700">
@@ -157,28 +155,28 @@ export function BackofficeApprovalsPage() {
                 </p>
               </div>
 
-              <div className="rounded-[24px] border border-burgundy-100 bg-cream-50 p-5">
+              <div className="rounded-lg border border-burgundy-100 bg-cream-50 p-5">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-burgundy-500">
                   Payload de acción
                 </p>
-                <pre className="mt-3 overflow-x-auto whitespace-pre-wrap rounded-2xl bg-white p-4 text-sm text-burgundy-900">
+                <pre className="mt-3 overflow-x-auto whitespace-pre-wrap rounded-lg bg-white p-4 text-sm text-burgundy-900">
                   {JSON.stringify(selectedApproval.action_payload, null, 2)}
                 </pre>
               </div>
 
               {Object.keys(selectedApproval.workflow_result).length > 0 ? (
-                <div className="rounded-[24px] border border-burgundy-100 bg-cream-50 p-5">
+                <div className="rounded-lg border border-burgundy-100 bg-cream-50 p-5">
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-burgundy-500">
                     Resultado del workflow
                   </p>
-                  <pre className="mt-3 overflow-x-auto whitespace-pre-wrap rounded-2xl bg-white p-4 text-sm text-burgundy-900">
+                  <pre className="mt-3 overflow-x-auto whitespace-pre-wrap rounded-lg bg-white p-4 text-sm text-burgundy-900">
                     {JSON.stringify(selectedApproval.workflow_result, null, 2)}
                   </pre>
                 </div>
               ) : null}
 
               {selectedApproval.decision_note ? (
-                <div className="rounded-[24px] border border-burgundy-100 bg-white p-5">
+                <div className="rounded-lg border border-burgundy-100 bg-white p-5">
                   <p className="text-sm font-semibold uppercase tracking-[0.2em] text-burgundy-500">
                     Nota de decisión
                   </p>

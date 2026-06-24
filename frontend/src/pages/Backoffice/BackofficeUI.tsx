@@ -44,7 +44,7 @@ type BadgeTone = "default" | "soft" | "gold" | "success" | "warning" | "dark";
 type MessageTone = "default" | "success" | "danger";
 
 const fieldBaseClasses =
-  "w-full rounded-[20px] border border-burgundy-200 bg-white px-4 py-3.5 text-sm text-burgundy-950 outline-none transition placeholder:text-burgundy-400 focus:border-burgundy-400 focus:ring-4 focus:ring-burgundy-100/80";
+  "w-full rounded-lg border border-burgundy-200 bg-white px-3.5 py-3 text-sm text-burgundy-950 outline-none transition placeholder:text-burgundy-400 focus:border-burgundy-500 focus:ring-2 focus:ring-burgundy-100/80";
 
 export function BackofficeHero({
   eyebrow,
@@ -54,30 +54,31 @@ export function BackofficeHero({
   stats = [],
 }: BackofficeHeroProps) {
   return (
-    <section className="relative overflow-hidden rounded-[34px] border border-burgundy-100 bg-white px-6 py-7 shadow-velvet md:px-8 md:py-8">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(200,169,110,0.16),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(114,47,55,0.08),transparent_36%)]" />
-      <div className="relative flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+    <section className="rounded-lg border border-burgundy-100 bg-white px-5 py-5 shadow-[0_16px_48px_rgba(66,13,21,0.07)] md:px-6">
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
         <div className="max-w-3xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
             {eyebrow}
           </p>
-          <h3 className="mt-3 font-serif text-4xl leading-tight text-burgundy-950">{title}</h3>
-          <p className="mt-4 max-w-2xl text-sm leading-7 text-burgundy-800">{description}</p>
+          <h1 className="mt-1.5 text-2xl font-semibold leading-tight text-burgundy-950">{title}</h1>
+          {description ? (
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-burgundy-700">{description}</p>
+          ) : null}
         </div>
         {actions ? <div className="flex flex-wrap gap-3 xl:justify-end">{actions}</div> : null}
       </div>
 
       {stats.length > 0 ? (
-        <div className="relative mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {stats.map((stat) => (
             <article
               key={stat.label}
-              className="rounded-[24px] border border-burgundy-100/80 bg-white/80 px-4 py-4 backdrop-blur"
+              className="rounded-lg border border-burgundy-100 bg-cream-50/70 px-4 py-3"
             >
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-burgundy-500">
                 {stat.label}
               </p>
-              <p className="mt-3 font-serif text-3xl text-burgundy-950">{stat.value}</p>
+              <p className="mt-2 text-2xl font-semibold text-burgundy-950">{stat.value}</p>
             </article>
           ))}
         </div>
@@ -94,7 +95,7 @@ export function BackofficePanel({
   return (
     <section
       className={cn(
-        "rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet md:p-7",
+        "rounded-lg border border-burgundy-100 bg-white p-5 shadow-[0_16px_48px_rgba(66,13,21,0.07)] md:p-6",
         className,
       )}
       {...props}
@@ -111,14 +112,14 @@ export function BackofficePanelHeader({
   actions,
 }: BackofficePanelHeaderProps) {
   return (
-    <div className="flex flex-col gap-4 border-b border-burgundy-100 pb-5 md:flex-row md:items-end md:justify-between">
+    <div className="flex flex-col gap-4 border-b border-burgundy-100 pb-4 md:flex-row md:items-center md:justify-between">
       <div className="max-w-2xl">
-        <p className="text-sm font-semibold uppercase tracking-[0.2em] text-burgundy-500">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-burgundy-500">
           {eyebrow}
         </p>
-        <h4 className="mt-2 font-serif text-3xl text-burgundy-950">{title}</h4>
+        <h2 className="mt-1.5 text-xl font-semibold text-burgundy-950">{title}</h2>
         {description ? (
-          <p className="mt-3 text-sm leading-7 text-burgundy-800">{description}</p>
+          <p className="mt-2 text-sm leading-6 text-burgundy-700">{description}</p>
         ) : null}
       </div>
       {actions ? <div className="flex flex-wrap gap-3">{actions}</div> : null}
@@ -134,7 +135,7 @@ export function BackofficeSectionCard({
   return (
     <div
       className={cn(
-        "rounded-[28px] border border-burgundy-100 bg-cream-50/80 p-5 md:p-6",
+        "rounded-lg border border-burgundy-100 bg-cream-50/80 p-4 md:p-5",
         className,
       )}
       {...props}
@@ -151,12 +152,12 @@ export function BackofficeSectionHeading({
 }: Pick<BackofficePanelHeaderProps, "eyebrow" | "title" | "description">) {
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-burgundy-500">
         {eyebrow}
       </p>
-      <h5 className="mt-2 font-serif text-2xl text-burgundy-950">{title}</h5>
+      <h3 className="mt-1.5 text-lg font-semibold text-burgundy-950">{title}</h3>
       {description ? (
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-burgundy-800">{description}</p>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-burgundy-700">{description}</p>
       ) : null}
     </div>
   );
@@ -192,7 +193,7 @@ export function BackofficeBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em]",
+        "inline-flex items-center rounded-md border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em]",
         tone === "default" && "border-burgundy-100 bg-white text-burgundy-800",
         tone === "soft" && "border-burgundy-100 bg-cream-50 text-burgundy-700",
         tone === "gold" && "border-gold-500/30 bg-gold-300/20 text-gold-700",
@@ -214,7 +215,7 @@ export function BackofficeMessage({
   return (
     <div
       className={cn(
-        "rounded-[22px] border px-4 py-3 text-sm leading-7",
+        "rounded-lg border px-4 py-3 text-sm leading-6",
         tone === "default" && "border-burgundy-200 bg-burgundy-50 text-burgundy-800",
         tone === "success" && "border-emerald-200 bg-emerald-50 text-emerald-800",
         tone === "danger" && "border-rose-200 bg-rose-50 text-rose-800",
@@ -239,7 +240,7 @@ export function BackofficeCheckboxCard({
   return (
     <label
       className={cn(
-        "flex h-full cursor-pointer items-start gap-3 rounded-[24px] border px-4 py-4 transition",
+        "flex h-full cursor-pointer items-start gap-3 rounded-lg border px-4 py-4 transition",
         checked
           ? "border-burgundy-300 bg-white text-burgundy-950 shadow-[0_18px_40px_rgba(66,13,21,0.08)]"
           : "border-burgundy-100 bg-cream-50 text-burgundy-900",
@@ -267,7 +268,7 @@ export function BackofficeEmptyState({
   description: string;
 }) {
   return (
-    <div className="rounded-[24px] border border-dashed border-burgundy-200 bg-cream-50/80 px-5 py-6 text-burgundy-800">
+    <div className="rounded-lg border border-dashed border-burgundy-200 bg-cream-50/80 px-5 py-6 text-burgundy-800">
       <p className="font-semibold text-burgundy-950">{title}</p>
       <p className="mt-2 text-sm leading-7">{description}</p>
     </div>

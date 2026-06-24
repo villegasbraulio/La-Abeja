@@ -129,7 +129,7 @@ function ExperienceCard({
     <button
       type="button"
       onClick={onSelect}
-      className="w-[280px] flex-none overflow-hidden rounded-[24px] border border-burgundy-100 bg-white text-left shadow-velvet transition hover:-translate-y-0.5 hover:border-burgundy-300 md:w-[320px]"
+      className="w-[280px] flex-none overflow-hidden rounded-lg border border-burgundy-100 bg-white text-left shadow-velvet transition hover:-translate-y-0.5 hover:border-burgundy-300 md:w-[320px]"
     >
       <img
         src={wineImageSrc(experience.cover_image)}
@@ -172,7 +172,7 @@ function ExperienceCard({
 
 function ExperienceHighlights({ experience }: { experience: VisitExperience }) {
   return (
-    <article className="overflow-hidden rounded-[28px] border border-burgundy-100 bg-white shadow-velvet">
+    <article className="overflow-hidden rounded-lg border border-burgundy-100 bg-white shadow-velvet">
       <div className="grid sm:grid-cols-[200px_1fr]">
         <img
           src={wineImageSrc(experience.cover_image)}
@@ -261,10 +261,10 @@ function VisitBookingFormSection({
   handleSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
   return (
-    <div className="rounded-[28px] border border-burgundy-100 bg-white p-5 shadow-velvet">
+    <div className="rounded-lg border border-burgundy-100 bg-white p-5 shadow-velvet">
       <SectionHeading eyebrow="Pago" title="Completá la reserva" />
 
-      <div className="mt-5 rounded-[20px] border border-burgundy-100 bg-cream-50 p-4 text-sm text-burgundy-800">
+      <div className="mt-5 rounded-lg border border-burgundy-100 bg-cream-50 p-4 text-sm text-burgundy-800">
         <p className="font-semibold text-burgundy-950">{selectedExperience.name}</p>
         <p className="mt-2">
           {formatDate(selectedSlot.date)} · {formatSlotTime(selectedSlot)}
@@ -283,7 +283,7 @@ function VisitBookingFormSection({
                   customer_first_name: event.target.value,
                 }))
               }
-              className="mt-2 w-full rounded-[18px] border border-burgundy-200 bg-cream-50 px-4 py-3"
+              className="mt-2 w-full rounded-lg border border-burgundy-200 bg-cream-50 px-4 py-3"
               required
             />
           </label>
@@ -297,7 +297,7 @@ function VisitBookingFormSection({
                   customer_last_name: event.target.value,
                 }))
               }
-              className="mt-2 w-full rounded-[18px] border border-burgundy-200 bg-cream-50 px-4 py-3"
+              className="mt-2 w-full rounded-lg border border-burgundy-200 bg-cream-50 px-4 py-3"
               required
             />
           </label>
@@ -312,7 +312,7 @@ function VisitBookingFormSection({
                   customer_email: event.target.value,
                 }))
               }
-              className="mt-2 w-full rounded-[18px] border border-burgundy-200 bg-cream-50 px-4 py-3"
+              className="mt-2 w-full rounded-lg border border-burgundy-200 bg-cream-50 px-4 py-3"
               required
             />
           </label>
@@ -326,7 +326,7 @@ function VisitBookingFormSection({
                   customer_phone: event.target.value,
                 }))
               }
-              className="mt-2 w-full rounded-[18px] border border-burgundy-200 bg-cream-50 px-4 py-3"
+              className="mt-2 w-full rounded-lg border border-burgundy-200 bg-cream-50 px-4 py-3"
               required
             />
           </label>
@@ -343,7 +343,7 @@ function VisitBookingFormSection({
               }))
             }
             placeholder="Ej: sin gluten, vegetariano"
-            className="mt-2 w-full rounded-[18px] border border-burgundy-200 bg-cream-50 px-4 py-3"
+            className="mt-2 w-full rounded-lg border border-burgundy-200 bg-cream-50 px-4 py-3"
           />
         </label>
 
@@ -358,19 +358,19 @@ function VisitBookingFormSection({
               }))
             }
             rows={4}
-            className="mt-2 w-full rounded-[18px] border border-burgundy-200 bg-cream-50 px-4 py-3"
+            className="mt-2 w-full rounded-lg border border-burgundy-200 bg-cream-50 px-4 py-3"
             placeholder="Celebración, acceso especial, contexto del grupo"
           />
         </label>
 
         {bookingError ? (
-          <div className="rounded-[20px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {bookingError}
           </div>
         ) : null}
 
         {redirectUrl ? (
-          <div className="rounded-[20px] border border-burgundy-100 bg-burgundy-50 px-4 py-3 text-sm text-burgundy-800">
+          <div className="rounded-lg border border-burgundy-100 bg-burgundy-50 px-4 py-3 text-sm text-burgundy-800">
             Si no te redirigimos automáticamente,{" "}
             <a href={redirectUrl} className="font-semibold underline">
               continuá con Mercado Pago acá
@@ -421,7 +421,7 @@ export function VisitPage() {
   });
 
   const experiences = experiencesQuery.data ?? [];
-  const slots = slotsQuery.data ?? [];
+  const slots = useMemo(() => slotsQuery.data ?? [], [slotsQuery.data]);
   const selectedExperience = experiences.find((experience) => experience.id === experienceId) ?? null;
   const selectedSlot = slots.find((slot) => slot.id === selectedSlotId) ?? null;
   const groupedSlots = useMemo(() => groupSlotsByDate(slots), [slots]);
@@ -585,29 +585,33 @@ export function VisitPage() {
     );
   }
 
+  const isIntroScreen = !isScheduleScreen && !isPaymentScreen;
+
   return (
     <div>
-      <PageHero
-        eyebrow="Visitas y hospitalidad"
-        title="Visitas y degustaciones en bodega."
-        description="Recorridos, catas y propuestas privadas para grupos pequeños o encuentros especiales en bodega."
-        className="py-10 md:py-12"
-        contentClassName="max-w-6xl"
-        titleClassName="max-w-6xl text-3xl leading-tight md:text-4xl lg:text-[3.35rem]"
-        descriptionClassName="max-w-4xl text-base leading-7 md:text-lg"
-      >
-        <Link to="/contacto?tipo=evento">
-          <Button variant="ghost">Consultar evento privado</Button>
-        </Link>
-      </PageHero>
+      {isIntroScreen ? (
+        <PageHero
+          eyebrow="Visitas y hospitalidad"
+          title="Visitas y degustaciones en bodega."
+          description="Recorridos, catas y propuestas privadas para grupos pequeños o encuentros especiales en bodega."
+          className="py-8 md:py-10"
+          contentClassName="max-w-6xl"
+          titleClassName="max-w-6xl"
+          descriptionClassName="max-w-4xl"
+        >
+          <Link to="/contacto?tipo=evento">
+            <Button variant="ghost">Consultar evento privado</Button>
+          </Link>
+        </PageHero>
+      ) : null}
 
-      {!isScheduleScreen && !isPaymentScreen ? (
+      {isIntroScreen ? (
         <section className="mx-auto max-w-7xl px-6 py-8">
           <SectionHeading
             eyebrow="Visitas"
             title="Elegí la experiencia"
           />
-          <div className="mt-6 rounded-[28px] border border-burgundy-100 bg-white p-4 shadow-velvet">
+          <div className="mt-6 rounded-lg border border-burgundy-100 bg-white p-4 shadow-velvet">
             {experiencesQuery.isLoading ? <p className="text-burgundy-700">Cargando experiencias...</p> : null}
             <div className="flex gap-3 overflow-x-auto pb-2">
               {experiences.map((experience) => (
@@ -629,7 +633,7 @@ export function VisitPage() {
               <ExperienceHighlights experience={selectedExperience} />
             </div>
 
-            <div className="rounded-[28px] border border-burgundy-100 bg-white p-5 shadow-velvet">
+            <div className="rounded-lg border border-burgundy-100 bg-white p-5 shadow-velvet">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-burgundy-500">
                   Disponibilidad
@@ -648,12 +652,14 @@ export function VisitPage() {
                     max={selectedExperience.max_guests}
                     value={guestCount}
                     onChange={(event) => handleGuestCountChange(event.target.value)}
-                    className="mt-2 w-full rounded-[18px] border border-burgundy-200 bg-cream-50 px-4 py-3"
+                    className="mt-2 w-full rounded-lg border border-burgundy-200 bg-cream-50 px-4 py-3"
                   />
                 </label>
-                <div className="rounded-[18px] bg-burgundy-950 px-4 py-3 text-cream-50">
-                  <p className="text-xs uppercase tracking-[0.18em] text-gold-300">Total estimado</p>
-                  <p className="mt-2 font-serif text-2xl md:text-[2rem]">
+                <div className="rounded-lg bg-burgundy-950 px-4 py-3 text-cream-50">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gold-300">
+                    Total estimado
+                  </p>
+                  <p className="mt-1.5 text-2xl font-semibold leading-tight tracking-normal">
                     {formatARS(
                       Number.parseInt(guestCount || "0", 10) *
                         Number.parseFloat(selectedExperience.price_per_person),
@@ -673,7 +679,7 @@ export function VisitPage() {
               ) : null}
 
               {!slotsQuery.isLoading && visibleMonth ? (
-                <div className="mt-4 rounded-[20px] border border-burgundy-100 bg-white p-4">
+                <div className="mt-4 rounded-lg border border-burgundy-100 bg-white p-4">
                   <div className="flex items-center justify-between gap-3">
                     <Button
                       type="button"
@@ -710,7 +716,7 @@ export function VisitPage() {
                   <div className="mt-2 grid grid-cols-7 gap-1.5">
                     {calendarDays.map((day) => {
                       if (!day.inCurrentMonth) {
-                        return <div key={day.date} className="aspect-square rounded-[18px] bg-transparent" />;
+                        return <div key={day.date} className="aspect-square rounded-lg bg-transparent" />;
                       }
 
                       const daySlots = groupedSlots[day.date] ?? [];
@@ -725,7 +731,7 @@ export function VisitPage() {
                           onClick={() => handleSelectDate(day.date)}
                           disabled={!isAvailable}
                           className={cn(
-                            "aspect-square rounded-[14px] border p-1.5 text-left transition",
+                            "aspect-square rounded-lg border p-1.5 text-left transition",
                             isSelected
                               ? "border-burgundy-900 bg-burgundy-950 text-cream-50"
                               : isAvailable
@@ -750,7 +756,7 @@ export function VisitPage() {
               ) : null}
 
               {selectedDate ? (
-                <div className="mt-4 rounded-[20px] border border-burgundy-100 bg-white p-4">
+                <div className="mt-4 rounded-lg border border-burgundy-100 bg-white p-4">
                   <p className="text-sm font-semibold uppercase tracking-[0.18em] text-burgundy-500">
                     Horarios del {formatWeekdayLabel(selectedDate)} {formatDate(selectedDate)}
                   </p>
@@ -760,7 +766,7 @@ export function VisitPage() {
                         key={slot.id}
                         type="button"
                         onClick={() => handleSelectSlot(slot.id)}
-                        className="rounded-[16px] border border-burgundy-200 bg-cream-50 px-3 py-3 text-left text-sm text-burgundy-900 transition hover:border-burgundy-400 hover:bg-white"
+                        className="rounded-lg border border-burgundy-200 bg-cream-50 px-3 py-3 text-left text-sm text-burgundy-900 transition hover:border-burgundy-400 hover:bg-white"
                       >
                         <span className="block font-semibold">{formatSlotTime(slot)}</span>
                         <span className="mt-1 block text-xs opacity-75">
@@ -805,27 +811,29 @@ export function VisitPage() {
         </section>
       ) : null}
 
-      <section className="mx-auto max-w-7xl px-6 py-20">
-        <div className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
-          <SectionHeading
-            eyebrow="FAQ de visitas"
-            title="Preguntas frecuentes"
-          />
-          <div className="mt-8 grid gap-4 lg:grid-cols-2">
-            {visitFaqs.map((item) => (
-              <details
-                key={item.question}
-                className="rounded-[24px] border border-burgundy-100 bg-cream-50 px-5 py-4"
-              >
-                <summary className="cursor-pointer list-none text-lg font-semibold text-burgundy-950">
-                  {item.question}
-                </summary>
-                <p className="mt-3 leading-7 text-burgundy-800">{item.answer}</p>
-              </details>
-            ))}
+      {isIntroScreen ? (
+        <section className="mx-auto max-w-7xl px-6 py-16">
+          <div className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.08)] md:p-8">
+            <SectionHeading
+              eyebrow="FAQ de visitas"
+              title="Preguntas frecuentes"
+            />
+            <div className="mt-6 grid gap-4 lg:grid-cols-2">
+              {visitFaqs.map((item) => (
+                <details
+                  key={item.question}
+                  className="rounded-lg border border-burgundy-100 bg-cream-50 px-5 py-4"
+                >
+                  <summary className="cursor-pointer list-none text-base font-semibold text-burgundy-950">
+                    {item.question}
+                  </summary>
+                  <p className="mt-3 leading-7 text-burgundy-800">{item.answer}</p>
+                </details>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
     </div>
   );
 }

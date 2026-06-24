@@ -1,5 +1,6 @@
 import { Route, Routes } from "react-router-dom";
 import { Layout } from "./components/layout/Layout";
+import { ScrollToTop } from "./components/layout/ScrollToTop";
 import { ToastViewport } from "./components/ui/ToastViewport";
 import { AboutPage } from "./pages/About";
 import { BackofficeApprovalsPage } from "./pages/Backoffice/ApprovalsPage";
@@ -33,6 +34,7 @@ import { VisitBookingResultPage } from "./pages/Visit/ResultPage";
 export default function App() {
   return (
     <>
+      <ScrollToTop />
       <Routes>
         <Route element={<Layout />}>
           <Route path="/" element={<LandingPage />} />

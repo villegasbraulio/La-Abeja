@@ -356,7 +356,7 @@ function WineMetric({
   return (
     <div
       className={cn(
-        "rounded-[20px] border px-3 py-3",
+        "rounded-lg border px-3 py-3",
         inverted
           ? "border-white/10 bg-white/10 text-cream-50"
           : "border-burgundy-100 bg-white text-burgundy-950",
@@ -576,8 +576,8 @@ export function WinesPage() {
     <div className="space-y-8">
       <BackofficeHero
         eyebrow="Gestión comercial del catálogo"
-        title="Una ficha de vinos mucho más ordenada, clara y alineada con el resto del backoffice."
-        description="Reorganicé esta vista para que el inventario se escanee mejor y el editor acompañe el flujo real de trabajo: identidad, pricing, perfil, contenido, imágenes y SEO."
+        title="Vinos"
+        description="Inventario, precios, contenido, imágenes y SEO."
         actions={
           <Button variant="ghost" onClick={resetEditor}>
             Nuevo vino
@@ -595,7 +595,7 @@ export function WinesPage() {
         <BackofficePanelHeader
           eyebrow="Búsqueda y filtros"
           title="Encontrá rápido el vino que querés editar"
-          description="Filtrá por nombre, SKU, categoría o varietal para reducir ruido y entrar más rápido a la ficha correcta."
+          description="Nombre, SKU, categoría o varietal."
           actions={
             hasActiveFilters ? (
               <Button type="button" variant="ghost" onClick={clearFilters}>
@@ -666,7 +666,7 @@ export function WinesPage() {
           <BackofficePanelHeader
             eyebrow="Inventario visible"
             title="Listado de vinos"
-            description="La tarjeta de cada vino ahora expone mejor precio, estado, margen y stock sin sentirse apretada."
+            description="Precio, estado, margen, stock y visibilidad."
           />
 
           <div className="mt-6 space-y-4">
@@ -694,7 +694,7 @@ export function WinesPage() {
                   key={wine.id}
                   type="button"
                   onClick={() => selectWine(wine.id)}
-                  className={`w-full rounded-[28px] border p-5 text-left transition ${
+                  className={`w-full rounded-lg border p-5 text-left transition ${
                     isSelected
                       ? "border-burgundy-900 bg-burgundy-950 text-cream-50 shadow-velvet"
                       : "border-burgundy-100 bg-white text-burgundy-950 hover:border-burgundy-200 hover:bg-cream-50/60"
@@ -704,7 +704,7 @@ export function WinesPage() {
                     <WineThumbnail
                       src={wine.primary_image}
                       name={wine.name}
-                      className="h-28 w-24 shrink-0 rounded-[22px]"
+                      className="h-28 w-24 shrink-0 rounded-lg"
                     />
 
                     <div className="min-w-0 flex-1">
@@ -796,7 +796,7 @@ export function WinesPage() {
                 <WineThumbnail
                   src={currentWineSummary.primary_image}
                   name={currentWineSummary.name}
-                  className="h-28 w-24 rounded-[22px]"
+                  className="h-28 w-24 rounded-lg"
                 />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap gap-2">
@@ -830,7 +830,7 @@ export function WinesPage() {
               <BackofficeSectionHeading
                 eyebrow="Nueva etiqueta"
                 title="Empezá por identidad y pricing"
-                description="Cargá nombre, SKU, categoría y precio. Después completá perfil sensorial, narrativa, imágenes y SEO con más contexto."
+                description="Nombre, SKU, categoría y precio base."
               />
             </BackofficeSectionCard>
           )}
@@ -941,7 +941,7 @@ export function WinesPage() {
               <BackofficeSectionHeading
                 eyebrow="Perfil sensorial"
                 title="Servicio, crianza y estructura"
-                description="Acá vive la parte técnica del vino. La reorganicé para que cada dato tenga contexto y no compita por atención."
+                description="Servicio, crianza, alcohol, acidez y estructura."
               />
 
               <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
@@ -986,7 +986,7 @@ export function WinesPage() {
               <BackofficeSectionHeading
                 eyebrow="Narrativa"
                 title="Contenido editorial de la ficha"
-                description="Separé descripción, cata, maridajes y notas de enólogo para que cada bloque tenga una intención clara."
+                description="Descripción, cata, maridajes y nota de enólogo."
               />
 
               <div className="mt-6 grid gap-5 xl:grid-cols-2">
@@ -1055,7 +1055,7 @@ export function WinesPage() {
                 <BackofficeSectionHeading
                   eyebrow="Imágenes"
                   title="Galería del vino"
-                  description="Cada imagen tiene ahora una lectura más clara: preview, URL, alt text y control de principal."
+                  description="Preview, URL, alt text y control de principal."
                 />
                 <Button type="button" variant="ghost" onClick={addImage}>
                   Agregar imagen
@@ -1066,13 +1066,13 @@ export function WinesPage() {
                 {formState.images.map((image, index) => (
                   <div
                     key={`image-${index}`}
-                    className="rounded-[24px] border border-burgundy-100 bg-white p-4 md:p-5"
+                    className="rounded-lg border border-burgundy-100 bg-white p-4 md:p-5"
                   >
                     <div className="grid gap-5 lg:grid-cols-[124px_1fr]">
                       <WineThumbnail
                         src={image.url}
                         name={image.alt_text || formState.name || `Imagen ${index + 1}`}
-                        className="h-36 w-full rounded-[22px]"
+                        className="h-36 w-full rounded-lg"
                       />
 
                       <div className="space-y-5">
@@ -1132,7 +1132,7 @@ export function WinesPage() {
               <BackofficeSectionHeading
                 eyebrow="SEO"
                 title="Metadata de descubrimiento"
-                description="Dejé el cierre del formulario para meta title y meta description, así el flujo termina con visibilidad y posicionamiento."
+                description="Meta title, descripción y estado de publicación."
               />
 
               <div className="mt-6 grid gap-5 xl:grid-cols-2">

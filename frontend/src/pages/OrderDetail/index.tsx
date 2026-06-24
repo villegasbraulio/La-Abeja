@@ -65,7 +65,7 @@ export function OrderDetailPage() {
   if (!accessToken && !guestAccessToken) {
     return (
       <section className="mx-auto max-w-4xl px-6 py-16">
-        <div className="rounded-[32px] border border-burgundy-100 bg-white p-10 shadow-velvet">
+        <div className="rounded-lg border border-burgundy-100 bg-white p-10 shadow-velvet">
           <h1 className="font-serif text-4xl text-burgundy-950">Necesitás iniciar sesión.</h1>
           <p className="mt-4 text-burgundy-800">
             Ingresá desde checkout o desde el enlace de seguimiento para consultar tu pedido.
@@ -85,7 +85,7 @@ export function OrderDetailPage() {
   if (isError || !data) {
     return (
       <section className="mx-auto max-w-4xl px-6 py-16">
-        <div className="rounded-[32px] border border-burgundy-100 bg-white p-10 shadow-velvet">
+        <div className="rounded-lg border border-burgundy-100 bg-white p-10 shadow-velvet">
           <h1 className="font-serif text-4xl text-burgundy-950">No encontramos este pedido.</h1>
           <Link to="/pedidos" className="mt-8 inline-flex">
             <Button>Volver al historial</Button>
@@ -116,7 +116,7 @@ export function OrderDetailPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-burgundy-500">
             Pedido
           </p>
-          <h1 className="mt-2 font-serif text-5xl text-burgundy-950">{data.order_number}</h1>
+          <h1 className="mt-2 font-serif text-3xl text-burgundy-950 sm:text-4xl">{data.order_number}</h1>
           <p className="mt-3 text-burgundy-700">
             {data.status_label} · creado el {formatDate(data.created_at)}
           </p>
@@ -138,13 +138,13 @@ export function OrderDetailPage() {
           {data.items.map((item) => (
             <article
               key={item.id}
-              className="grid gap-4 rounded-[28px] border border-burgundy-100 bg-white p-5 shadow-velvet sm:grid-cols-[140px_1fr]"
+              className="grid gap-4 rounded-lg border border-burgundy-100 bg-white p-5 shadow-velvet sm:grid-cols-[140px_1fr]"
             >
               <img
                 src={wineImageSrc(item.primary_image)}
                 alt={item.wine_name}
                 onError={applyWineImageFallback}
-                className="h-36 w-full rounded-[20px] object-cover"
+                className="h-36 w-full rounded-lg object-cover"
               />
               <div className="flex flex-col justify-between gap-4">
                 <div>
@@ -166,7 +166,7 @@ export function OrderDetailPage() {
         </div>
 
         <aside className="space-y-5">
-          <div className="rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+          <div className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-velvet">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
               Resumen
             </p>
@@ -185,7 +185,7 @@ export function OrderDetailPage() {
               </div>
             </div>
             {data.payment ? (
-              <div className="mt-6 rounded-[22px] border border-burgundy-100 bg-cream-50 p-4 text-sm text-burgundy-800">
+              <div className="mt-6 rounded-lg border border-burgundy-100 bg-cream-50 p-4 text-sm text-burgundy-800">
                 <p className="font-semibold text-burgundy-950">Pago</p>
                 <p className="mt-2">Estado técnico: {data.payment.status}</p>
                 {data.payment.payment_method ? (
@@ -195,14 +195,14 @@ export function OrderDetailPage() {
             ) : null}
 
             {orderProgressMessage ? (
-              <div className="mt-6 rounded-[22px] border border-burgundy-100 bg-cream-50 p-4 text-sm text-burgundy-800">
+              <div className="mt-6 rounded-lg border border-burgundy-100 bg-cream-50 p-4 text-sm text-burgundy-800">
                 <p className="font-semibold text-burgundy-950">Próximo paso</p>
                 <p className="mt-2">{orderProgressMessage}</p>
               </div>
             ) : null}
 
             {data.tracking_number ? (
-              <div className="mt-6 rounded-[22px] border border-burgundy-100 bg-cream-50 p-4 text-sm text-burgundy-800">
+              <div className="mt-6 rounded-lg border border-burgundy-100 bg-cream-50 p-4 text-sm text-burgundy-800">
                 <p className="font-semibold text-burgundy-950">Seguimiento</p>
                 <p className="mt-2">Código: {data.tracking_number}</p>
                 {data.tracking_url ? (
@@ -244,7 +244,7 @@ export function OrderDetailPage() {
             ) : null}
           </div>
 
-          <div className="rounded-[32px] border border-white/70 bg-burgundy-950 p-6 text-cream-50 shadow-velvet">
+          <div className="rounded-lg border border-white/70 bg-burgundy-950 p-6 text-cream-50 shadow-velvet">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-gold-300">
               Entrega
             </p>

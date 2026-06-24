@@ -85,20 +85,14 @@ export function BackofficeSalesMetricsPage() {
   );
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+    <div className="space-y-6">
+      <section className="rounded-lg border border-burgundy-100 bg-white p-5 shadow-[0_16px_48px_rgba(66,13,21,0.07)] md:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-burgundy-500">
               Rendimiento comercial
             </p>
-            <h3 className="mt-3 font-serif text-4xl text-burgundy-950">
-              Métricas y estadísticas de ventas
-            </h3>
-            <p className="mt-4 max-w-3xl text-burgundy-700">
-              Facturación, botellas, clientes, productos, rentabilidad, conversión e incidencias
-              reunidas en una sola vista.
-            </p>
+            <h1 className="mt-1.5 text-2xl font-semibold text-burgundy-950">Métricas</h1>
           </div>
           <label className="grid min-w-64 gap-2 text-sm font-semibold text-burgundy-900">
             Período analizado
@@ -119,7 +113,7 @@ export function BackofficeSalesMetricsPage() {
 
       {metricsQuery.isLoading ? <p className="text-burgundy-700">Calculando métricas...</p> : null}
       {metricsQuery.isError ? (
-        <div className="rounded-[28px] border border-burgundy-200 bg-white p-6 text-burgundy-900 shadow-velvet">
+        <div className="rounded-lg border border-burgundy-200 bg-white p-6 text-burgundy-900 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
           No pudimos calcular las métricas para este período.
         </div>
       ) : null}
@@ -135,23 +129,23 @@ export function BackofficeSalesMetricsPage() {
             ].map((card) => (
               <article
                 key={card.label}
-                className="rounded-[28px] border border-burgundy-100 bg-white p-6 shadow-velvet"
+                className="rounded-lg border border-burgundy-100 bg-white p-5 shadow-[0_16px_48px_rgba(66,13,21,0.07)]"
               >
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
                   {card.label}
                 </p>
-                <p className="mt-4 font-serif text-4xl text-burgundy-950">{card.value}</p>
+                <p className="mt-3 text-3xl font-semibold text-burgundy-950">{card.value}</p>
               </article>
             ))}
           </section>
 
-          <section className="rounded-[30px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+          <section className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-burgundy-500">
                   Evolución
                 </p>
-                <h4 className="mt-2 font-serif text-3xl text-burgundy-950">Ventas por período</h4>
+                <h4 className="mt-2 text-xl font-semibold text-burgundy-950">Ventas por período</h4>
               </div>
               <p className="text-sm text-burgundy-600">
                 {formatDate(data.summary.start_at)} — {formatDate(data.summary.end_at)}
@@ -184,24 +178,24 @@ export function BackofficeSalesMetricsPage() {
           </section>
 
           <section className="grid gap-6 xl:grid-cols-2">
-            <article className="rounded-[30px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+            <article className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-burgundy-500">
                 Mix varietal
               </p>
-              <h4 className="mt-2 font-serif text-3xl text-burgundy-950">Botellas por varietal</h4>
+              <h4 className="mt-2 text-xl font-semibold text-burgundy-950">Botellas por varietal</h4>
               <BarList items={varietalBars} />
             </article>
-            <article className="rounded-[30px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+            <article className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-burgundy-500">
                 Productos destacados
               </p>
-              <h4 className="mt-2 font-serif text-3xl text-burgundy-950">Facturación por etiqueta</h4>
+              <h4 className="mt-2 text-xl font-semibold text-burgundy-950">Facturación por etiqueta</h4>
               <BarList items={productBars} />
             </article>
           </section>
 
           <section className="grid gap-6 xl:grid-cols-3">
-            <article className="rounded-[30px] border border-burgundy-100 bg-burgundy-950 p-6 text-cream-50 shadow-velvet">
+            <article className="rounded-lg border border-burgundy-100 bg-burgundy-950 p-6 text-cream-50 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gold-300">
                 Conversión
               </p>
@@ -220,11 +214,11 @@ export function BackofficeSalesMetricsPage() {
               </div>
             </article>
 
-            <article className="rounded-[30px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+            <article className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-burgundy-500">
                 Clientes
               </p>
-              <p className="mt-5 font-serif text-5xl text-burgundy-950">
+              <p className="mt-5 text-4xl font-semibold text-burgundy-950">
                 <Percentage value={data.repeat_customers.repeat_rate} />
               </p>
               <p className="mt-2 text-sm text-burgundy-700">tasa de recompra</p>
@@ -235,11 +229,11 @@ export function BackofficeSalesMetricsPage() {
               </div>
             </article>
 
-            <article className="rounded-[30px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+            <article className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-burgundy-500">
                 Incidencias
               </p>
-              <p className="mt-5 font-serif text-5xl text-burgundy-950">
+              <p className="mt-5 text-4xl font-semibold text-burgundy-950">
                 <Percentage value={data.incidents.incident_rate} />
               </p>
               <p className="mt-2 text-sm text-burgundy-700">tasa de incidencias</p>
@@ -253,7 +247,7 @@ export function BackofficeSalesMetricsPage() {
           </section>
 
           <section className="grid gap-6 xl:grid-cols-2">
-            <article className="rounded-[30px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+            <article className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-burgundy-500">
                 Canales de venta
               </p>
@@ -265,7 +259,7 @@ export function BackofficeSalesMetricsPage() {
                 }))}
               />
             </article>
-            <article className="rounded-[30px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+            <article className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
               <p className="text-sm font-semibold uppercase tracking-[0.2em] text-burgundy-500">
                 Margen estimado
               </p>

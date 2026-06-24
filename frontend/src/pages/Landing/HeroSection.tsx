@@ -52,7 +52,7 @@ export function HeroSection() {
           {estateFacts.map((fact) => (
             <div
               key={fact.label}
-              className="rounded-[28px] border border-burgundy-100 bg-white/80 p-5 shadow-velvet"
+              className="rounded-lg border border-burgundy-100 bg-white/80 p-5 shadow-velvet"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
                 {fact.label}
@@ -67,14 +67,14 @@ export function HeroSection() {
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.85, ease: "easeOut" }}
-        className="relative overflow-hidden rounded-[32px] border border-white/60 bg-hero-radial p-6 shadow-velvet"
+        className="relative overflow-hidden rounded-lg border border-white/60 bg-hero-radial p-6 shadow-velvet"
       >
         <img
           src="https://images.unsplash.com/photo-1569919659476-f0852f6834b7?auto=format&fit=crop&w=1400&q=80"
           alt="Viñedos de Bodega La Abeja"
-          className="h-[520px] w-full rounded-[26px] object-cover"
+          className="h-[520px] w-full rounded-lg object-cover"
         />
-        <div className="absolute bottom-12 left-12 max-w-sm rounded-[24px] bg-burgundy-950/88 p-6 text-cream-50">
+        <div className="absolute bottom-12 left-12 max-w-sm rounded-lg bg-burgundy-950/88 p-6 text-cream-50">
           <p className="text-sm uppercase tracking-[0.22em] text-gold-300">Compra con acompanamiento</p>
           <p className="mt-3 text-lg leading-7">
             Etiquetas recomendadas, retiro en bodega, regalos y visitas coordinadas para que cada

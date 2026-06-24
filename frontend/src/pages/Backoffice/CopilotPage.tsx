@@ -252,19 +252,13 @@ export function BackofficeCopilotPage() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+      <section className="rounded-lg border border-burgundy-100 bg-white p-5 shadow-[0_16px_48px_rgba(66,13,21,0.07)] md:p-6">
+        <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-burgundy-500">
               Asistente de soporte y operaciones
             </p>
-            <h3 className="mt-3 font-serif text-4xl text-burgundy-950">
-              Copilot operativo para pedidos, ventas, tareas, knowledge y coordinación interna.
-            </h3>
-            <p className="mt-4 max-w-3xl text-burgundy-700">
-              Ahora puede guiar consultas internas, consultar métricas y dejar artefactos operativos
-              visibles para el equipo sin salir del backoffice.
-            </p>
+            <h1 className="mt-1.5 text-2xl font-semibold text-burgundy-950">Copilot operativo</h1>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:w-[560px]">
@@ -292,12 +286,12 @@ export function BackofficeCopilotPage() {
             ].map((card) => (
               <article
                 key={card.label}
-                className="rounded-[24px] border border-burgundy-100 bg-cream-50 px-5 py-4"
+                className="rounded-lg border border-burgundy-100 bg-cream-50 px-4 py-3"
               >
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-burgundy-500">
                   {card.label}
                 </p>
-                <p className="mt-3 font-serif text-4xl text-burgundy-950">{card.value}</p>
+                <p className="mt-2 text-2xl font-semibold text-burgundy-950">{card.value}</p>
               </article>
             ))}
           </div>
@@ -322,9 +316,9 @@ export function BackofficeCopilotPage() {
       </section>
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-      <section className="rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+      <section className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
         <div className="mt-8 space-y-4">
-          <div className="rounded-[24px] border border-burgundy-100 bg-white p-5">
+          <div className="rounded-lg border border-burgundy-100 bg-white p-5">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-burgundy-500">
@@ -337,7 +331,7 @@ export function BackofficeCopilotPage() {
             </div>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {quickActionCards.map((action) => (
-                <article key={action.title} className="rounded-[22px] border border-burgundy-100 bg-cream-50 p-4">
+                <article key={action.title} className="rounded-lg border border-burgundy-100 bg-cream-50 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
                     {action.mode === "send" ? "Ejecuta ahora" : "Usa prompt"}
                   </p>
@@ -355,7 +349,7 @@ export function BackofficeCopilotPage() {
             </div>
           </div>
 
-          <div className="rounded-[24px] border border-burgundy-100 bg-cream-50 p-5">
+          <div className="rounded-lg border border-burgundy-100 bg-cream-50 p-5">
             <div className="flex items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-burgundy-500">
@@ -382,7 +376,7 @@ export function BackofficeCopilotPage() {
 
           <div className="max-h-[560px] space-y-4 overflow-y-auto pr-2">
             {orderedTurns.length === 0 ? (
-              <div className="rounded-[24px] border border-dashed border-burgundy-200 bg-cream-50 p-6 text-burgundy-700">
+              <div className="rounded-lg border border-dashed border-burgundy-200 bg-cream-50 p-6 text-burgundy-700">
                 Probá con preguntas como:
                 <br />
                 “Mostrame el stock bajo”
@@ -402,7 +396,7 @@ export function BackofficeCopilotPage() {
             {orderedTurns.map((turn) => (
               <article
                 key={turn.id}
-                className={`rounded-[24px] border p-5 ${
+                className={`rounded-lg border p-5 ${
                   turn.role === "assistant"
                     ? "border-burgundy-100 bg-white"
                     : "border-transparent bg-burgundy-950 text-cream-50"
@@ -442,13 +436,13 @@ export function BackofficeCopilotPage() {
             ))}
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 rounded-[28px] border border-burgundy-100 bg-cream-50 p-5">
+          <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border border-burgundy-100 bg-cream-50 p-5">
             <label className="grid gap-2">
               <span className="text-sm font-semibold text-burgundy-900">Mensaje</span>
               <textarea
                 value={draft}
                 onChange={(event) => setDraft(event.target.value)}
-                className="min-h-32 rounded-[22px] border border-burgundy-200 bg-white px-4 py-3 text-burgundy-950 outline-none focus:border-burgundy-400"
+                className="min-h-32 rounded-lg border border-burgundy-200 bg-white px-4 py-3 text-burgundy-950 outline-none focus:border-burgundy-400"
                 placeholder="Escribí una consulta operativa o comercial..."
               />
             </label>
@@ -475,7 +469,7 @@ export function BackofficeCopilotPage() {
       </section>
 
       <aside className="space-y-6">
-        <section className="rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+        <section className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
             Estado actual
           </p>
@@ -495,12 +489,12 @@ export function BackofficeCopilotPage() {
           </div>
         </section>
 
-        <section className="rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+        <section className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
             Ultima accion
           </p>
           {blockedExecutions.length > 0 ? (
-            <div className="mt-5 rounded-[24px] border border-amber-200 bg-amber-50 p-5 text-sm text-burgundy-900">
+            <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-5 text-sm text-burgundy-900">
               <p className="font-semibold">Hay acciones esperando aprobacion humana.</p>
               <div className="mt-3 space-y-2">
                 {blockedExecutions.map((tool) => (
@@ -514,7 +508,7 @@ export function BackofficeCopilotPage() {
                 <p className="mt-4 text-sm text-burgundy-800">{inlineApprovalSummary}</p>
               ) : null}
               {inlineApprovalQuery.data ? (
-                <div className="mt-4 rounded-[20px] border border-amber-200 bg-white p-4">
+                <div className="mt-4 rounded-lg border border-amber-200 bg-white p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
                     Approval inline
                   </p>
@@ -531,7 +525,7 @@ export function BackofficeCopilotPage() {
                     {JSON.stringify(inlineApprovalQuery.data.action_payload, null, 2)}
                   </pre>
                   {inlinePostApprovalSuggestion ? (
-                    <div className="mt-4 rounded-[18px] border border-emerald-200 bg-emerald-50 p-4">
+                    <div className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-4">
                       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
                         Siguiente paso sugerido
                       </p>
@@ -595,7 +589,7 @@ export function BackofficeCopilotPage() {
           ) : writeExecutions.length > 0 ? (
             <div className="mt-5 space-y-3">
               {writeExecutions.map((tool) => (
-                <article key={tool.id} className="rounded-[20px] border border-burgundy-100 bg-cream-50 p-4">
+                <article key={tool.id} className="rounded-lg border border-burgundy-100 bg-cream-50 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
                     {tool.status}
                   </p>
@@ -620,7 +614,7 @@ export function BackofficeCopilotPage() {
           )}
         </section>
 
-        <section className="rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+        <section className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
             Tools usadas
           </p>
@@ -640,7 +634,7 @@ export function BackofficeCopilotPage() {
           </div>
         </section>
 
-        <section className="rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+        <section className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
               Tareas recientes
@@ -652,7 +646,7 @@ export function BackofficeCopilotPage() {
           <div className="mt-5 space-y-3">
             {overviewQuery.data?.recent_tasks.length ? (
               overviewQuery.data.recent_tasks.map((task) => (
-                <article key={task.id} className="rounded-[20px] border border-burgundy-100 bg-cream-50 p-4">
+                <article key={task.id} className="rounded-lg border border-burgundy-100 bg-cream-50 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
                     {task.task_type}
                   </p>
@@ -668,7 +662,7 @@ export function BackofficeCopilotPage() {
           </div>
         </section>
 
-        <section className="rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+        <section className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
               Reservas recientes
@@ -680,7 +674,7 @@ export function BackofficeCopilotPage() {
           <div className="mt-5 space-y-3">
             {overviewQuery.data?.recent_stock_reservations.length ? (
               overviewQuery.data.recent_stock_reservations.map((reservation) => (
-                <article key={reservation.id} className="rounded-[20px] border border-burgundy-100 bg-cream-50 p-4">
+                <article key={reservation.id} className="rounded-lg border border-burgundy-100 bg-cream-50 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
                     {reservation.status}
                   </p>
@@ -696,7 +690,7 @@ export function BackofficeCopilotPage() {
           </div>
         </section>
 
-        <section className="rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+        <section className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
               Aprobaciones pendientes
@@ -708,7 +702,7 @@ export function BackofficeCopilotPage() {
           <div className="mt-5 space-y-3">
             {overviewQuery.data?.pending_approvals.length ? (
               overviewQuery.data.pending_approvals.map((approval) => (
-                <article key={approval.id} className="rounded-[20px] border border-burgundy-100 bg-cream-50 p-4">
+                <article key={approval.id} className="rounded-lg border border-burgundy-100 bg-cream-50 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
                     {approval.workflow_type}
                   </p>
@@ -722,7 +716,7 @@ export function BackofficeCopilotPage() {
           </div>
         </section>
 
-        <section className="rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+        <section className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
               Cancelaciones pendientes
@@ -734,7 +728,7 @@ export function BackofficeCopilotPage() {
           <div className="mt-5 space-y-3">
             {overviewQuery.data?.pending_cancellation_approvals.length ? (
               overviewQuery.data.pending_cancellation_approvals.map((approval) => (
-                <article key={approval.id} className="rounded-[20px] border border-burgundy-100 bg-cream-50 p-4">
+                <article key={approval.id} className="rounded-lg border border-burgundy-100 bg-cream-50 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
                     {approval.status}
                   </p>
@@ -750,7 +744,7 @@ export function BackofficeCopilotPage() {
           </div>
         </section>
 
-        <section className="rounded-[32px] border border-white/70 bg-burgundy-950 p-6 text-cream-50 shadow-velvet">
+        <section className="rounded-lg border border-white/70 bg-burgundy-950 p-6 text-cream-50 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
           <p className="text-sm font-semibold uppercase tracking-[0.22em] text-gold-300">
             Alcance operativo
           </p>

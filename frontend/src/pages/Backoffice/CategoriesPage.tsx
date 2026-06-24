@@ -123,8 +123,8 @@ export function CategoriesPage() {
     <div className="space-y-8">
       <BackofficeHero
         eyebrow="Arquitectura del catálogo"
-        title="Ordená las categorías con una vista más clara y consistente."
-        description="Esta pantalla ahora prioriza orden visual, contexto y edición rápida para mantener la navegación del shop prolija sin perder detalle operativo."
+        title="Categorías"
+        description="Nombres, slugs, íconos y orden del shop."
         actions={
           <Button variant="ghost" onClick={resetEditor}>
             Nueva categoría
@@ -163,7 +163,7 @@ export function CategoriesPage() {
                   key={category.id}
                   type="button"
                   onClick={() => setSelectedCategory(category)}
-                  className={`w-full rounded-[26px] border p-5 text-left transition ${
+                  className={`w-full rounded-lg border p-5 text-left transition ${
                     isSelected
                       ? "border-burgundy-900 bg-burgundy-950 text-cream-50 shadow-velvet"
                       : "border-burgundy-100 bg-cream-50/70 text-burgundy-950 hover:border-burgundy-200 hover:bg-white"
@@ -204,7 +204,7 @@ export function CategoriesPage() {
           <BackofficePanelHeader
             eyebrow="Editor"
             title={selectedCategory ? "Refinar categoría" : "Crear nueva categoría"}
-            description="Ajustá naming, slug, ícono y descripción dentro de un formulario más alineado y fácil de escanear."
+            description="Nombre, slug, ícono, descripción y estado visible."
           />
 
           <form className="mt-6 space-y-6" onSubmit={handleSubmit}>

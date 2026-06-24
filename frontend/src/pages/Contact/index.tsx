@@ -33,7 +33,7 @@ export function ContactPage() {
         aside={
           <div className="space-y-4">
             {contactChannels.map((channel) => (
-              <div key={channel.label} className="rounded-[24px] bg-cream-50 p-4 text-burgundy-900">
+              <div key={channel.label} className="rounded-lg bg-cream-50 p-4 text-burgundy-900">
                 <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
                   {channel.label}
                 </p>
@@ -47,7 +47,7 @@ export function ContactPage() {
 
       <section className="mx-auto max-w-7xl px-6 py-8">
         <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
+          <div className="rounded-lg border border-burgundy-100 bg-white p-8 shadow-velvet">
             <SectionHeading
               eyebrow="Formulario de contacto"
               title="Contanos que necesitas y te ayudamos a resolverlo."
@@ -103,7 +103,7 @@ export function ContactPage() {
               <label className="grid gap-2">
                 <span className="text-sm font-semibold text-burgundy-800">Mensaje</span>
                 <textarea
-                  className="min-h-36 rounded-[24px] border border-burgundy-200 bg-cream-50 px-4 py-3 text-burgundy-950 outline-none focus:border-burgundy-400"
+                  className="min-h-36 rounded-lg border border-burgundy-200 bg-cream-50 px-4 py-3 text-burgundy-950 outline-none focus:border-burgundy-400"
                   name="message"
                   placeholder="Contanos que necesitas: visita, regalo, compra o evento."
                   required
@@ -121,7 +121,7 @@ export function ContactPage() {
             </form>
           </div>
 
-          <div className="rounded-[32px] border border-white/70 bg-burgundy-950 p-8 text-cream-50 shadow-velvet">
+          <div className="rounded-lg border border-white/70 bg-burgundy-950 p-8 text-cream-50 shadow-velvet">
             <SectionHeading
               eyebrow="Atencion personalizada"
               title="Regalos, eventos y compras de volumen necesitan una conversacion propia."

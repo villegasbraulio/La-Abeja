@@ -15,7 +15,7 @@ export function AboutPage() {
           <img
             src="https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?auto=format&fit=crop&w=1200&q=80"
             alt="Barricas y cava de la bodega"
-            className="h-[320px] w-full rounded-[24px] object-cover"
+            className="h-[320px] w-full rounded-lg object-cover"
           />
         }
       >
@@ -32,7 +32,7 @@ export function AboutPage() {
           {aboutPillars.map((pillar) => (
             <article
               key={pillar.title}
-              className="rounded-[30px] border border-burgundy-100 bg-white p-6 shadow-velvet"
+              className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-velvet"
             >
               <h2 className="font-serif text-3xl text-burgundy-950">{pillar.title}</h2>
               <p className="mt-4 leading-7 text-burgundy-800">{pillar.description}</p>
@@ -42,14 +42,14 @@ export function AboutPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-20">
-        <div className="rounded-[36px] border border-burgundy-100 bg-white px-8 py-10 shadow-velvet md:px-10">
+        <div className="rounded-lg border border-burgundy-100 bg-white px-8 py-10 shadow-velvet md:px-10">
           <SectionHeading
             eyebrow="Linea de tiempo"
             title="Una cronologia breve para entender como se fue formando la identidad de la bodega."
           />
           <div className="mt-10 grid gap-6 lg:grid-cols-3">
             {storyMilestones.map((item) => (
-              <article key={item.year} className="rounded-[28px] border border-burgundy-100 bg-cream-50 p-6">
+              <article key={item.year} className="rounded-lg border border-burgundy-100 bg-cream-50 p-6">
                 <p className="text-sm font-semibold uppercase tracking-[0.18em] text-burgundy-500">
                   {item.year}
                 </p>

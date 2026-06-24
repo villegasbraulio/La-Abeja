@@ -39,7 +39,7 @@ export default {
         sans: ["Manrope", "system-ui", "sans-serif"]
       },
       boxShadow: {
-        velvet: "0 24px 80px rgba(66, 13, 21, 0.16)"
+        velvet: "0 16px 48px rgba(66, 13, 21, 0.08)"
       },
       backgroundImage: {
         "hero-radial":

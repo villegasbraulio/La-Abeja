@@ -251,7 +251,7 @@ function VisitImage({ src, alt }: { src?: string | null; alt: string }) {
       src={resolved}
       alt={alt}
       onError={applyWineImageFallback}
-      className="h-24 w-24 rounded-[22px] object-cover"
+      className="h-24 w-24 rounded-lg object-cover"
     />
   );
 }
@@ -658,15 +658,11 @@ export function BackofficeVisitsPage() {
     <div className="space-y-8">
       <BackofficeHero
         eyebrow="Visitas y eventos"
-        title={
-          activeTab === "visitas"
-            ? "Separá la experiencia comercial de la operación diaria."
-            : "Seguimiento claro de reservas, pagos y check-ins."
-        }
+        title={activeTab === "visitas" ? "Experiencias" : "Reservas"}
         description={
           activeTab === "visitas"
-            ? "Esta pestaña concentra la propuesta de cada visita y su agenda publicada, así el equipo puede editar sin mezclarla con reservas reales."
-            : "Esta pestaña muestra únicamente reservas reales para revisar estados, invitados y recordatorios sin distraerse con la configuración de las experiencias."
+            ? "Propuesta comercial, cupos, agenda publicada y estado visible."
+            : "Estados, invitados, pagos, check-ins y recordatorios."
         }
         actions={
           activeTab === "visitas" ? (
@@ -680,7 +676,7 @@ export function BackofficeVisitsPage() {
         stats={activeTab === "visitas" ? experienceStats : bookingStats}
       />
 
-      <section className="rounded-[30px] border border-burgundy-100 bg-white p-3 shadow-velvet">
+      <section className="rounded-lg border border-burgundy-100 bg-white p-3 shadow-velvet">
         <div className="grid gap-3 lg:grid-cols-2">
           {visitWorkspaceTabs.map((tab) => {
             const isActive = activeTab === tab.value;
@@ -691,7 +687,7 @@ export function BackofficeVisitsPage() {
                 type="button"
                 onClick={() => setActiveTab(tab.value)}
                 className={cn(
-                  "rounded-[24px] border px-5 py-5 text-left transition",
+                  "rounded-lg border px-5 py-5 text-left transition",
                   isActive
                     ? "border-burgundy-900 bg-burgundy-950 text-cream-50 shadow-velvet"
                     : "border-burgundy-100 bg-cream-50/80 text-burgundy-950 hover:border-burgundy-300 hover:bg-white",
@@ -732,7 +728,7 @@ export function BackofficeVisitsPage() {
                     type="button"
                     onClick={() => selectExperience(experience)}
                     className={cn(
-                      "w-full rounded-[28px] border p-5 text-left shadow-velvet transition",
+                      "w-full rounded-lg border p-5 text-left shadow-velvet transition",
                       selectedExperienceId === experience.id
                         ? "border-burgundy-900 bg-burgundy-950 text-cream-50"
                         : "border-burgundy-100 bg-white text-burgundy-950",
@@ -911,7 +907,7 @@ export function BackofficeVisitsPage() {
                   <div className="grid gap-3 md:grid-cols-2">
                     <label
                       className={cn(
-                        "flex cursor-pointer items-start gap-3 rounded-[24px] border px-4 py-4 transition",
+                        "flex cursor-pointer items-start gap-3 rounded-lg border px-4 py-4 transition",
                         experienceForm.is_active
                           ? "border-burgundy-300 bg-white text-burgundy-950"
                           : "border-burgundy-100 bg-cream-50 text-burgundy-900",
@@ -932,7 +928,7 @@ export function BackofficeVisitsPage() {
                     </label>
                     <label
                       className={cn(
-                        "flex cursor-pointer items-start gap-3 rounded-[24px] border px-4 py-4 transition",
+                        "flex cursor-pointer items-start gap-3 rounded-lg border px-4 py-4 transition",
                         experienceForm.is_featured
                           ? "border-burgundy-300 bg-white text-burgundy-950"
                           : "border-burgundy-100 bg-cream-50 text-burgundy-900",
@@ -974,7 +970,7 @@ export function BackofficeVisitsPage() {
             <BackofficePanelHeader
               eyebrow="Turnos"
               title="Agenda de la experiencia"
-              description="Definí fechas, horarios, capacidad máxima y bloqueos operativos sin salir del backoffice."
+              description="Fechas, horarios, capacidad máxima y bloqueos operativos."
               actions={
                 <Button onClick={createNewSlot} disabled={!selectedExperienceId}>
                   Nuevo turno
@@ -994,7 +990,7 @@ export function BackofficeVisitsPage() {
                       type="button"
                       onClick={() => selectSlot(slot)}
                       className={cn(
-                        "w-full rounded-[24px] border p-5 text-left transition",
+                        "w-full rounded-lg border p-5 text-left transition",
                         selectedSlotId === slot.id
                           ? "border-burgundy-900 bg-burgundy-950 text-cream-50"
                           : "border-burgundy-100 bg-cream-50 text-burgundy-900",
@@ -1101,7 +1097,7 @@ export function BackofficeVisitsPage() {
 
                     <label
                       className={cn(
-                        "flex cursor-pointer items-start gap-3 rounded-[24px] border px-4 py-4 transition",
+                        "flex cursor-pointer items-start gap-3 rounded-lg border px-4 py-4 transition",
                         slotForm.is_blocked
                           ? "border-burgundy-300 bg-burgundy-950 text-cream-50"
                           : "border-burgundy-100 bg-cream-50 text-burgundy-900",
@@ -1161,7 +1157,7 @@ export function BackofficeVisitsPage() {
           <BackofficePanelHeader
             eyebrow="Reservas"
             title="Seguimiento operativo de visitas"
-            description="Acá viven solamente las reservas reales, con filtros propios y detalle de check-in."
+            description="Filtros por experiencia, estado, cliente y confirmación."
           />
 
           <div className="mt-6 grid gap-4 xl:grid-cols-[1.1fr_1fr_240px]">
@@ -1205,7 +1201,7 @@ export function BackofficeVisitsPage() {
               <BackofficeSectionHeading
                 eyebrow="Contexto"
                 title={activeExperienceFilterName}
-                description="Cuando filtrás por visita, la lista de la derecha queda enfocada en ese flujo operativo."
+                description="La lista queda enfocada en esa experiencia."
               />
               <div className="mt-4 flex flex-wrap gap-3">
                 <BackofficeBadge tone="soft">{bookings.length} reservas visibles</BackofficeBadge>
@@ -1221,8 +1217,8 @@ export function BackofficeVisitsPage() {
             <BackofficeSectionCard>
               <BackofficeSectionHeading
                 eyebrow="Uso rápido"
-                title="Una pestaña pensada para operación"
-                description="No mezcla campos de la experiencia con eventos reales, así el equipo puede revisar reservas sin ruido."
+                title="Operación diaria"
+                description="Estados y búsqueda para ubicar reservas pendientes, pagadas o canceladas."
               />
             </BackofficeSectionCard>
           </div>
@@ -1240,7 +1236,7 @@ export function BackofficeVisitsPage() {
                     type="button"
                     onClick={() => selectBooking(booking)}
                     className={cn(
-                      "w-full rounded-[28px] border p-5 text-left shadow-velvet transition",
+                      "w-full rounded-lg border p-5 text-left shadow-velvet transition",
                       selectedBookingId === booking.id
                         ? "border-burgundy-900 bg-burgundy-950 text-cream-50"
                         : "border-burgundy-100 bg-white text-burgundy-950",
@@ -1290,7 +1286,7 @@ export function BackofficeVisitsPage() {
 
               {selectedBooking ? (
                 <div className="mt-6 space-y-6">
-                  <div className="rounded-[24px] border border-burgundy-100 bg-cream-50 p-5">
+                  <div className="rounded-lg border border-burgundy-100 bg-cream-50 p-5">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-burgundy-500">

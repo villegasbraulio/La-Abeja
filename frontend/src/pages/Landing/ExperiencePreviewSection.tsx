@@ -16,7 +16,7 @@ export function ExperiencePreviewSection() {
           {featuredExperiences.map((experience) => (
             <article
               key={experience.title}
-              className="rounded-[30px] border border-burgundy-100 bg-white p-6 shadow-velvet"
+              className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-velvet"
             >
               <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                 <div>

@@ -68,7 +68,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
         {items.length === 0 ? (
           <div className="flex flex-1 flex-col justify-between px-6 py-6">
-            <div className="rounded-[28px] border border-white/10 bg-white/5 p-6">
+            <div className="rounded-lg border border-white/10 bg-white/5 p-6">
               <p className="text-sm leading-7 text-cream-100/80">
                 Agrega algunas etiquetas para ver aca una previa con subtotal, acceso rapido al
                 carrito y proximos pasos.
@@ -95,14 +95,14 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               {previewItems.map((item) => (
                 <article
                   key={item.wineId}
-                  className="rounded-[28px] border border-white/10 bg-white/5 p-4"
+                  className="rounded-lg border border-white/10 bg-white/5 p-4"
                 >
                   <div className="flex gap-4">
                     <img
                       src={wineImageSrc(item.primaryImage)}
                       alt={item.name}
                       onError={applyWineImageFallback}
-                      className="h-24 w-20 rounded-[18px] object-cover"
+                      className="h-24 w-20 rounded-lg object-cover"
                     />
                     <div className="min-w-0 flex-1">
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-300/75">
@@ -130,7 +130,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
               ))}
 
               {hiddenItemsCount > 0 ? (
-                <div className="rounded-[24px] border border-dashed border-white/15 bg-white/5 px-4 py-4 text-sm text-cream-100/75">
+                <div className="rounded-lg border border-dashed border-white/15 bg-white/5 px-4 py-4 text-sm text-cream-100/75">
                   Hay {hiddenItemsCount} producto{hiddenItemsCount === 1 ? "" : "s"} mas en el
                   carrito completo.
                 </div>

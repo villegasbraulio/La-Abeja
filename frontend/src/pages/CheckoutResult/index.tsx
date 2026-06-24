@@ -102,15 +102,15 @@ export function CheckoutResultPage() {
 
   return (
     <section className="mx-auto max-w-5xl px-6 py-16">
-      <div className="rounded-[32px] border border-burgundy-100 bg-white p-10 shadow-velvet">
+      <div className="rounded-lg border border-burgundy-100 bg-white p-10 shadow-velvet">
         <p className="text-sm font-semibold uppercase tracking-[0.24em] text-burgundy-500">
           Resultado del checkout
         </p>
-        <h1 className="mt-3 font-serif text-5xl text-burgundy-950">{title}</h1>
+        <h1 className="mt-3 font-serif text-3xl text-burgundy-950 sm:text-4xl">{title}</h1>
         <p className="mt-4 max-w-3xl text-burgundy-800">{description}</p>
 
         {data ? (
-          <div className="mt-8 grid gap-4 rounded-[24px] border border-burgundy-100 bg-cream-50 p-6 md:grid-cols-3">
+          <div className="mt-8 grid gap-4 rounded-lg border border-burgundy-100 bg-cream-50 p-6 md:grid-cols-3">
             <div>
               <p className="text-xs uppercase tracking-[0.16em] text-burgundy-500">Pedido</p>
               <p className="mt-2 text-lg font-semibold text-burgundy-950">{data.order_number}</p>
@@ -133,7 +133,7 @@ export function CheckoutResultPage() {
               data.shipping_method,
               Boolean(data.tracking_number),
             ) ? (
-              <div className="rounded-[24px] border border-burgundy-100 bg-white p-6 text-sm text-burgundy-800">
+              <div className="rounded-lg border border-burgundy-100 bg-white p-6 text-sm text-burgundy-800">
                 <p className="font-semibold text-burgundy-950">Próximo paso</p>
                 <p className="mt-2">
                   {buildPostPaymentNote(
@@ -148,7 +148,7 @@ export function CheckoutResultPage() {
         ) : null}
 
         {paymentId || merchantOrderId || preferenceId || externalReference ? (
-          <div className="mt-6 grid gap-4 rounded-[24px] border border-burgundy-100 bg-cream-50 p-6 md:grid-cols-2">
+          <div className="mt-6 grid gap-4 rounded-lg border border-burgundy-100 bg-cream-50 p-6 md:grid-cols-2">
             {paymentId ? (
               <div>
                 <p className="text-xs uppercase tracking-[0.16em] text-burgundy-500">

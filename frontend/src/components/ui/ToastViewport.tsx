@@ -51,7 +51,7 @@ function ToastCard({ toast }: { toast: Toast }) {
       exit={{ opacity: 0, y: -12, scale: 0.94 }}
       transition={{ duration: 0.22, ease: "easeOut" }}
       className={cn(
-        "pointer-events-auto relative overflow-hidden rounded-[26px] border px-4 py-4 shadow-[0_24px_65px_-34px_rgba(31,27,24,0.45)] backdrop-blur-xl",
+        "pointer-events-auto relative overflow-hidden rounded-lg border px-4 py-4 shadow-[0_24px_65px_-34px_rgba(31,27,24,0.45)] backdrop-blur-xl",
         styles.container,
       )}
       role="status"

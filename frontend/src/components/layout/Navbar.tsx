@@ -182,7 +182,7 @@ export function Navbar() {
 
         <div
           className={cn(
-            "absolute inset-x-4 top-[calc(100%+0.75rem)] z-50 origin-top rounded-[32px] border border-white/70 bg-[linear-gradient(180deg,rgba(255,249,242,0.97)_0%,rgba(248,241,232,0.98)_100%)] p-5 shadow-[0_28px_70px_-35px_rgba(79,18,31,0.45)] transition-all duration-300 ease-out md:hidden",
+            "absolute inset-x-4 top-[calc(100%+0.75rem)] z-50 origin-top rounded-lg border border-white/70 bg-[linear-gradient(180deg,rgba(255,249,242,0.97)_0%,rgba(248,241,232,0.98)_100%)] p-5 shadow-[0_28px_70px_-35px_rgba(79,18,31,0.45)] transition-all duration-300 ease-out md:hidden",
             isMenuOpen
               ? "visible translate-y-0 scale-100 opacity-100"
               : "invisible -translate-y-3 scale-[0.98] opacity-0",
@@ -215,7 +215,7 @@ export function Navbar() {
                   to={link.href}
                   className={({ isActive }) =>
                     cn(
-                      "flex items-center justify-between rounded-[24px] border border-transparent bg-white/75 px-4 py-4 text-sm font-semibold text-burgundy-800 transition-all duration-300",
+                      "flex items-center justify-between rounded-lg border border-transparent bg-white/75 px-4 py-4 text-sm font-semibold text-burgundy-800 transition-all duration-300",
                       isActive && "border-burgundy-200 bg-white text-burgundy-950 shadow-velvet",
                     )
                   }
@@ -251,7 +251,7 @@ export function Navbar() {
                 to="/pedidos"
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center justify-between rounded-[24px] border border-transparent bg-white/75 px-4 py-4 text-sm font-semibold text-burgundy-800 transition-all duration-300",
+                    "flex items-center justify-between rounded-lg border border-transparent bg-white/75 px-4 py-4 text-sm font-semibold text-burgundy-800 transition-all duration-300",
                     isActive && "border-burgundy-200 bg-white text-burgundy-950 shadow-velvet",
                   )
                 }
@@ -270,7 +270,7 @@ export function Navbar() {
                 to="/backoffice"
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center justify-between rounded-[24px] border border-transparent bg-burgundy-900 px-4 py-4 text-sm font-semibold text-gold-300 transition-all duration-300",
+                    "flex items-center justify-between rounded-lg border border-transparent bg-burgundy-900 px-4 py-4 text-sm font-semibold text-gold-300 transition-all duration-300",
                     isActive && "shadow-velvet",
                   )
                 }
@@ -286,7 +286,7 @@ export function Navbar() {
             ) : null}
           </nav>
 
-          <div className="mt-4 rounded-[24px] bg-burgundy-950 px-5 py-5 text-cream-50">
+          <div className="mt-4 rounded-lg bg-burgundy-950 px-5 py-5 text-cream-50">
             <p className="text-xs font-semibold uppercase tracking-[0.22em] text-gold-300/80">
               Concierge
             </p>

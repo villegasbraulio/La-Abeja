@@ -52,7 +52,7 @@ export function ProductDetailPage() {
   if (isError || !data) {
     return (
       <section className="mx-auto max-w-4xl px-6 py-16">
-        <div className="rounded-[28px] border border-burgundy-100 bg-white p-8 shadow-velvet">
+        <div className="rounded-lg border border-burgundy-100 bg-white p-8 shadow-velvet">
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-burgundy-600">
             Ficha no disponible
           </p>
@@ -97,12 +97,12 @@ export function ProductDetailPage() {
       <section className="mx-auto max-w-7xl px-6 py-16">
         <div className="grid gap-10 lg:grid-cols-[1.02fr_0.98fr]">
           <div className="space-y-5">
-            <div className="overflow-hidden rounded-[32px] border border-white/70 bg-white p-4 shadow-velvet">
+            <div className="overflow-hidden rounded-lg border border-white/70 bg-white p-4 shadow-velvet">
               <img
                 src={selectedImage ?? wineImageSrc(gallery[0].url)}
                 alt={data.name}
                 onError={applyWineImageFallback}
-                className="h-full min-h-[560px] w-full rounded-[24px] object-cover"
+                className="h-full min-h-[560px] w-full rounded-lg object-cover"
               />
             </div>
 
@@ -111,14 +111,14 @@ export function ProductDetailPage() {
                 <button
                   key={image.id}
                   type="button"
-                  className="overflow-hidden rounded-[22px] border border-burgundy-100 bg-white p-2 shadow-velvet"
+                  className="overflow-hidden rounded-lg border border-burgundy-100 bg-white p-2 shadow-velvet"
                   onClick={() => setSelectedImage(wineImageSrc(image.url))}
                 >
                   <img
                     src={wineImageSrc(image.url)}
                     alt={image.alt_text}
                     onError={applyWineImageFallback}
-                    className="h-24 w-full rounded-[16px] object-cover"
+                    className="h-24 w-full rounded-lg object-cover"
                   />
                 </button>
               ))}
@@ -140,7 +140,7 @@ export function ProductDetailPage() {
               <StarRating rating={data.average_rating} count={data.review_count} />
             </div>
 
-            <div className="rounded-[28px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+            <div className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-velvet">
               <p className="text-sm uppercase tracking-[0.22em] text-burgundy-500">Precio</p>
               <div className="mt-2 flex items-end gap-3">
                 <p className="text-4xl font-bold text-burgundy-950">{formatARS(data.price)}</p>
@@ -152,9 +152,9 @@ export function ProductDetailPage() {
               </div>
               <p className="mt-4 text-burgundy-800">{data.description}</p>
               <div className="mt-6 grid gap-3 text-sm text-burgundy-700 md:grid-cols-3">
-                <div className="rounded-[20px] bg-cream-50 px-4 py-3">Retiro en bodega disponible</div>
-                <div className="rounded-[20px] bg-cream-50 px-4 py-3">Asistencia para regalos y cajas</div>
-                <div className="rounded-[20px] bg-cream-50 px-4 py-3">Concierge comercial de lunes a sabado</div>
+                <div className="rounded-lg bg-cream-50 px-4 py-3">Retiro en bodega disponible</div>
+                <div className="rounded-lg bg-cream-50 px-4 py-3">Asistencia para regalos y cajas</div>
+                <div className="rounded-lg bg-cream-50 px-4 py-3">Concierge comercial de lunes a sabado</div>
               </div>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Button
@@ -182,13 +182,13 @@ export function ProductDetailPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
-              <div className="rounded-[28px] border border-burgundy-100 bg-white p-6">
+              <div className="rounded-lg border border-burgundy-100 bg-white p-6">
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-burgundy-500">
                   Notas de cata
                 </p>
                 <p className="mt-3 leading-7 text-burgundy-900">{data.tasting_notes}</p>
               </div>
-              <div className="rounded-[28px] border border-burgundy-100 bg-white p-6">
+              <div className="rounded-lg border border-burgundy-100 bg-white p-6">
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-burgundy-500">
                   Maridajes
                 </p>
@@ -205,7 +205,7 @@ export function ProductDetailPage() {
               </div>
             </div>
 
-            <div className="rounded-[28px] border border-burgundy-100 bg-white p-6">
+            <div className="rounded-lg border border-burgundy-100 bg-white p-6">
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-burgundy-500">
                 Perfil de cata
               </p>
@@ -227,7 +227,7 @@ export function ProductDetailPage() {
               </div>
             </div>
 
-            <div className="rounded-[28px] border border-burgundy-100 bg-white p-6">
+            <div className="rounded-lg border border-burgundy-100 bg-white p-6">
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-burgundy-500">
                 Datos de servicio
               </p>
@@ -256,7 +256,7 @@ export function ProductDetailPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
-              <div className="rounded-[28px] border border-burgundy-100 bg-white p-6">
+              <div className="rounded-lg border border-burgundy-100 bg-white p-6">
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-burgundy-500">
                   Premios y menciones
                 </p>
@@ -273,7 +273,7 @@ export function ProductDetailPage() {
                 </div>
               </div>
 
-              <div className="rounded-[28px] border border-burgundy-100 bg-white p-6">
+              <div className="rounded-lg border border-burgundy-100 bg-white p-6">
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-burgundy-500">
                   Notas del enologo
                 </p>
@@ -289,7 +289,7 @@ export function ProductDetailPage() {
 
       <section className="mx-auto max-w-7xl px-6 py-8">
         <div className="grid gap-6 lg:grid-cols-[1fr_0.95fr]">
-          <div className="rounded-[30px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+          <div className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-velvet">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
               Reviews recientes
             </p>
@@ -298,7 +298,7 @@ export function ProductDetailPage() {
                 data.recent_reviews.map((review) => (
                   <article
                     key={review.id}
-                    className="rounded-[24px] border border-burgundy-100 bg-cream-50 p-5"
+                    className="rounded-lg border border-burgundy-100 bg-cream-50 p-5"
                   >
                     <div className="flex items-center justify-between gap-4">
                       <p className="font-semibold text-burgundy-950">{review.title}</p>
@@ -316,7 +316,7 @@ export function ProductDetailPage() {
             </div>
           </div>
 
-          <div className="rounded-[30px] border border-white/70 bg-burgundy-950 p-6 text-cream-50 shadow-velvet">
+          <div className="rounded-lg border border-white/70 bg-burgundy-950 p-6 text-cream-50 shadow-velvet">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-gold-300">
               Compra asistida
             </p>

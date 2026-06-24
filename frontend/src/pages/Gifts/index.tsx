@@ -13,13 +13,13 @@ export function GiftsPage() {
         description="Reunimos propuestas para empresas, aniversarios, eventos y agradecimientos con presentacion cuidada y asesoramiento personalizado."
         aside={
           <div className="space-y-4 text-burgundy-900">
-            <p className="rounded-[22px] bg-cream-50 px-5 py-4">
+            <p className="rounded-lg bg-cream-50 px-5 py-4">
               Cajas de 2, 3 y 6 vinos con presentacion premium.
             </p>
-            <p className="rounded-[22px] bg-cream-50 px-5 py-4">
+            <p className="rounded-lg bg-cream-50 px-5 py-4">
               Tarjetas personalizadas, coordinacion de entrega y asesoramiento humano.
             </p>
-            <p className="rounded-[22px] bg-cream-50 px-5 py-4">
+            <p className="rounded-lg bg-cream-50 px-5 py-4">
               Programas especiales para empresas, eventos y celebraciones.
             </p>
           </div>
@@ -38,7 +38,7 @@ export function GiftsPage() {
           {giftingCollections.map((collection) => (
             <article
               key={collection.title}
-              className="rounded-[30px] border border-burgundy-100 bg-white p-6 shadow-velvet"
+              className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-velvet"
             >
               <h2 className="font-serif text-3xl text-burgundy-950">{collection.title}</h2>
               <p className="mt-4 leading-7 text-burgundy-800">{collection.description}</p>
@@ -53,7 +53,7 @@ export function GiftsPage() {
       </section>
 
       <section className="mx-auto max-w-7xl px-6 py-20">
-        <div className="rounded-[36px] border border-white/70 bg-burgundy-950 px-8 py-10 text-cream-50 shadow-velvet">
+        <div className="rounded-lg border border-white/70 bg-burgundy-950 px-8 py-10 text-cream-50 shadow-velvet">
           <SectionHeading
             eyebrow="Gift Concierge"
             title="Un canal dedicado a regalos ayuda a elegir mejor y cuidar cada detalle."

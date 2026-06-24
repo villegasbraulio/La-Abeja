@@ -118,8 +118,8 @@ export function VarietalsPage() {
     <div className="space-y-8">
       <BackofficeHero
         eyebrow="Base enológica"
-        title="Curá varietales con mejor jerarquía visual y formularios más prolijos."
-        description="La gestión de varietales ahora mantiene el mismo tono del resto del backoffice: más aire, mejor lectura y una edición más clara de origen, descripción y estructura."
+        title="Varietales"
+        description="Origen, descripción y relación con etiquetas."
         actions={
           <Button variant="ghost" onClick={resetEditor}>
             Nuevo varietal
@@ -146,7 +146,7 @@ export function VarietalsPage() {
             {!isLoading && varietals.length === 0 ? (
               <BackofficeEmptyState
                 title="Todavía no hay varietales cargados."
-                description="Creá el primero para empezar a estructurar mejor el catálogo."
+                description="Creá el primero para estructurar el catálogo."
               />
             ) : null}
 
@@ -158,7 +158,7 @@ export function VarietalsPage() {
                   key={varietal.id}
                   type="button"
                   onClick={() => setSelectedVarietal(varietal)}
-                  className={`w-full rounded-[26px] border p-5 text-left transition ${
+                  className={`w-full rounded-lg border p-5 text-left transition ${
                     isSelected
                       ? "border-burgundy-900 bg-burgundy-950 text-cream-50 shadow-velvet"
                       : "border-burgundy-100 bg-cream-50/70 text-burgundy-950 hover:border-burgundy-200 hover:bg-white"
@@ -196,7 +196,7 @@ export function VarietalsPage() {
           <BackofficePanelHeader
             eyebrow="Editor"
             title={selectedVarietal ? "Refinar varietal" : "Crear nuevo varietal"}
-            description="Definí nombre, slug, región y descripción con un formulario mejor equilibrado y más fácil de usar."
+            description="Nombre, slug, región, descripción y estado visible."
           />
 
           <form className="mt-6 space-y-6" onSubmit={handleSubmit}>

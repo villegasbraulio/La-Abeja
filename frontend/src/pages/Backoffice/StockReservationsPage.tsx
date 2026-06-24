@@ -54,16 +54,14 @@ export function BackofficeStockReservationsPage() {
   }, [reservations, selectedReservationId]);
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+    <div className="space-y-6">
+      <section className="rounded-lg border border-burgundy-100 bg-white p-5 shadow-[0_16px_48px_rgba(66,13,21,0.07)] md:p-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-burgundy-500">
               Reservas de stock
             </p>
-            <h3 className="mt-3 font-serif text-4xl text-burgundy-950">
-              Vista operativa de stock reservado, liberaciones parciales y contexto por pedido.
-            </h3>
+            <h1 className="mt-1.5 text-2xl font-semibold text-burgundy-950">Stock reservado</h1>
           </div>
           <Link to="/backoffice/aprobaciones">
             <Button variant="secondary">Abrir aprobaciones</Button>
@@ -71,7 +69,7 @@ export function BackofficeStockReservationsPage() {
         </div>
       </section>
 
-      <section className="grid gap-4 rounded-[28px] border border-burgundy-100 bg-white p-5 shadow-velvet lg:grid-cols-[1fr_240px]">
+      <section className="grid gap-4 rounded-lg border border-burgundy-100 bg-white p-5 shadow-[0_16px_48px_rgba(66,13,21,0.07)] lg:grid-cols-[1fr_240px]">
         <label className="space-y-2 text-sm font-semibold text-burgundy-900">
           Buscar por SKU, vino, pedido, cliente o motivo
           <input
@@ -101,7 +99,7 @@ export function BackofficeStockReservationsPage() {
         <section className="space-y-4">
           {reservationsQuery.isLoading ? <p className="text-burgundy-700">Cargando reservas...</p> : null}
           {reservationsQuery.isError ? (
-            <div className="rounded-[24px] border border-burgundy-200 bg-white p-6 text-burgundy-800 shadow-velvet">
+            <div className="rounded-lg border border-burgundy-200 bg-white p-6 text-burgundy-800 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
               No pudimos cargar las reservas de stock por ahora.
             </div>
           ) : null}
@@ -110,7 +108,7 @@ export function BackofficeStockReservationsPage() {
               key={reservation.id}
               type="button"
               onClick={() => setSelectedReservationId(reservation.id)}
-              className={`w-full rounded-[28px] border p-5 text-left shadow-velvet transition ${
+              className={`w-full rounded-lg border p-5 text-left shadow-[0_16px_48px_rgba(66,13,21,0.07)] transition ${
                 selectedReservationId === reservation.id
                   ? "border-burgundy-900 bg-burgundy-950 text-cream-50"
                   : "border-burgundy-100 bg-white text-burgundy-950"
@@ -121,7 +119,7 @@ export function BackofficeStockReservationsPage() {
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-current/70">
                     {reservation.wine_sku}
                   </p>
-                  <h4 className="mt-2 font-serif text-2xl">{reservation.wine_name}</h4>
+                  <h4 className="mt-2 text-lg font-semibold">{reservation.wine_name}</h4>
                   <p className="mt-2 text-sm text-current/70">
                     {reservation.quantity} reservadas · {reservation.remaining_quantity} pendientes
                   </p>
@@ -134,13 +132,13 @@ export function BackofficeStockReservationsPage() {
             </button>
           ))}
           {!reservationsQuery.isLoading && reservations.length === 0 ? (
-            <div className="rounded-[24px] border border-burgundy-100 bg-white p-6 text-burgundy-800 shadow-velvet">
+            <div className="rounded-lg border border-burgundy-100 bg-white p-6 text-burgundy-800 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
               No encontramos reservas con esos filtros.
             </div>
           ) : null}
         </section>
 
-        <section className="rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+        <section className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
           {!selectedReservation ? (
             <p className="text-burgundy-700">Seleccioná una reserva para ver el detalle.</p>
           ) : null}
@@ -150,7 +148,7 @@ export function BackofficeStockReservationsPage() {
                 <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
                   {selectedReservation.wine_sku}
                 </p>
-                <h3 className="mt-2 font-serif text-4xl text-burgundy-950">
+                <h3 className="mt-2 text-2xl font-semibold text-burgundy-950">
                   {selectedReservation.wine_name}
                 </h3>
                 <p className="mt-3 text-sm text-burgundy-700">
@@ -160,7 +158,7 @@ export function BackofficeStockReservationsPage() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-[24px] border border-burgundy-100 bg-cream-50 p-5 text-sm text-burgundy-800">
+                <div className="rounded-lg border border-burgundy-100 bg-cream-50 p-5 text-sm text-burgundy-800">
                   <p className="font-semibold text-burgundy-950">Estado actual</p>
                   <div className="mt-3 space-y-1">
                     <p>Estado: {reservationStatusLabels[selectedReservation.status] ?? selectedReservation.status}</p>
@@ -169,7 +167,7 @@ export function BackofficeStockReservationsPage() {
                     <p>Pendientes: {selectedReservation.remaining_quantity}</p>
                   </div>
                 </div>
-                <div className="rounded-[24px] border border-burgundy-100 bg-cream-50 p-5 text-sm text-burgundy-800">
+                <div className="rounded-lg border border-burgundy-100 bg-cream-50 p-5 text-sm text-burgundy-800">
                   <p className="font-semibold text-burgundy-950">Workflow</p>
                   <div className="mt-3 space-y-1">
                     <p>Workflow: {selectedReservation.workflow_type || "sin workflow asociado"}</p>
@@ -182,7 +180,7 @@ export function BackofficeStockReservationsPage() {
                 </div>
               </div>
 
-              <div className="rounded-[24px] border border-burgundy-100 bg-white p-5">
+              <div className="rounded-lg border border-burgundy-100 bg-white p-5">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-burgundy-500">
                   Motivo
                 </p>

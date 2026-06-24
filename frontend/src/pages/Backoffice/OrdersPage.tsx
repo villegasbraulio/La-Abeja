@@ -51,17 +51,15 @@ export function BackofficeOrdersPage() {
   });
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
-        <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
+    <div className="space-y-6">
+      <section className="rounded-lg border border-burgundy-100 bg-white p-5 shadow-[0_16px_48px_rgba(66,13,21,0.07)] md:p-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-burgundy-500">
           Operación de pedidos
         </p>
-        <h3 className="mt-3 font-serif text-4xl text-burgundy-950">
-          Revisá ingresos, estado comercial y datos de entrega sin salir del backoffice.
-        </h3>
+        <h1 className="mt-1.5 text-2xl font-semibold text-burgundy-950">Pedidos</h1>
       </section>
 
-      <section className="grid gap-4 rounded-[28px] border border-burgundy-100 bg-white p-5 shadow-velvet lg:grid-cols-[1fr_240px]">
+      <section className="grid gap-4 rounded-lg border border-burgundy-100 bg-white p-5 shadow-[0_16px_48px_rgba(66,13,21,0.07)] lg:grid-cols-[1fr_240px]">
         <label className="space-y-2 text-sm font-semibold text-burgundy-900">
           Buscar por pedido o cliente
           <input
@@ -91,7 +89,7 @@ export function BackofficeOrdersPage() {
         <section className="space-y-4">
           {ordersQuery.isLoading ? <p className="text-burgundy-700">Cargando pedidos...</p> : null}
           {ordersQuery.isError ? (
-            <div className="rounded-[24px] border border-burgundy-200 bg-white p-6 text-burgundy-800 shadow-velvet">
+            <div className="rounded-lg border border-burgundy-200 bg-white p-6 text-burgundy-800 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
               No pudimos cargar la cola de pedidos por ahora.
             </div>
           ) : null}
@@ -100,7 +98,7 @@ export function BackofficeOrdersPage() {
               key={order.id}
               type="button"
               onClick={() => setSelectedOrderId(order.id)}
-              className={`w-full rounded-[28px] border p-5 text-left shadow-velvet transition ${
+              className={`w-full rounded-lg border p-5 text-left shadow-[0_16px_48px_rgba(66,13,21,0.07)] transition ${
                 selectedOrderId === order.id
                   ? "border-burgundy-900 bg-burgundy-950 text-cream-50"
                   : "border-burgundy-100 bg-white text-burgundy-950"
@@ -111,7 +109,7 @@ export function BackofficeOrdersPage() {
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-current/70">
                     {order.order_number}
                   </p>
-                  <h4 className="mt-2 font-serif text-2xl">{order.customer_name}</h4>
+                  <h4 className="mt-2 text-lg font-semibold">{order.customer_name}</h4>
                   <p className="mt-2 text-sm text-current/70">{order.customer_email}</p>
                 </div>
                 <div className="text-left lg:text-right">
@@ -127,19 +125,19 @@ export function BackofficeOrdersPage() {
             </button>
           ))}
           {!ordersQuery.isLoading && orders.length === 0 ? (
-            <div className="rounded-[24px] border border-burgundy-100 bg-white p-6 text-burgundy-800 shadow-velvet">
+            <div className="rounded-lg border border-burgundy-100 bg-white p-6 text-burgundy-800 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
               No encontramos pedidos con esos filtros.
             </div>
           ) : null}
         </section>
 
-        <section className="rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+        <section className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
           {!selectedOrderId ? (
             <p className="text-burgundy-700">Seleccioná un pedido para ver el detalle.</p>
           ) : null}
           {detailQuery.isLoading ? <p className="text-burgundy-700">Cargando detalle...</p> : null}
           {detailQuery.isError ? (
-            <div className="rounded-[24px] border border-burgundy-200 bg-cream-50 p-5 text-burgundy-800">
+            <div className="rounded-lg border border-burgundy-200 bg-cream-50 p-5 text-burgundy-800">
               No pudimos cargar el detalle del pedido seleccionado.
             </div>
           ) : null}
@@ -150,7 +148,7 @@ export function BackofficeOrdersPage() {
                   <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
                     {detailQuery.data.order_number}
                   </p>
-                  <h3 className="mt-2 font-serif text-4xl text-burgundy-950">
+                  <h3 className="mt-2 text-2xl font-semibold text-burgundy-950">
                     {detailQuery.data.customer_name}
                   </h3>
                   <p className="mt-3 text-sm text-burgundy-700">
@@ -163,7 +161,7 @@ export function BackofficeOrdersPage() {
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-[24px] border border-burgundy-100 bg-cream-50 p-5 text-sm text-burgundy-800">
+                <div className="rounded-lg border border-burgundy-100 bg-cream-50 p-5 text-sm text-burgundy-800">
                   <p className="font-semibold text-burgundy-950">Entrega</p>
                   <div className="mt-3 space-y-1">
                     <p>{detailQuery.data.shipping_address.recipient_name}</p>
@@ -177,7 +175,7 @@ export function BackofficeOrdersPage() {
                   </div>
                 </div>
 
-                <div className="rounded-[24px] border border-burgundy-100 bg-cream-50 p-5 text-sm text-burgundy-800">
+                <div className="rounded-lg border border-burgundy-100 bg-cream-50 p-5 text-sm text-burgundy-800">
                   <p className="font-semibold text-burgundy-950">Pago</p>
                   {detailQuery.data.payment ? (
                     <div className="mt-3 space-y-1">
@@ -198,7 +196,7 @@ export function BackofficeOrdersPage() {
                 {detailQuery.data.items.map((item) => (
                   <article
                     key={item.id}
-                    className="flex flex-col gap-4 rounded-[24px] border border-burgundy-100 bg-white p-4 md:flex-row md:items-center md:justify-between"
+                    className="flex flex-col gap-4 rounded-lg border border-burgundy-100 bg-white p-4 md:flex-row md:items-center md:justify-between"
                   >
                     <div className="flex items-center gap-4">
                       <img

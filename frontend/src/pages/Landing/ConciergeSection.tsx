@@ -11,7 +11,7 @@ export function ConciergeSection() {
           {hospitalityPromises.map((promise) => (
             <article
               key={promise.label}
-              className="rounded-[28px] border border-burgundy-100 bg-white p-6 shadow-velvet"
+              className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-velvet"
             >
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
                 {promise.label}
@@ -21,7 +21,7 @@ export function ConciergeSection() {
             </article>
           ))}
         </div>
-        <div className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
+        <div className="rounded-lg border border-burgundy-100 bg-white p-8 shadow-velvet">
           <SectionHeading
             eyebrow="Concierge"
             title="Envios, retiro, regalos y contacto resueltos con informacion clara."

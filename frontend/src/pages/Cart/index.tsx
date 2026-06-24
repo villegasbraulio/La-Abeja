@@ -10,11 +10,11 @@ export function CartPage() {
   if (items.length === 0) {
     return (
       <section className="mx-auto max-w-5xl px-6 py-16">
-        <div className="rounded-[32px] border border-burgundy-100 bg-white p-10 text-center shadow-velvet">
+        <div className="rounded-lg border border-burgundy-100 bg-white p-10 text-center shadow-velvet">
           <p className="text-sm font-semibold uppercase tracking-[0.28em] text-burgundy-500">
             Carrito
           </p>
-          <h1 className="mt-3 font-serif text-5xl text-burgundy-950">
+          <h1 className="mt-3 font-serif text-3xl text-burgundy-950 sm:text-4xl">
             Todavia no agregaste vinos.
           </h1>
           <p className="mt-4 text-burgundy-800">
@@ -35,7 +35,7 @@ export function CartPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-burgundy-600">
             Carrito
           </p>
-          <h1 className="mt-2 font-serif text-5xl text-burgundy-950">Tu seleccion</h1>
+          <h1 className="mt-2 font-serif text-3xl text-burgundy-950 sm:text-4xl">Tu seleccion</h1>
         </div>
         <Button variant="ghost" onClick={clearCart}>
           Vaciar carrito
@@ -47,13 +47,13 @@ export function CartPage() {
           {items.map((item) => (
             <article
               key={item.wineId}
-              className="grid gap-4 rounded-[28px] border border-burgundy-100 bg-white p-5 shadow-velvet sm:grid-cols-[140px_1fr]"
+              className="grid gap-4 rounded-lg border border-burgundy-100 bg-white p-5 shadow-velvet sm:grid-cols-[140px_1fr]"
             >
               <img
                 src={wineImageSrc(item.primaryImage)}
                 alt={item.name}
                 onError={applyWineImageFallback}
-                className="h-36 w-full rounded-[20px] object-cover"
+                className="h-36 w-full rounded-lg object-cover"
               />
               <div className="flex flex-col justify-between gap-4">
                 <div>
@@ -105,7 +105,7 @@ export function CartPage() {
         </div>
 
         <div className="space-y-5">
-          <aside className="h-fit rounded-[32px] border border-burgundy-100 bg-white p-6 shadow-velvet">
+          <aside className="h-fit rounded-lg border border-burgundy-100 bg-white p-6 shadow-velvet">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
               Resumen
             </p>
@@ -129,14 +129,14 @@ export function CartPage() {
             </div>
           </aside>
 
-          <aside className="rounded-[32px] border border-white/70 bg-burgundy-950 p-6 text-cream-50 shadow-velvet">
+          <aside className="rounded-lg border border-white/70 bg-burgundy-950 p-6 text-cream-50 shadow-[0_16px_48px_rgba(66,13,21,0.08)]">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-gold-300">
               Servicio
             </p>
             <div className="mt-5 space-y-4 text-sm leading-6 text-cream-100/80">
               <p>Retiro en bodega disponible con coordinacion.</p>
               <p>Asistencia para regalos, empresas y eventos privados.</p>
-              <p>Guia de compra, FAQ y contacto visibles para reducir friccion.</p>
+              <p>Guia de compra y contacto disponibles cuando el cliente los necesita.</p>
             </div>
             <div className="mt-6 flex flex-col gap-3">
               <Link to="/guia-de-compra">

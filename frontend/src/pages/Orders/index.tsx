@@ -18,11 +18,11 @@ export function OrdersPage() {
   if (!accessToken || !user) {
     return (
       <section className="mx-auto max-w-4xl px-6 py-16">
-        <div className="rounded-[32px] border border-burgundy-100 bg-white p-10 shadow-velvet">
+        <div className="rounded-lg border border-burgundy-100 bg-white p-10 shadow-velvet">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-burgundy-500">
             Pedidos
           </p>
-          <h1 className="mt-3 font-serif text-5xl text-burgundy-950">
+          <h1 className="mt-3 font-serif text-3xl text-burgundy-950 sm:text-4xl">
             Iniciá sesión desde checkout para ver tu historial.
           </h1>
           <p className="mt-4 text-burgundy-800">
@@ -42,14 +42,14 @@ export function OrdersPage() {
         <p className="text-sm font-semibold uppercase tracking-[0.24em] text-burgundy-500">
           Mis pedidos
         </p>
-        <h1 className="mt-2 font-serif text-5xl text-burgundy-950">
+        <h1 className="mt-2 font-serif text-3xl text-burgundy-950 sm:text-4xl">
           Historial de compra de {user.first_name}.
         </h1>
       </div>
 
       {isLoading ? <p className="text-burgundy-700">Cargando pedidos...</p> : null}
       {isError ? (
-        <div className="rounded-[24px] border border-burgundy-200 bg-white p-6 text-burgundy-800 shadow-velvet">
+        <div className="rounded-lg border border-burgundy-200 bg-white p-6 text-burgundy-800 shadow-velvet">
           No pudimos cargar el historial por ahora.
         </div>
       ) : null}
@@ -58,7 +58,7 @@ export function OrdersPage() {
         {(data?.results ?? []).map((order) => (
           <article
             key={order.id}
-            className="rounded-[28px] border border-burgundy-100 bg-white p-6 shadow-velvet"
+            className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-velvet"
           >
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>

@@ -20,7 +20,7 @@ export function NewsletterCard({
   }
 
   return (
-    <div className="rounded-[32px] border border-burgundy-100 bg-white p-8 shadow-velvet">
+    <div className="rounded-lg border border-burgundy-100 bg-white p-8 shadow-velvet">
       <p className="text-sm font-semibold uppercase tracking-[0.26em] text-burgundy-500">
         Newsletter
       </p>
