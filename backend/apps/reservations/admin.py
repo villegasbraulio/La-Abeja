@@ -5,7 +5,7 @@ from __future__ import annotations
 from django.contrib import admin
 from django.utils.html import format_html
 
-from .models import Booking, Experience, TimeSlot
+from .models import Booking, BookingManualRefund, BookingPayment, Experience, TimeSlot
 
 
 class TimeSlotInline(admin.TabularInline):
@@ -50,7 +50,10 @@ class ExperienceAdmin(admin.ModelAdmin):
         if not obj.cover_image:
             return "Sin imagen"
         return format_html(
-            '<img src="{}" alt="{}" style="width: 64px; height: 64px; object-fit: cover; border-radius: 14px;" />',
+            (
+                '<img src="{}" alt="{}" '
+                'style="width: 64px; height: 64px; object-fit: cover; border-radius: 14px;" />'
+            ),
             obj.cover_image,
             obj.name,
         )
@@ -108,3 +111,47 @@ class BookingAdmin(admin.ModelAdmin):
         """Return the date of the booked slot."""
         return str(obj.time_slot.date)
 
+
+@admin.register(BookingPayment)
+class BookingPaymentAdmin(admin.ModelAdmin):
+    """Admin for Mercado Pago visit payments."""
+
+    list_display = (
+        "booking",
+        "status",
+        "amount",
+        "currency",
+        "mp_payment_id",
+        "updated_at",
+    )
+    list_filter = ("status", "currency")
+    search_fields = (
+        "booking__confirmation_code",
+        "booking__customer_email",
+        "mp_preference_id",
+        "mp_payment_id",
+    )
+    readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(BookingManualRefund)
+class BookingManualRefundAdmin(admin.ModelAdmin):
+    """Admin for manual visit refund tracking."""
+
+    list_display = (
+        "booking",
+        "status",
+        "amount",
+        "currency",
+        "operator",
+        "created_at",
+        "completed_at",
+    )
+    list_filter = ("status", "currency")
+    search_fields = (
+        "booking__confirmation_code",
+        "booking__customer_email",
+        "operator__email",
+        "note",
+    )
+    readonly_fields = ("created_at", "updated_at")

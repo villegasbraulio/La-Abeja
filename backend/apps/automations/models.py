@@ -13,6 +13,7 @@ class OutboxEvent(models.Model):
 
     class EventType(models.TextChoices):
         ORDER_EMAIL = "order.email", "Email de pedido"
+        BOOKING_EMAIL = "booking.email", "Email de reserva"
         ANDREANI_FULFILLMENT = "order.andreani", "Despacho Andreani"
 
     class Status(models.TextChoices):

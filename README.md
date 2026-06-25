@@ -778,6 +778,7 @@ Si corres `seed_demo_data` con los defaults de [`.env.example`](.env.example):
 - acciones masivas sobre catalogo
 - mejoras de operacion para pagos, envios y notificaciones
 - mayor profundidad en visitas, hospitalidad y eventos
+- conectar el backend de email transaccional a un proveedor productivo, por ejemplo AWS SES
 
 ## Licencia y uso
 

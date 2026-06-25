@@ -405,7 +405,7 @@ class Command(BaseCommand):
                     "highlights": data["highlights"],
                     "cover_image": data["cover_image"],
                     "gallery_images": [],
-                    "cancellation_hours": 48,
+                    "cancellation_hours": 24,
                     "is_active": True,
                     "is_featured": data["is_featured"],
                 },

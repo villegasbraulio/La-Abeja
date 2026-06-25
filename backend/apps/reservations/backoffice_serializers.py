@@ -2,14 +2,23 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
+
 from django.db import transaction
 from django.template.defaultfilters import slugify
 from rest_framework import serializers
 
 from apps.authentication.models import CustomUser
 
-from .models import Booking, Experience, TimeSlot
-from .services import ReservationCapacityError, recalculate_slot_availability
+from .models import Booking, BookingManualRefund, Experience, TimeSlot
+from .services import (
+    ReservationCapacityError,
+    booking_holds_capacity,
+    cancel_booking,
+    ensure_manual_refund_record,
+    mark_manual_refund,
+    recalculate_slot_availability,
+)
 
 
 class BackofficeExperienceSerializer(serializers.ModelSerializer):
@@ -133,22 +142,71 @@ class BackofficeBookingSerializer(serializers.ModelSerializer):
     customer_name = serializers.SerializerMethodField()
     customer_email = serializers.SerializerMethodField()
     customer_phone = serializers.SerializerMethodField()
+    time_slot = serializers.PrimaryKeyRelatedField(
+        queryset=TimeSlot.objects.select_related("experience").all(),
+        required=False,
+        write_only=True,
+    )
+    customer_first_name = serializers.CharField(
+        max_length=100,
+        required=False,
+        allow_blank=True,
+        write_only=True,
+    )
+    customer_last_name = serializers.CharField(
+        max_length=100,
+        required=False,
+        allow_blank=True,
+        write_only=True,
+    )
+    customer_email_input = serializers.EmailField(
+        source="customer_email",
+        required=False,
+        allow_blank=True,
+        write_only=True,
+    )
+    customer_phone_input = serializers.CharField(
+        source="customer_phone",
+        max_length=20,
+        required=False,
+        allow_blank=True,
+        write_only=True,
+    )
     experience_name = serializers.CharField(source="time_slot.experience.name", read_only=True)
-    experience_type = serializers.CharField(source="time_slot.experience.experience_type", read_only=True)
+    experience_type = serializers.CharField(
+        source="time_slot.experience.experience_type",
+        read_only=True,
+    )
     slot_date = serializers.DateField(source="time_slot.date", read_only=True)
     slot_start_time = serializers.TimeField(source="time_slot.start_time", read_only=True)
     slot_end_time = serializers.TimeField(source="time_slot.end_time", read_only=True)
     payment_status = serializers.CharField(source="payment.status", read_only=True)
     payment_status_detail = serializers.CharField(source="payment.status_detail", read_only=True)
+    manual_refund = serializers.SerializerMethodField()
+    manual_refund_status = serializers.ChoiceField(
+        choices=BookingManualRefund.Status.choices,
+        required=False,
+        write_only=True,
+    )
+    manual_refund_note = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        write_only=True,
+    )
 
     class Meta:
         model = Booking
         fields = [
             "id",
             "confirmation_code",
+            "time_slot",
             "customer_name",
             "customer_email",
             "customer_phone",
+            "customer_first_name",
+            "customer_last_name",
+            "customer_email_input",
+            "customer_phone_input",
             "experience_name",
             "experience_type",
             "slot_date",
@@ -163,8 +221,22 @@ class BackofficeBookingSerializer(serializers.ModelSerializer):
             "checked_in_at",
             "payment_status",
             "payment_status_detail",
+            "manual_refund",
+            "manual_refund_status",
+            "manual_refund_note",
             "reminder_24h_sent",
             "reminder_1h_sent",
+            "hold_expires_at",
+            "created_at",
+        ]
+        read_only_fields = [
+            "confirmation_code",
+            "total_price",
+            "payment_status",
+            "payment_status_detail",
+            "reminder_24h_sent",
+            "reminder_1h_sent",
+            "hold_expires_at",
             "created_at",
         ]
 
@@ -191,16 +263,145 @@ class BackofficeBookingSerializer(serializers.ModelSerializer):
             return obj.user.phone
         return obj.customer_phone
 
+    def get_manual_refund(self, obj: Booking) -> dict[str, object] | None:
+        """Return the staff-facing refund record when one exists."""
+        try:
+            refund = obj.manual_refund
+        except BookingManualRefund.DoesNotExist:
+            return None
+        operator = refund.operator
+        return {
+            "id": str(refund.id),
+            "status": refund.status,
+            "status_label": refund.get_status_display(),
+            "amount": str(refund.amount),
+            "currency": refund.currency,
+            "reason": refund.reason,
+            "note": refund.note,
+            "operator": str(operator.id) if operator else None,
+            "operator_email": operator.email if operator else "",
+            "created_at": refund.created_at,
+            "updated_at": refund.updated_at,
+            "completed_at": refund.completed_at,
+        }
+
+    def validate(self, attrs: dict[str, object]) -> dict[str, object]:
+        """Validate manual booking changes against the selected slot."""
+        slot = attrs.get("time_slot") or getattr(self.instance, "time_slot", None)
+        if self.instance is None and slot is None:
+            raise serializers.ValidationError(
+                {"time_slot": "Seleccioná un turno para la reserva manual."}
+            )
+        if slot is None:
+            return attrs
+
+        guest_count = int(attrs.get("guest_count") or getattr(self.instance, "guest_count", 0) or 0)
+        if guest_count < slot.experience.min_guests or guest_count > slot.experience.max_guests:
+            raise serializers.ValidationError(
+                {
+                    "guest_count": (
+                        f"Esta visita admite entre {slot.experience.min_guests} y "
+                        f"{slot.experience.max_guests} personas."
+                    )
+                }
+            )
+        is_assigning_slot = self.instance is None or "time_slot" in attrs
+        if slot.is_blocked and is_assigning_slot:
+            raise serializers.ValidationError(
+                {"time_slot": "No se puede reservar un turno bloqueado."}
+            )
+        if self.instance is None and "status" not in attrs:
+            attrs["status"] = Booking.Status.CONFIRMED
+        return attrs
+
+    @transaction.atomic
+    def create(self, validated_data: dict[str, object]) -> Booking:
+        """Create a manual booking from the backoffice."""
+        slot_ref = validated_data.pop("time_slot")
+        slot = TimeSlot.objects.select_for_update().select_related("experience").get(pk=slot_ref.pk)
+        guest_count = int(validated_data["guest_count"])
+        booking = Booking.objects.create(
+            confirmation_code=Booking.generate_confirmation_code(),
+            time_slot=slot,
+            customer_first_name=str(validated_data.get("customer_first_name") or "").strip(),
+            customer_last_name=str(validated_data.get("customer_last_name") or "").strip(),
+            customer_email=str(validated_data.get("customer_email") or "").strip().lower(),
+            customer_phone=str(validated_data.get("customer_phone") or "").strip(),
+            guest_count=guest_count,
+            total_price=Decimal(slot.experience.price_per_person) * guest_count,
+            status=str(validated_data.get("status") or Booking.Status.CONFIRMED),
+            special_requests=str(validated_data.get("special_requests") or "").strip(),
+            dietary_restrictions=validated_data.get("dietary_restrictions") or [],
+            checked_in_at=validated_data.get("checked_in_at"),
+        )
+        try:
+            recalculate_slot_availability(slot)
+        except ReservationCapacityError as exc:
+            raise serializers.ValidationError({"guest_count": str(exc)}) from exc
+        return booking
+
     @transaction.atomic
     def update(self, instance: Booking, validated_data: dict[str, object]) -> Booking:
         """Update a booking and keep slot availability consistent."""
+        refund_status = validated_data.pop("manual_refund_status", None)
+        refund_note = validated_data.pop("manual_refund_note", None)
+        request = self.context.get("request")
+        operator = request.user if request is not None else None
         booking = Booking.objects.select_for_update().get(pk=instance.pk)
-        slot = TimeSlot.objects.select_for_update().get(pk=booking.time_slot_id)
+        old_slot_id = booking.time_slot_id
+        new_slot_ref = validated_data.get("time_slot")
+        slot_id = new_slot_ref.pk if isinstance(new_slot_ref, TimeSlot) else old_slot_id
+        slot = (
+            TimeSlot.objects.select_for_update()
+            .select_related("experience")
+            .get(pk=slot_id)
+        )
         for field, value in validated_data.items():
-            setattr(booking, field, value)
+            if field == "time_slot":
+                booking.time_slot = slot
+            else:
+                setattr(booking, field, value)
+        if "guest_count" in validated_data or new_slot_ref is not None:
+            booking.total_price = Decimal(slot.experience.price_per_person) * int(
+                booking.guest_count
+            )
+        if not booking_holds_capacity(booking):
+            booking.hold_expires_at = None
         booking.save()
+        refund = None
+        if booking.status == Booking.Status.CANCELLED:
+            booking, refund = cancel_booking(
+                booking,
+                actor=operator,
+                note=str(refund_note or "").strip(),
+                enforce_deadline=False,
+            )
+        elif refund_note is not None or refund_status is not None:
+            refund = ensure_manual_refund_record(
+                booking,
+                operator=operator,
+                note=str(refund_note or "").strip(),
+            )
+            if refund is None:
+                raise serializers.ValidationError(
+                    {
+                        "manual_refund_status": (
+                            "No hay un pago aprobado que requiera reembolso manual."
+                        )
+                    }
+                )
+        if refund is not None and (refund_note is not None or refund_status is not None):
+            mark_manual_refund(
+                refund,
+                status=str(refund_status) if refund_status is not None else None,
+                note=str(refund_note) if refund_note is not None else None,
+                operator=operator,
+            )
         try:
-            recalculate_slot_availability(slot)
+            for affected_slot in TimeSlot.objects.select_for_update().filter(
+                pk__in={old_slot_id, slot.id}
+            ):
+                recalculate_slot_availability(affected_slot)
         except ReservationCapacityError as exc:
             raise serializers.ValidationError({"guest_count": str(exc)}) from exc
         return booking

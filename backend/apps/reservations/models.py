@@ -32,7 +32,7 @@ class Experience(models.Model):
     highlights = models.JSONField(default=list, blank=True)
     cover_image = models.URLField()
     gallery_images = models.JSONField(default=list, blank=True)
-    cancellation_hours = models.IntegerField(default=48)
+    cancellation_hours = models.IntegerField(default=24)
     is_active = models.BooleanField(default=True)
     is_featured = models.BooleanField(default=False)
 
@@ -101,7 +101,21 @@ class Booking(models.Model):
     checked_in_at = models.DateTimeField(null=True, blank=True)
     reminder_24h_sent = models.BooleanField(default=False)
     reminder_1h_sent = models.BooleanField(default=False)
+    hold_expires_at = models.DateTimeField(null=True, blank=True)
+    client_request_id = models.CharField(max_length=120, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["status", "hold_expires_at"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["client_request_id"],
+                condition=~models.Q(client_request_id=""),
+                name="unique_nonempty_booking_client_request_id",
+            ),
+        ]
 
     def __str__(self) -> str:
         """Return the booking confirmation code."""
@@ -179,4 +193,49 @@ class BookingPayment(models.Model):
 
     def __str__(self) -> str:
         """Return a readable booking payment label."""
+        return f"{self.booking.confirmation_code} - {self.status}"
+
+
+class BookingManualRefund(models.Model):
+    """Internal record for refunds that staff must execute outside Mercado Pago."""
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Pendiente"
+        COMPLETED = "completed", "Completado"
+        CANCELLED = "cancelled", "Cancelado"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    booking = models.OneToOneField(
+        Booking,
+        on_delete=models.PROTECT,
+        related_name="manual_refund",
+    )
+    payment = models.ForeignKey(
+        BookingPayment,
+        on_delete=models.PROTECT,
+        related_name="manual_refunds",
+        null=True,
+        blank=True,
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3, default="ARS")
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    reason = models.CharField(max_length=120, default="booking_cancelled")
+    note = models.TextField(blank=True)
+    operator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="booking_manual_refunds",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        """Return a readable refund label."""
         return f"{self.booking.confirmation_code} - {self.status}"

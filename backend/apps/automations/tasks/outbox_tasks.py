@@ -51,17 +51,31 @@ def process_outbox_event(event_id: str) -> dict[str, object]:
 
 
 def _execute_event(event: OutboxEvent) -> None:
-    order_id = str(event.payload.get("order_id") or "")
-    order = Order.objects.prefetch_related("items").get(pk=order_id)
     if event.event_type == OutboxEvent.EventType.ORDER_EMAIL:
+        order_id = str(event.payload.get("order_id") or "")
+        order = Order.objects.prefetch_related("items").get(pk=order_id)
         from apps.orders.fulfillment import send_order_email
 
         send_order_email(order, template=str(event.payload.get("template") or ""))
         return
     if event.event_type == OutboxEvent.EventType.ANDREANI_FULFILLMENT:
+        order_id = str(event.payload.get("order_id") or "")
+        order = Order.objects.prefetch_related("items").get(pk=order_id)
         from apps.orders.fulfillment import sync_andreani_shipping_order
 
         sync_andreani_shipping_order(order, retry_failed=event.attempts > 1)
+        return
+    if event.event_type == OutboxEvent.EventType.BOOKING_EMAIL:
+        booking_id = str(event.payload.get("booking_id") or "")
+        from apps.reservations.fulfillment import send_booking_email
+        from apps.reservations.models import Booking
+
+        booking = Booking.objects.select_related(
+            "user",
+            "time_slot",
+            "time_slot__experience",
+        ).get(pk=booking_id)
+        send_booking_email(booking, template=str(event.payload.get("template") or ""))
         return
     raise PermanentFulfillmentError(f"Tipo de evento desconocido: {event.event_type}")
 

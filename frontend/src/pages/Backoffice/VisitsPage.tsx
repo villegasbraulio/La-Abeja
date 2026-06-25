@@ -45,6 +45,12 @@ const bookingStatusOptions = [
   { value: "no_show", label: "No se presentó" },
 ];
 
+const manualRefundStatusOptions = [
+  { value: "pending", label: "Pendiente" },
+  { value: "completed", label: "Completado" },
+  { value: "cancelled", label: "Cancelado" },
+];
+
 const visitWorkspaceTabs: Array<{
   value: "visitas" | "reservas";
   label: string;
@@ -85,6 +91,8 @@ interface BookingFormState {
   guest_count: string;
   special_requests: string;
   checked_in_at: string;
+  manual_refund_status: string;
+  manual_refund_note: string;
 }
 
 interface SlotFormState {
@@ -110,7 +118,7 @@ const emptyExperienceForm: ExperienceFormState = {
   highlights_text: "",
   cover_image: "",
   gallery_images_text: "",
-  cancellation_hours: "48",
+  cancellation_hours: "24",
   is_active: true,
   is_featured: false,
 };
@@ -120,6 +128,8 @@ const emptyBookingForm: BookingFormState = {
   guest_count: "2",
   special_requests: "",
   checked_in_at: "",
+  manual_refund_status: "",
+  manual_refund_note: "",
 };
 
 const emptySlotForm: SlotFormState = {
@@ -189,16 +199,25 @@ function toBookingFormState(booking: BackofficeBooking): BookingFormState {
     guest_count: String(booking.guest_count),
     special_requests: booking.special_requests,
     checked_in_at: booking.checked_in_at ? booking.checked_in_at.slice(0, 16) : "",
+    manual_refund_status: booking.manual_refund?.status ?? "",
+    manual_refund_note: booking.manual_refund?.note ?? "",
   };
 }
 
 function toBookingPayload(formState: BookingFormState): BackofficeBookingPayload {
-  return {
+  const payload: BackofficeBookingPayload = {
     status: formState.status,
     guest_count: Number.parseInt(formState.guest_count, 10),
     special_requests: formState.special_requests,
     checked_in_at: formState.checked_in_at ? new Date(formState.checked_in_at).toISOString() : null,
   };
+  if (formState.manual_refund_status) {
+    payload.manual_refund_status = formState.manual_refund_status;
+  }
+  if (formState.manual_refund_note) {
+    payload.manual_refund_note = formState.manual_refund_note;
+  }
+  return payload;
 }
 
 function toSlotFormState(slot: BackofficeTimeSlot): SlotFormState {
@@ -1378,6 +1397,47 @@ export function BackofficeVisitsPage() {
                       </div>
                     </BackofficeSectionCard>
                   </div>
+
+                  {selectedBooking.manual_refund ||
+                  (bookingForm.status === "cancelled" && selectedBooking.payment_status === "approved") ? (
+                    <BackofficeSectionCard>
+                      <BackofficeSectionHeading
+                        eyebrow="Reembolso manual"
+                        title={
+                          selectedBooking.manual_refund
+                            ? `${selectedBooking.manual_refund.amount} ${selectedBooking.manual_refund.currency}`
+                            : "Pendiente de registrar"
+                        }
+                        description="Seguimiento interno del reintegro que se ejecuta fuera del checkout."
+                      />
+                      <div className="mt-4 grid gap-4 md:grid-cols-2">
+                        <BackofficeField label="Estado del reembolso">
+                          <BackofficeSelect
+                            value={bookingForm.manual_refund_status || "pending"}
+                            onChange={handleBookingField("manual_refund_status")}
+                          >
+                            {manualRefundStatusOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </BackofficeSelect>
+                        </BackofficeField>
+                        <BackofficeField label="Operador">
+                          <BackofficeInput
+                            value={selectedBooking.manual_refund?.operator_email || "Se asigna al guardar"}
+                            readOnly
+                          />
+                        </BackofficeField>
+                      </div>
+                      <BackofficeField label="Nota de reembolso">
+                        <BackofficeTextarea
+                          value={bookingForm.manual_refund_note}
+                          onChange={handleBookingField("manual_refund_note")}
+                        />
+                      </BackofficeField>
+                    </BackofficeSectionCard>
+                  ) : null}
                 </div>
               ) : (
                 <div className="mt-6">

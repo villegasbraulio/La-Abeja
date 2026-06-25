@@ -8,6 +8,7 @@ import json
 from typing import Any
 
 from django.conf import settings
+from django.utils import timezone
 from rest_framework.request import Request
 
 
@@ -26,7 +27,11 @@ def parse_signature_header(signature_header: str) -> tuple[str | None, str | Non
 
 
 def has_valid_signature(request: Request, payload: dict[str, Any]) -> bool:
-    return True
+    """Validate Mercado Pago webhook origin using the configured secret."""
+    secret = str(settings.MERCADOPAGO_WEBHOOK_SECRET or "").strip()
+    signature_required = bool(getattr(settings, "MERCADOPAGO_WEBHOOK_SIGNATURE_REQUIRED", True))
+    if not secret:
+        return not signature_required
 
     signature_header = request.headers.get("x-signature", "")
     request_id = request.headers.get("x-request-id", "")
@@ -44,14 +49,29 @@ def has_valid_signature(request: Request, payload: dict[str, Any]) -> bool:
 
     if not data_id or not request_id or not ts_value or not received_signature:
         return False
+    if not _has_fresh_timestamp(ts_value):
+        return False
 
-    template = f"id:{data_id};request-id:{request_id};ts:{ts_value};"
+    template = f"id:{str(data_id).lower()};request-id:{request_id};ts:{ts_value};"
     expected_signature = hmac.new(
         secret.encode("utf-8"),
         template.encode("utf-8"),
         hashlib.sha256,
     ).hexdigest()
     return hmac.compare_digest(expected_signature, received_signature)
+
+
+def _has_fresh_timestamp(ts_value: str) -> bool:
+    """Return whether the signature timestamp is inside the accepted tolerance."""
+    try:
+        timestamp = int(ts_value)
+    except (TypeError, ValueError):
+        return False
+    if timestamp > 10_000_000_000:
+        timestamp = timestamp // 1000
+    tolerance = int(getattr(settings, "MERCADOPAGO_WEBHOOK_SIGNATURE_TOLERANCE_SECONDS", 300))
+    current = int(timezone.now().timestamp())
+    return abs(current - timestamp) <= tolerance
 
 
 def build_webhook_deduplication_key(

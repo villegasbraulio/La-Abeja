@@ -106,6 +106,13 @@ function textToList(value: string) {
     .filter(Boolean);
 }
 
+function generateClientRequestId() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 function buildVisitPath(pathname: string, updates: Record<string, string | null | undefined>) {
   const searchParams = new URLSearchParams();
 
@@ -395,6 +402,7 @@ export function VisitPage() {
   const [bookingForm, setBookingForm] = useState<BookingFormState>(emptyBookingForm);
   const [bookingError, setBookingError] = useState<string | null>(null);
   const [redirectUrl, setRedirectUrl] = useState<string | null>(null);
+  const [clientRequestId, setClientRequestId] = useState(generateClientRequestId);
 
   const isScheduleScreen = location.pathname === "/visitas/horarios";
   const isPaymentScreen = location.pathname === "/visitas/pago";
@@ -503,6 +511,7 @@ export function VisitPage() {
         customer_last_name: bookingForm.customer_last_name.trim(),
         customer_email: bookingForm.customer_email.trim(),
         customer_phone: bookingForm.customer_phone.trim(),
+        client_request_id: clientRequestId,
         special_requests: bookingForm.special_requests.trim(),
         dietary_restrictions: textToList(bookingForm.dietary_restrictions_text),
       };
@@ -524,6 +533,7 @@ export function VisitPage() {
           axiosError.response?.data?.time_slot?.[0] ??
           (error instanceof Error ? error.message : "No pudimos preparar la reserva."),
       );
+      setClientRequestId(generateClientRequestId());
     },
   });
 

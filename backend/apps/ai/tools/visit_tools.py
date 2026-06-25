@@ -101,9 +101,8 @@ def search_visit_context(payload: dict[str, object], context: ToolContext) -> di
             {
                 "id": str(booking.id),
                 "confirmation_code": booking.confirmation_code,
-                "customer_name": (f"{booking.user.first_name} {booking.user.last_name}".strip())
-                or booking.user.email,
-                "customer_email": booking.user.email,
+                "customer_name": booking.customer_name,
+                "customer_email": booking.user.email if booking.user_id else booking.customer_email,
                 "experience_name": booking.time_slot.experience.name,
                 "experience_type": booking.time_slot.experience.experience_type,
                 "slot_date": booking.time_slot.date.isoformat(),
@@ -112,7 +111,11 @@ def search_visit_context(payload: dict[str, object], context: ToolContext) -> di
                 "guest_count": booking.guest_count,
                 "status": booking.status,
                 "special_requests": booking.special_requests,
-                "checked_in_at": booking.checked_in_at.isoformat() if booking.checked_in_at else None,
+                "checked_in_at": (
+                    booking.checked_in_at.isoformat()
+                    if booking.checked_in_at
+                    else None
+                ),
                 "created_at": booking.created_at.isoformat(),
             }
             for booking in bookings_qs[:limit]

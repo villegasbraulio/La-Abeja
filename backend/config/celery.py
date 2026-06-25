@@ -26,6 +26,10 @@ app.conf.beat_schedule = {
         "task": "apps.automations.tasks.outbox_tasks.dispatch_pending_outbox_events",
         "schedule": crontab(minute="*"),
     },
+    "expire-booking-holds": {
+        "task": "apps.automations.tasks.reconciliation_tasks.expire_pending_booking_holds_task",
+        "schedule": crontab(minute="*"),
+    },
     "reconcile-payments-and-shipments": {
         "task": "apps.automations.tasks.reconciliation_tasks.reconcile_external_operations",
         "schedule": crontab(minute="*/10"),

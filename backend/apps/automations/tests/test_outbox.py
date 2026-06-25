@@ -12,6 +12,8 @@ from django.utils import timezone
 from apps.automations.models import OutboxEvent
 from apps.automations.tasks.outbox_tasks import process_outbox_event
 from apps.automations.tasks.reconciliation_tasks import (
+    expire_pending_booking_holds_task,
+    reconcile_pending_booking_payments,
     reconcile_pending_payments,
     reconcile_stuck_shipments,
 )
@@ -19,6 +21,30 @@ from apps.orders.models import Order
 from apps.orders.tests.factories import OrderFactory, OrderItemFactory
 from apps.payments.models import Payment
 from apps.payments.tests.factories import PaymentFactory
+from apps.reservations.models import Booking, BookingPayment, Experience, TimeSlot
+
+
+def make_experience(**overrides) -> Experience:
+    """Create a minimal visit experience for automation tests."""
+    defaults = {
+        "name": "Visita Reserva",
+        "slug": f"visita-{timezone.now().timestamp()}",
+        "experience_type": Experience.ExperienceType.WINERY_TOUR,
+        "description": "Recorrido guiado",
+        "duration_minutes": 90,
+        "price_per_person": Decimal("25000.00"),
+        "min_guests": 1,
+        "max_guests": 12,
+        "includes": ["Degustación"],
+        "highlights": ["Vista al viñedo"],
+        "cover_image": "https://example.com/visit.jpg",
+        "gallery_images": [],
+        "cancellation_hours": 24,
+        "is_active": True,
+        "is_featured": False,
+    }
+    defaults.update(overrides)
+    return Experience.objects.create(**defaults)
 
 
 @pytest.mark.django_db
@@ -39,6 +65,44 @@ def test_outbox_processes_email_once(mock_send_email) -> None:
     assert first["status"] == OutboxEvent.Status.COMPLETED
     assert second["status"] == "already_completed"
     mock_send_email.assert_called_once()
+
+
+@pytest.mark.django_db
+@patch("apps.reservations.fulfillment.send_booking_email")
+def test_outbox_processes_booking_email_once(mock_send_booking_email) -> None:
+    """Booking emails should use the same durable outbox worker."""
+    experience = make_experience()
+    slot = TimeSlot.objects.create(
+        experience=experience,
+        date=timezone.localdate() + timedelta(days=2),
+        start_time=timezone.datetime.strptime("13:00", "%H:%M").time(),
+        end_time=timezone.datetime.strptime("14:30", "%H:%M").time(),
+        capacity=8,
+        spots_available=5,
+    )
+    booking = Booking.objects.create(
+        confirmation_code=Booking.generate_confirmation_code(),
+        time_slot=slot,
+        customer_first_name="Juan",
+        customer_last_name="Paz",
+        customer_email="juan@example.com",
+        customer_phone="+5492604111111",
+        guest_count=3,
+        total_price=Decimal("75000.00"),
+        status=Booking.Status.PENDING_PAYMENT,
+    )
+    event = OutboxEvent.objects.create(
+        event_key=f"booking-email-test:{booking.id}",
+        event_type=OutboxEvent.EventType.BOOKING_EMAIL,
+        payload={"booking_id": str(booking.id), "template": "booking_confirmation"},
+    )
+
+    first = process_outbox_event(str(event.id))
+    second = process_outbox_event(str(event.id))
+
+    assert first["status"] == OutboxEvent.Status.COMPLETED
+    assert second["status"] == "already_completed"
+    mock_send_booking_email.assert_called_once()
 
 
 @pytest.mark.django_db
@@ -102,6 +166,110 @@ def test_reconciliation_recovers_missed_approved_payment(
     assert OutboxEvent.objects.filter(
         event_type=OutboxEvent.EventType.ANDREANI_FULFILLMENT
     ).exists()
+
+
+@pytest.mark.django_db
+def test_expire_pending_booking_holds_releases_visit_capacity() -> None:
+    """Expired visit checkout holds should release their seats."""
+    experience = make_experience()
+    slot = TimeSlot.objects.create(
+        experience=experience,
+        date=timezone.localdate() + timedelta(days=2),
+        start_time=timezone.datetime.strptime("13:00", "%H:%M").time(),
+        end_time=timezone.datetime.strptime("14:30", "%H:%M").time(),
+        capacity=8,
+        spots_available=5,
+    )
+    booking = Booking.objects.create(
+        confirmation_code=Booking.generate_confirmation_code(),
+        time_slot=slot,
+        customer_first_name="Juan",
+        customer_last_name="Paz",
+        customer_email="juan@example.com",
+        customer_phone="+5492604111111",
+        guest_count=3,
+        total_price=Decimal("75000.00"),
+        status=Booking.Status.PENDING_PAYMENT,
+        hold_expires_at=timezone.now() - timedelta(minutes=1),
+    )
+    payment = BookingPayment.objects.create(
+        booking=booking,
+        idempotency_key=f"mercadopago:booking:{booking.id}",
+        amount=booking.total_price,
+        currency="ARS",
+        status=BookingPayment.Status.PENDING,
+    )
+
+    result = expire_pending_booking_holds_task()
+
+    booking.refresh_from_db()
+    payment.refresh_from_db()
+    slot.refresh_from_db()
+    assert result["booking_holds_expired"] == 1
+    assert booking.status == Booking.Status.PAYMENT_FAILED
+    assert payment.status == BookingPayment.Status.CANCELLED
+    assert payment.status_detail == "booking_hold_expired"
+    assert slot.spots_available == 8
+
+
+@pytest.mark.django_db
+@patch("apps.automations.tasks.reconciliation_tasks.MercadoPagoClient.search_payments")
+def test_reconciliation_recovers_missed_booking_payment(mock_search_payments, settings) -> None:
+    """A missed visit payment webhook should be recovered by external-reference search."""
+    settings.MERCADOPAGO_ACCESS_TOKEN = "token"
+    settings.MERCADOPAGO_COLLECTOR_ID = "445566"
+    settings.BOOKING_PAYMENT_RECONCILIATION_AGE_MINUTES = 5
+    experience = make_experience()
+    slot = TimeSlot.objects.create(
+        experience=experience,
+        date=timezone.localdate() + timedelta(days=2),
+        start_time=timezone.datetime.strptime("13:00", "%H:%M").time(),
+        end_time=timezone.datetime.strptime("14:30", "%H:%M").time(),
+        capacity=8,
+        spots_available=5,
+    )
+    booking = Booking.objects.create(
+        confirmation_code=Booking.generate_confirmation_code(),
+        time_slot=slot,
+        customer_first_name="Juan",
+        customer_last_name="Paz",
+        customer_email="juan@example.com",
+        customer_phone="+5492604111111",
+        guest_count=3,
+        total_price=Decimal("75000.00"),
+        status=Booking.Status.PENDING_PAYMENT,
+        hold_expires_at=timezone.now() + timedelta(minutes=10),
+    )
+    payment = BookingPayment.objects.create(
+        booking=booking,
+        idempotency_key=f"mercadopago:booking:{booking.id}",
+        amount=booking.total_price,
+        currency="ARS",
+        status=BookingPayment.Status.PENDING,
+    )
+    BookingPayment.objects.filter(pk=payment.pk).update(
+        updated_at=timezone.now() - timedelta(minutes=20)
+    )
+    mock_search_payments.return_value = [
+        {
+            "id": "99880022",
+            "status": "approved",
+            "external_reference": str(booking.id),
+            "transaction_amount": "75000.00",
+            "currency_id": "ARS",
+            "collector_id": 445566,
+        }
+    ]
+
+    result = reconcile_pending_booking_payments()
+
+    booking.refresh_from_db()
+    payment.refresh_from_db()
+    slot.refresh_from_db()
+    assert result["booking_payments_synced"] == 1
+    assert booking.status == Booking.Status.CONFIRMED
+    assert payment.status == BookingPayment.Status.APPROVED
+    assert slot.spots_available == 5
 
 
 @pytest.mark.django_db

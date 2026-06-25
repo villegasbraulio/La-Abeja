@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import { Link, useSearchParams } from "react-router-dom";
 import { visitsApi } from "../../api/visits";
 import { Button } from "../../components/ui/Button";
@@ -27,6 +28,7 @@ function resolveVisitStatus(searchParams: URLSearchParams) {
 
 export function VisitBookingResultPage() {
   const [searchParams] = useSearchParams();
+  const queryClient = useQueryClient();
   const accessToken = useAuthStore((state) => state.accessToken);
   const bookingId = searchParams.get("booking_id");
   const guestAccessToken = searchParams.get("guest_access_token");
@@ -39,6 +41,17 @@ export function VisitBookingResultPage() {
   });
 
   const booking = bookingQuery.data;
+  const cancelMutation = useMutation({
+    mutationFn: () => visitsApi.cancelBooking(bookingId ?? "", guestAccessToken),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["visit-booking-detail", bookingId, guestAccessToken],
+      });
+    },
+  });
+  const canCancel = booking?.status === "confirmed" || booking?.status === "pending_payment";
+  const cancelError = (cancelMutation.error as AxiosError<{ detail?: string }> | null)?.response
+    ?.data.detail;
 
   return (
     <section className="mx-auto max-w-4xl px-6 py-20">
@@ -80,10 +93,24 @@ export function VisitBookingResultPage() {
           <Link to="/visitas">
             <Button>Volver a visitas</Button>
           </Link>
+          {booking && canCancel ? (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                if (window.confirm("¿Querés cancelar esta reserva?")) {
+                  cancelMutation.mutate();
+                }
+              }}
+              disabled={cancelMutation.isPending}
+            >
+              {cancelMutation.isPending ? "Cancelando..." : "Cancelar reserva"}
+            </Button>
+          ) : null}
           <Link to="/contacto?tipo=visita">
             <Button variant="ghost">Necesito ayuda</Button>
           </Link>
         </div>
+        {cancelError ? <p className="mt-4 text-sm text-burgundy-800">{cancelError}</p> : null}
       </div>
     </section>
   );

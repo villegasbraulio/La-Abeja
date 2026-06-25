@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 from typing import Any
-from urllib.parse import urlsplit
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urlsplit
 
 import structlog
 from django.conf import settings
@@ -120,11 +119,18 @@ class MercadoPagoClient:
                 "experience_name": booking.time_slot.experience.name,
                 "slot_date": booking.time_slot.date.isoformat(),
                 "slot_start_time": booking.time_slot.start_time.isoformat(),
+                "hold_expires_at": booking.hold_expires_at.isoformat()
+                if booking.hold_expires_at
+                else "",
             },
             "payment_methods": {
                 "installments": 6,
             },
         }
+        if booking.hold_expires_at:
+            payload["expires"] = True
+            payload["expiration_date_from"] = booking.created_at.isoformat()
+            payload["expiration_date_to"] = booking.hold_expires_at.isoformat()
         notification_url = self._build_booking_notification_url()
         if notification_url:
             payload["notification_url"] = notification_url
@@ -244,7 +250,10 @@ class MercadoPagoClient:
 
     def _build_back_urls(self, order: Order) -> dict[str, str]:
         """Return public back URLs when the frontend host can receive redirects."""
-        frontend_url = self._resolve_public_base_url(settings.FRONTEND_URL, setting_name="FRONTEND_URL")
+        frontend_url = self._resolve_public_base_url(
+            settings.FRONTEND_URL,
+            setting_name="FRONTEND_URL",
+        )
         if not frontend_url:
             return {}
 
@@ -267,7 +276,10 @@ class MercadoPagoClient:
 
     def _build_booking_back_urls(self, booking: Booking) -> dict[str, str]:
         """Return public back URLs for visit booking redirects."""
-        frontend_url = self._resolve_public_base_url(settings.FRONTEND_URL, setting_name="FRONTEND_URL")
+        frontend_url = self._resolve_public_base_url(
+            settings.FRONTEND_URL,
+            setting_name="FRONTEND_URL",
+        )
         if not frontend_url:
             return {}
 
@@ -290,14 +302,20 @@ class MercadoPagoClient:
 
     def _build_notification_url(self) -> str | None:
         """Return a public webhook URL when the backend host can receive callbacks."""
-        backend_url = self._resolve_public_base_url(settings.BACKEND_URL, setting_name="BACKEND_URL")
+        backend_url = self._resolve_public_base_url(
+            settings.BACKEND_URL,
+            setting_name="BACKEND_URL",
+        )
         if not backend_url:
             return None
         return f"{backend_url}/api/v1/payments/webhook/"
 
     def _build_booking_notification_url(self) -> str | None:
         """Return a public webhook URL for visit booking payments."""
-        backend_url = self._resolve_public_base_url(settings.BACKEND_URL, setting_name="BACKEND_URL")
+        backend_url = self._resolve_public_base_url(
+            settings.BACKEND_URL,
+            setting_name="BACKEND_URL",
+        )
         if not backend_url:
             return None
         return f"{backend_url}/api/v1/visits/payments/webhook/"

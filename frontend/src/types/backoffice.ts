@@ -177,8 +177,23 @@ export interface BackofficeBooking {
   checked_in_at: string | null;
   payment_status: string;
   payment_status_detail: string;
+  manual_refund: {
+    id: string;
+    status: string;
+    status_label: string;
+    amount: string;
+    currency: string;
+    reason: string;
+    note: string;
+    operator: string | null;
+    operator_email: string;
+    created_at: string;
+    updated_at: string;
+    completed_at: string | null;
+  } | null;
   reminder_24h_sent: boolean;
   reminder_1h_sent: boolean;
+  hold_expires_at: string | null;
   created_at: string;
 }
 
@@ -320,6 +335,8 @@ export interface BackofficeBookingPayload {
   guest_count: number;
   special_requests: string;
   checked_in_at: string | null;
+  manual_refund_status?: string;
+  manual_refund_note?: string;
 }
 
 export interface BackofficeTimeSlotPayload {

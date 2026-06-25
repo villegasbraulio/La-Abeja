@@ -41,6 +41,17 @@ export interface VisitPaymentSummary {
   updated_at: string;
 }
 
+export interface VisitManualRefundSummary {
+  id: string;
+  status: string;
+  status_label: string;
+  amount: string;
+  currency: string;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+}
+
 export interface VisitBooking {
   id: string;
   confirmation_code: string;
@@ -57,8 +68,10 @@ export interface VisitBooking {
   status_label: string;
   special_requests: string;
   dietary_restrictions: string[];
+  hold_expires_at: string | null;
   guest_access_token: string | null;
   payment: VisitPaymentSummary | null;
+  manual_refund: VisitManualRefundSummary | null;
   created_at: string;
 }
 
@@ -69,6 +82,7 @@ export interface VisitBookingCreatePayload {
   customer_last_name: string;
   customer_email: string;
   customer_phone: string;
+  client_request_id?: string;
   special_requests?: string;
   dietary_restrictions?: string[];
 }
@@ -81,6 +95,8 @@ export interface VisitBookingPreferenceResponse {
     preference_id: string;
     init_point: string | null;
     sandbox_init_point: string | null;
+    hold_expires_at: string | null;
+    hold_minutes: number;
     guest_access_token: string | null;
   };
 }

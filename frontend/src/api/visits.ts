@@ -33,4 +33,17 @@ export const visitsApi = {
     });
     return response.data;
   },
+  cancelBooking: async (
+    bookingId: string,
+    guestAccessToken?: string | null,
+  ): Promise<VisitBooking> => {
+    const response = await apiClient.post<VisitBooking>(
+      `/visits/bookings/${bookingId}/cancel/`,
+      null,
+      {
+        params: guestAccessToken ? { guest_access_token: guestAccessToken } : undefined,
+      },
+    );
+    return response.data;
+  },
 };

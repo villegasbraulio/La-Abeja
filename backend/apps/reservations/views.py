@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import structlog
+from django.db import transaction
 from django.db.models import Q
 from django.http import Http404
 from django.utils import timezone
@@ -23,7 +24,12 @@ from .serializers import (
     PublicExperienceSerializer,
     PublicTimeSlotSerializer,
 )
-from .services import ReservationIntegrityError, sync_booking_payment
+from .services import (
+    ReservationIntegrityError,
+    cancel_booking,
+    expire_pending_booking_holds,
+    sync_booking_payment,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -37,7 +43,12 @@ class ExperienceListView(generics.ListAPIView):
 
     def get_queryset(self):
         """Return only active public experiences ordered by prominence."""
-        return Experience.objects.filter(is_active=True).order_by("-is_featured", "name")
+        expire_pending_booking_holds()
+        return (
+            Experience.objects.filter(is_active=True)
+            .exclude(experience_type=Experience.ExperienceType.PRIVATE_EVENT)
+            .order_by("-is_featured", "name")
+        )
 
 
 class TimeSlotListView(generics.ListAPIView):
@@ -49,8 +60,15 @@ class TimeSlotListView(generics.ListAPIView):
 
     def get_queryset(self):
         """Filter future slots by experience and guest count."""
+        expire_pending_booking_holds()
         queryset = TimeSlot.objects.select_related("experience").filter(
             experience__is_active=True,
+            experience__experience_type__in=[
+                Experience.ExperienceType.WINERY_TOUR,
+                Experience.ExperienceType.PREMIUM_TASTING,
+                Experience.ExperienceType.HARVEST,
+                Experience.ExperienceType.WINE_PAIRING,
+            ],
             is_blocked=False,
         )
         experience_id = self.request.query_params.get("experience")
@@ -121,6 +139,54 @@ class BookingDetailView(generics.RetrieveAPIView):
         return guest_booking
 
 
+class BookingCancelView(APIView):
+    """Allow a customer to cancel a booking inside the configured window."""
+
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request: Request, pk: str) -> Response:
+        """Cancel the booking and record a manual refund task when needed."""
+        booking = self._get_booking(request, pk)
+        with transaction.atomic():
+            booking = (
+                Booking.objects.select_for_update()
+                .select_related("user", "time_slot", "time_slot__experience")
+                .get(pk=booking.pk)
+            )
+            try:
+                booking, _refund = cancel_booking(
+                    booking,
+                    actor=request.user,
+                    note="Cancelación solicitada por cliente.",
+                    enforce_deadline=True,
+                )
+            except ReservationIntegrityError as exc:
+                return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        booking.refresh_from_db()
+        return Response(PublicBookingSerializer(booking).data)
+
+    def _get_booking(self, request: Request, pk: str) -> Booking:
+        """Return the authenticated booking or a guest booking with a valid token."""
+        if request.user.is_authenticated:
+            booking = (
+                Booking.objects.select_related("user", "time_slot", "time_slot__experience")
+                .filter(user=request.user, pk=pk)
+                .first()
+            )
+            if booking is None:
+                raise Http404("Booking not found")
+            return booking
+
+        guest_booking = resolve_guest_booking(
+            booking_id=pk,
+            guest_access_token=request.query_params.get("guest_access_token"),
+        )
+        if guest_booking is None:
+            raise Http404("Booking not found")
+        return guest_booking
+
+
 class BookingPaymentWebhookView(APIView):
     """Receive Mercado Pago notifications for visit bookings."""
 
@@ -136,16 +202,22 @@ class BookingPaymentWebhookView(APIView):
             or payload.get("topic")
             or ""
         )
+        raw_payload_data = payload.get("data")
+        payload_data = raw_payload_data if isinstance(raw_payload_data, dict) else {}
         notification_id = str(
             payload.get("id")
             or request.query_params.get("id")
             or request.query_params.get("data.id")
-            or (payload.get("data") or {}).get("id")
+            or payload_data.get("id")
             or "unknown"
         )
-        payment_resource_id = request.query_params.get("data.id") or str((payload.get("data") or {}).get("id", ""))
+        payment_resource_id = request.query_params.get("data.id") or str(
+            payload_data.get("id", "")
+        )
         if not payment_resource_id and topic == "payment":
-            payment_resource_id = str(request.query_params.get("id") or payload.get("id") or "")
+            payment_resource_id = str(
+                request.query_params.get("id") or payload.get("id") or ""
+            )
         deduplication_key = build_webhook_deduplication_key(
             topic=topic or "unknown",
             notification_id=notification_id,
