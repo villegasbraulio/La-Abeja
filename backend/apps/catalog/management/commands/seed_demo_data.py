@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import os
-from datetime import time, timedelta
+from datetime import date, time, timedelta
 from decimal import Decimal
 
 from django.core.management.base import BaseCommand
@@ -244,6 +244,21 @@ EXPERIENCES = (
     },
 )
 
+JULY_EVENT_SLOTS = (
+    ("tour-historico-la-abeja", 3, time(10, 0), "Lucía"),
+    ("evento-privado-en-la-cava", 4, time(19, 0), "Valentina"),
+    ("maridaje-con-chef", 5, time(12, 30), "Sofía"),
+    ("cata-premium-reservas", 10, time(18, 0), "Martín"),
+    ("tour-historico-la-abeja", 11, time(11, 0), "Lucía"),
+    ("maridaje-con-chef", 12, time(13, 0), "Sofía"),
+    ("cata-premium-reservas", 17, time(18, 0), "Martín"),
+    ("evento-privado-en-la-cava", 18, time(19, 30), "Valentina"),
+    ("tour-historico-la-abeja", 19, time(10, 30), "Tomás"),
+    ("vendimia-por-un-dia", 24, time(15, 0), "Tomás"),
+    ("maridaje-con-chef", 25, time(20, 0), "Sofía"),
+    ("evento-privado-en-la-cava", 31, time(19, 0), "Valentina"),
+)
+
 
 class Command(BaseCommand):
     """Load master data and realistic demo content for local development."""
@@ -412,22 +427,38 @@ class Command(BaseCommand):
             )
             for offset, (guide, start_time) in enumerate(zip(guides, start_times, strict=True)):
                 slot_date = first_slot_date + timedelta(days=offset)
-                end_datetime = timezone.datetime.combine(slot_date, start_time) + timedelta(
-                    minutes=data["duration_minutes"]
-                )
-                TimeSlot.objects.update_or_create(
-                    experience=experience,
-                    date=slot_date,
-                    start_time=start_time,
-                    defaults={
-                        "end_time": end_datetime.time(),
-                        "capacity": data["max_guests"],
-                        "spots_available": data["max_guests"],
-                        "guide_name": guide,
-                        "is_blocked": False,
-                        "block_reason": "",
-                    },
-                )
+                self._seed_slot(experience, slot_date, start_time, guide)
+
+        july_year = today.year
+        experiences_by_slug = {
+            experience.slug: experience for experience in Experience.objects.all()
+        }
+        for slug, day, start_time, guide in JULY_EVENT_SLOTS:
+            self._seed_slot(experiences_by_slug[slug], date(july_year, 7, day), start_time, guide)
+
+    def _seed_slot(
+        self,
+        experience: Experience,
+        slot_date: date,
+        start_time: time,
+        guide_name: str,
+    ) -> None:
+        end_datetime = timezone.datetime.combine(slot_date, start_time) + timedelta(
+            minutes=experience.duration_minutes
+        )
+        TimeSlot.objects.update_or_create(
+            experience=experience,
+            date=slot_date,
+            start_time=start_time,
+            defaults={
+                "end_time": end_datetime.time(),
+                "capacity": experience.max_guests,
+                "spots_available": experience.max_guests,
+                "guide_name": guide_name,
+                "is_blocked": False,
+                "block_reason": "",
+            },
+        )
 
     def _seed_admin(self) -> None:
         email = os.getenv("DEMO_ADMIN_EMAIL", "admin@bodegalaabeja.com.ar").lower()
