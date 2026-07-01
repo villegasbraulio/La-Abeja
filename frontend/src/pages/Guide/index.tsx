@@ -8,16 +8,16 @@ export function GuidePage() {
   return (
     <div>
       <PageHero
-        eyebrow="Guia de compra y envios"
+        eyebrow="Guía de compra y envíos"
         title="Todo lo necesario para comprar con tranquilidad."
-        description="Envios, retiro en bodega, preguntas frecuentes y criterios de atencion para resolver dudas antes de confirmar el pedido."
+        description="Envíos, retiro en bodega, preguntas frecuentes y criterios de atención para resolver dudas antes de confirmar el pedido."
         aside={
           <div className="space-y-4 text-burgundy-900">
             <p>
               <span className="font-semibold">Cobertura:</span> Cuyo y AMBA priorizados
             </p>
             <p>
-              <span className="font-semibold">Retiro:</span> disponible con coordinacion previa
+              <span className="font-semibold">Retiro:</span> disponible con coordinación previa
             </p>
             <p>
               <span className="font-semibold">Asistencia:</span> soporte humano para regalos, volumen y visitas
@@ -26,7 +26,7 @@ export function GuidePage() {
         }
       >
         <Link to="/contacto?tipo=envios">
-          <Button>Consultar un envio</Button>
+          <Button>Consultar un envío</Button>
         </Link>
         <Link to="/carrito">
           <Button variant="ghost">Ver carrito</Button>
@@ -52,7 +52,7 @@ export function GuidePage() {
           <div className="rounded-lg border border-burgundy-100 bg-white p-8 shadow-[0_16px_48px_rgba(66,13,21,0.08)]">
             <SectionHeading
               eyebrow="Retiro en bodega"
-              title="Una opcion simple y visible para quienes pasan por San Rafael."
+              title="Una opción simple y visible para quienes pasan por San Rafael."
             />
             <p className="mt-6 leading-8 text-burgundy-800">
               Comprar online y retirar en bodega permite sumar flexibilidad, evitar esperas y
@@ -64,9 +64,9 @@ export function GuidePage() {
               Lo que comunica
             </p>
             <ul className="mt-6 list-disc space-y-3 pl-5 text-cream-100/80">
-              <li>Coordinacion posterior a la compra con franja horaria sugerida.</li>
-              <li>Oportunidad de sumar visita, regalo o compra asistida el mismo dia.</li>
-              <li>Menos friccion para clientes locales o turistas con agenda ajustada.</li>
+              <li>Coordinación posterior a la compra con franja horaria sugerida.</li>
+              <li>Oportunidad de sumar visita, regalo o compra asistida el mismo día.</li>
+              <li>Menos fricción para clientes locales o turistas con agenda ajustada.</li>
             </ul>
           </div>
         </div>

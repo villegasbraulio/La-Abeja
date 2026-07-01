@@ -315,7 +315,7 @@ export function BackofficeCopilotPage() {
         </div>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+      <div className="space-y-6">
       <section className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-[0_16px_48px_rgba(66,13,21,0.07)]">
         <div className="mt-8 space-y-4">
           <div className="rounded-lg border border-burgundy-100 bg-white p-5">

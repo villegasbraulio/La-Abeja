@@ -15,13 +15,13 @@ export function CartPage() {
             Carrito
           </p>
           <h1 className="mt-3 font-serif text-3xl text-burgundy-950 sm:text-4xl">
-            Todavia no agregaste vinos.
+            Todavía no agregaste vinos.
           </h1>
           <p className="mt-4 text-burgundy-800">
-            Cuando sumes una etiqueta al carrito, la vas a ver aca con cantidad y subtotal.
+            Cuando sumes una etiqueta al carrito, la vas a ver acá con cantidad y subtotal.
           </p>
           <Link to="/vinos" className="mt-8 inline-flex">
-            <Button>Ir al catalogo</Button>
+            <Button>Ir al catálogo</Button>
           </Link>
         </div>
       </section>
@@ -35,7 +35,7 @@ export function CartPage() {
           <p className="text-sm font-semibold uppercase tracking-[0.25em] text-burgundy-600">
             Carrito
           </p>
-          <h1 className="mt-2 font-serif text-3xl text-burgundy-950 sm:text-4xl">Tu seleccion</h1>
+          <h1 className="mt-2 font-serif text-3xl text-burgundy-950 sm:text-4xl">Tu selección</h1>
         </div>
         <Button variant="ghost" onClick={clearCart}>
           Vaciar carrito
@@ -114,8 +114,8 @@ export function CartPage() {
               <span className="text-2xl font-bold text-burgundy-950">{subtotalFormatted}</span>
             </div>
             <p className="mt-4 text-sm leading-6 text-burgundy-700">
-              Revisa tu seleccion, elegi la modalidad de entrega y continua el pago online con
-              confirmacion posterior en tu historial.
+              Revisá tu selección, elegí la modalidad de entrega y continuá el pago online con
+              confirmación posterior en tu historial.
             </p>
             <div className="mt-6 space-y-3">
               <Link to="/checkout" className="block">
@@ -134,14 +134,14 @@ export function CartPage() {
               Servicio
             </p>
             <div className="mt-5 space-y-4 text-sm leading-6 text-cream-100/80">
-              <p>Retiro en bodega disponible con coordinacion.</p>
+              <p>Retiro en bodega disponible con coordinación.</p>
               <p>Asistencia para regalos, empresas y eventos privados.</p>
-              <p>Guia de compra y contacto disponibles cuando el cliente los necesita.</p>
+              <p>Guía de compra y contacto disponibles cuando el cliente los necesita.</p>
             </div>
             <div className="mt-6 flex flex-col gap-3">
               <Link to="/guia-de-compra">
                 <Button variant="secondary" className="w-full">
-                  Ver guia de compra
+                  Ver guía de compra
                 </Button>
               </Link>
               <Link to="/contacto?tipo=regalos">

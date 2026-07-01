@@ -9,6 +9,7 @@ from .backoffice_views import (
     BackofficeBookingListCreateView,
     BackofficeExperienceDetailView,
     BackofficeExperienceListCreateView,
+    BackofficeReservationMetricsView,
     BackofficeTimeSlotDetailView,
     BackofficeTimeSlotListCreateView,
 )
@@ -16,7 +17,16 @@ from .backoffice_views import (
 app_name = "reservations_backoffice"
 
 urlpatterns = [
-    path("visits/experiences/", BackofficeExperienceListCreateView.as_view(), name="experience-list"),
+    path(
+        "visits/reservation-metrics/",
+        BackofficeReservationMetricsView.as_view(),
+        name="reservation-metrics",
+    ),
+    path(
+        "visits/experiences/",
+        BackofficeExperienceListCreateView.as_view(),
+        name="experience-list",
+    ),
     path(
         "visits/experiences/<uuid:pk>/",
         BackofficeExperienceDetailView.as_view(),

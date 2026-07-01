@@ -8,9 +8,11 @@ import { BackofficeLayout } from "./pages/Backoffice/BackofficeLayout";
 import { BackofficeCancellationApprovalsPage } from "./pages/Backoffice/CancellationApprovalsPage";
 import { CategoriesPage } from "./pages/Backoffice/CategoriesPage";
 import { BackofficeCopilotPage } from "./pages/Backoffice/CopilotPage";
+import { BackofficeCustomersPage } from "./pages/Backoffice/CustomersPage";
 import { BackofficeDashboardPage } from "./pages/Backoffice/DashboardPage";
 import { BackofficeLoginPage } from "./pages/Backoffice/LoginPage";
 import { BackofficeOrdersPage } from "./pages/Backoffice/OrdersPage";
+import { BackofficePromoCodesPage } from "./pages/Backoffice/PromoCodesPage";
 import { BackofficeSalesMetricsPage } from "./pages/Backoffice/SalesMetricsPage";
 import { BackofficeStockReservationsPage } from "./pages/Backoffice/StockReservationsPage";
 import { BackofficeTasksPage } from "./pages/Backoffice/TasksPage";
@@ -27,6 +29,7 @@ import { GuidePage } from "./pages/Guide";
 import { LandingPage } from "./pages/Landing";
 import { OrderDetailPage } from "./pages/OrderDetail";
 import { OrdersPage } from "./pages/Orders";
+import { PoliciesPage } from "./pages/Policies";
 import { ProductDetailPage } from "./pages/ProductDetail";
 import { VisitPage } from "./pages/Visit";
 import { VisitBookingResultPage } from "./pages/Visit/ResultPage";
@@ -48,6 +51,7 @@ export default function App() {
           <Route path="/regalos" element={<GiftsPage />} />
           <Route path="/guia-de-compra" element={<GuidePage />} />
           <Route path="/contacto" element={<ContactPage />} />
+          <Route path="/compra-segura" element={<PoliciesPage />} />
           <Route path="/carrito" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/checkout/resultado" element={<CheckoutResultPage />} />
@@ -63,8 +67,11 @@ export default function App() {
           <Route path="aprobaciones" element={<BackofficeApprovalsPage />} />
           <Route path="reservas-stock" element={<BackofficeStockReservationsPage />} />
           <Route path="cancelaciones" element={<BackofficeCancellationApprovalsPage />} />
-          <Route path="visitas" element={<BackofficeVisitsPage />} />
+          <Route path="visitas" element={<BackofficeVisitsPage section="visitas" />} />
+          <Route path="reservas" element={<BackofficeVisitsPage section="reservas" />} />
           <Route path="pedidos" element={<BackofficeOrdersPage />} />
+          <Route path="clientes" element={<BackofficeCustomersPage />} />
+          <Route path="cupones" element={<BackofficePromoCodesPage />} />
           <Route path="vinos" element={<WinesPage />} />
           <Route path="categorias" element={<CategoriesPage />} />
           <Route path="varietales" element={<VarietalsPage />} />

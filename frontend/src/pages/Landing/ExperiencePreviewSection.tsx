@@ -5,18 +5,18 @@ import { featuredExperiences } from "../../lib/siteContent";
 
 export function ExperiencePreviewSection() {
   return (
-    <section className="mx-auto max-w-7xl px-6 py-20">
-      <div className="grid gap-10 lg:grid-cols-[0.9fr_1.1fr]">
+    <section className="bg-cream-100/70">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:px-6 lg:grid-cols-[0.88fr_1.12fr] lg:py-20">
         <SectionHeading
-          eyebrow="Visitas"
-          title="Recorridos, catas y experiencias privadas para vivir la bodega de cerca."
-          description="Cada visita tiene propuesta, detalle y reserva propia para que planearla sea tan simple como elegir una etiqueta."
+          eyebrow="Reservas"
+          title="Visitas pensadas para decidir con el paladar."
+          description="Recorridos, catas y propuestas privadas para turistas que quieren conocer la historia, probar etiquetas y comprar mejor."
         />
         <div className="grid gap-5">
           {featuredExperiences.map((experience) => (
             <article
               key={experience.title}
-              className="rounded-lg border border-burgundy-100 bg-white p-6 shadow-velvet"
+              className="rounded-lg border border-burgundy-100 bg-white p-5 shadow-velvet sm:p-6"
             >
               <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                 <div>
@@ -35,7 +35,7 @@ export function ExperiencePreviewSection() {
                     ))}
                   </div>
                 </div>
-                <Link to="/contacto?tipo=visita" className="shrink-0">
+                <Link to="/visitas" className="shrink-0">
                   <Button>{experience.cta}</Button>
                 </Link>
               </div>

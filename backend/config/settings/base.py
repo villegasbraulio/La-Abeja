@@ -100,7 +100,6 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "rest_framework_simplejwt.token_blacklist",
-    "django_filters",
     "apps.authentication",
     "apps.ai",
     "apps.catalog",
@@ -213,10 +212,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.AllowAny",
     ),
-    "DEFAULT_FILTER_BACKENDS": (
-        "django_filters.rest_framework.DjangoFilterBackend",
-        "rest_framework.filters.OrderingFilter",
-    ),
+    "DEFAULT_FILTER_BACKENDS": ("rest_framework.filters.OrderingFilter",),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 12,
 }
@@ -298,17 +294,6 @@ ANDREANI_TRACKING_URL_TEMPLATE = os.getenv(
     "ANDREANI_TRACKING_URL_TEMPLATE",
     "https://www.andreani.com/#!/informacionEnvio/{tracking_number}",
 )
-
-TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID", "")
-TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN", "")
-TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER", "")
-TWILIO_WHATSAPP_FROM = os.getenv("TWILIO_WHATSAPP_FROM", "")
-
-ENABLE_WHATSAPP_NOTIFICATIONS = (
-    os.getenv("ENABLE_WHATSAPP_NOTIFICATIONS", "False").lower() == "true"
-)
-ENABLE_SMS_NOTIFICATIONS = os.getenv("ENABLE_SMS_NOTIFICATIONS", "False").lower() == "true"
-LOW_STOCK_ALERT_ENABLED = os.getenv("LOW_STOCK_ALERT_ENABLED", "True").lower() == "true"
 
 AI_LLM_PROVIDER = os.getenv("AI_LLM_PROVIDER", "groq").lower()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")

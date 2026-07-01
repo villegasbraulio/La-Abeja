@@ -15,6 +15,11 @@ export interface BackofficeDashboard {
     stock: number;
     low_stock_threshold: number;
   }>;
+  action_items: Array<{
+    label: string;
+    count: number;
+    href: string;
+  }>;
 }
 
 export interface SalesMetricsDashboard {
@@ -100,6 +105,87 @@ export interface SalesMetricsDashboard {
     incident_task_count: number;
     incident_rate: number;
   };
+}
+
+export interface ReservationMetricsDashboard {
+  summary: {
+    period: string;
+    start_at: string;
+    end_at: string;
+    booking_count: number;
+    revenue_booking_count: number;
+    total_revenue: string;
+    average_booking_value: string;
+    total_guests: number;
+    average_group_size: number;
+    checked_in_count: number;
+    completed_count: number;
+    cancelled_count: number;
+    no_show_count: number;
+    pending_payment_count: number;
+    payment_failed_count: number;
+    conversion_rate: number;
+    cancellation_rate: number;
+    no_show_rate: number;
+    check_in_rate: number;
+    average_lead_days: number;
+  };
+  capacity: {
+    slot_count: number;
+    blocked_slot_count: number;
+    total_capacity: number;
+    booked_guests: number;
+    available_spots: number;
+    occupancy_rate: number;
+  };
+  timeline: {
+    grain: string;
+    results: Array<{
+      period: string;
+      booking_count: number;
+      guest_count: number;
+      total_revenue: string;
+    }>;
+  };
+  by_experience: {
+    results: Array<{
+      experience_id: string;
+      experience_name: string;
+      slot_count: number;
+      booking_count: number;
+      guest_count: number;
+      total_revenue: string;
+      total_capacity: number;
+      booked_guests: number;
+      occupancy_rate: number;
+    }>;
+  };
+  status_breakdown: {
+    results: Array<{
+      status: string;
+      label: string;
+      booking_count: number;
+      guest_count: number;
+      total_revenue: string;
+    }>;
+  };
+  operations: {
+    special_requests_count: number;
+    dietary_restrictions_count: number;
+    pending_refunds_count: number;
+    pending_payment_count: number;
+    payment_failed_count: number;
+  };
+  upcoming_slots: Array<{
+    slot_id: number;
+    experience_name: string;
+    date: string;
+    start_time: string;
+    capacity: number;
+    booked_guests: number;
+    spots_available: number;
+    occupancy_rate: number;
+  }>;
 }
 
 export interface BackofficeCategory {
@@ -310,6 +396,49 @@ export interface BackofficeOrderDetail extends Order {
   customer_name: string;
   customer_email: string;
   customer_phone: string;
+}
+
+export interface BackofficeOrderActionPayload {
+  status?: string;
+  tracking_number?: string;
+  estimated_delivery?: string | null;
+  notes?: string;
+}
+
+export interface BackofficeCustomer {
+  id: string;
+  email: string;
+  full_name: string;
+  phone: string;
+  newsletter_subscribed: boolean;
+  orders_count: number;
+  total_spent: string | null;
+  last_order_at: string | null;
+  date_joined: string;
+}
+
+export interface BackofficePromoCode {
+  id: number;
+  code: string;
+  discount_type: "percentage" | "fixed" | "free_shipping";
+  discount_value: string;
+  min_order_amount: string;
+  max_uses: number | null;
+  used_count: number;
+  valid_from: string;
+  valid_until: string;
+  is_active: boolean;
+}
+
+export interface BackofficePromoCodePayload {
+  code: string;
+  discount_type: "percentage" | "fixed" | "free_shipping";
+  discount_value: string;
+  min_order_amount: string;
+  max_uses: number | null;
+  valid_from: string;
+  valid_until: string;
+  is_active: boolean;
 }
 
 export interface BackofficeExperiencePayload {

@@ -49,10 +49,10 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
                 Carrito
               </p>
               <h2 className="mt-3 font-serif text-3xl text-gold-300">
-                {itemCount === 0 ? "Tu seleccion esta vacia" : `${itemCount} ${itemCount === 1 ? "vino" : "vinos"} listos`}
+                {itemCount === 0 ? "Tu selección está vacía" : `${itemCount} ${itemCount === 1 ? "vino" : "vinos"} listos`}
               </h2>
               <p className="mt-3 max-w-xs text-sm leading-6 text-cream-100/75">
-                Un vistazo rapido antes de pasar al carrito completo o continuar la compra.
+                Un vistazo rápido antes de pasar al carrito completo o continuar la compra.
               </p>
             </div>
             <button
@@ -70,8 +70,8 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
           <div className="flex flex-1 flex-col justify-between px-6 py-6">
             <div className="rounded-lg border border-white/10 bg-white/5 p-6">
               <p className="text-sm leading-7 text-cream-100/80">
-                Agrega algunas etiquetas para ver aca una previa con subtotal, acceso rapido al
-                carrito y proximos pasos.
+                Agregá algunas etiquetas para ver acá una previa con subtotal, acceso rápido al
+                carrito y próximos pasos.
               </p>
             </div>
             <div className="space-y-3">
@@ -131,7 +131,7 @@ export function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
 
               {hiddenItemsCount > 0 ? (
                 <div className="rounded-lg border border-dashed border-white/15 bg-white/5 px-4 py-4 text-sm text-cream-100/75">
-                  Hay {hiddenItemsCount} producto{hiddenItemsCount === 1 ? "" : "s"} mas en el
+                  Hay {hiddenItemsCount} producto{hiddenItemsCount === 1 ? "" : "s"} más en el
                   carrito completo.
                 </div>
               ) : null}

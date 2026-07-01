@@ -8,8 +8,10 @@ from django.db import transaction
 from django.template.defaultfilters import slugify
 from rest_framework import serializers
 
-from apps.orders.models import Order
+from apps.authentication.models import CustomUser
+from apps.orders.models import Order, PromoCode
 from apps.orders.serializers import OrderSerializer
+from apps.orders.state_machine import can_transition
 from apps.payments.models import Payment
 
 from .models import Category, Varietal, Wine, WineImage
@@ -215,6 +217,7 @@ class BackofficeDashboardSerializer(serializers.Serializer):
     total_orders = serializers.IntegerField()
     pending_orders = serializers.IntegerField()
     low_stock_items = serializers.ListField(child=serializers.DictField())
+    action_items = serializers.ListField(child=serializers.DictField())
 
 
 class BackofficeOrderListSerializer(serializers.ModelSerializer):
@@ -323,3 +326,80 @@ class BackofficeOrderDetailSerializer(OrderSerializer):
     def get_customer_phone(self, obj: Order) -> str:
         """Return the best contact phone for the order."""
         return BackofficeOrderListSerializer.get_customer_phone(self, obj)
+
+
+class BackofficeOrderActionSerializer(serializers.Serializer):
+    """Validate the small set of order operations exposed to staff."""
+
+    status = serializers.ChoiceField(choices=Order.Status.choices, required=False)
+    tracking_number = serializers.CharField(required=False, allow_blank=True, max_length=100)
+    estimated_delivery = serializers.DateField(required=False, allow_null=True)
+    notes = serializers.CharField(required=False, allow_blank=True)
+
+    def validate_status(self, value: str) -> str:
+        """Keep staff actions inside the order state machine."""
+        order = self.context["order"]
+        if value != order.status and not can_transition(order.status, value):
+            raise serializers.ValidationError(
+                f"No se puede pasar de {order.get_status_display()} a {Order.Status(value).label}."
+            )
+        return value
+
+    def save(self) -> Order:
+        """Apply the requested operational changes."""
+        order = self.context["order"]
+        update_fields = ["updated_at"]
+        for field in ["status", "tracking_number", "estimated_delivery", "notes"]:
+            if field in self.validated_data:
+                setattr(order, field, self.validated_data[field])
+                update_fields.append(field)
+        order.save(update_fields=update_fields)
+        return order
+
+
+class BackofficePromoCodeSerializer(serializers.ModelSerializer):
+    """Expose promo codes in the custom backoffice."""
+
+    class Meta:
+        model = PromoCode
+        fields = [
+            "id",
+            "code",
+            "discount_type",
+            "discount_value",
+            "min_order_amount",
+            "max_uses",
+            "used_count",
+            "valid_from",
+            "valid_until",
+            "is_active",
+        ]
+        read_only_fields = ["used_count"]
+
+
+class BackofficeCustomerSerializer(serializers.ModelSerializer):
+    """Small customer 360 row for the backoffice."""
+
+    full_name = serializers.CharField(read_only=True)
+    orders_count = serializers.IntegerField(read_only=True)
+    total_spent = serializers.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        read_only=True,
+        allow_null=True,
+    )
+    last_order_at = serializers.DateTimeField(read_only=True, allow_null=True)
+
+    class Meta:
+        model = CustomUser
+        fields = [
+            "id",
+            "email",
+            "full_name",
+            "phone",
+            "newsletter_subscribed",
+            "orders_count",
+            "total_spent",
+            "last_order_at",
+            "date_joined",
+        ]

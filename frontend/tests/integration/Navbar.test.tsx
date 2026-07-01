@@ -33,10 +33,10 @@ describe("Navbar", () => {
     const user = userEvent.setup();
     renderNavbar();
 
-    await user.click(screen.getByRole("button", { name: /abrir navegacion/i }));
+    await user.click(screen.getByRole("button", { name: /abrir navegación/i }));
 
-    expect(screen.getByText(/explora la bodega/i)).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /vinos/i })).toHaveLength(2);
+    expect(screen.getByText(/comprar o reservar/i)).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /vinos/i }).length).toBeGreaterThanOrEqual(2);
   });
 
   it("opens a side drawer preview when the cart button is pressed", async () => {

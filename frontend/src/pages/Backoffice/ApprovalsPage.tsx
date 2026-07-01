@@ -99,7 +99,7 @@ export function BackofficeApprovalsPage() {
         </label>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="space-y-6">
         <section className="space-y-4">
           {approvalsQuery.isLoading ? <p className="text-burgundy-700">Cargando approvals...</p> : null}
           {approvalsQuery.isError ? (

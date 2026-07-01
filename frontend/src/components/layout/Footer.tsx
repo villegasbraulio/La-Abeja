@@ -58,9 +58,9 @@ export function Footer() {
                 pensada para comprar con calma y volver.
               </p>
               <div className="mt-6 space-y-2 text-sm text-cream-100/75">
-                <p>Av. Hipolito Yrigoyen 9500 · San Rafael · Mendoza</p>
-                <p>Lunes a sabado · 10 a 18 h · Concierge comercial y de visitas</p>
-                <p>Solo para mayores de 18 anos.</p>
+                <p>Av. Hipólito Yrigoyen 9500 · San Rafael · Mendoza</p>
+                <p>Lunes a sábado · 10 a 18 h · Concierge comercial y de visitas</p>
+                <p>Solo para mayores de 18 años.</p>
               </div>
             </div>
 
@@ -85,12 +85,14 @@ export function Footer() {
 
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-gold-300">
-                Senales de confianza
+                Señales de confianza
               </p>
               <div className="mt-5 space-y-3 text-sm text-cream-100/80">
-                <p>Envios coordinados, retiro en bodega y soporte humano para compras complejas.</p>
+                <p>Pago seguro con Mercado Pago, envíos con seguimiento y retiro en bodega.</p>
                 <p>Asistencia para regalos, eventos privados y selecciones a medida.</p>
-                <p>Seguimiento de pedidos y atencion personalizada antes y despues de la compra.</p>
+                <Link to="/compra-segura" className="block font-semibold text-gold-300 hover:text-gold-200">
+                  Ver políticas de compra segura
+                </Link>
               </div>
             </div>
           </div>
@@ -98,7 +100,7 @@ export function Footer() {
           <div className="border-t border-white/10">
             <div className="mx-auto flex max-w-7xl flex-col gap-3 px-6 py-5 text-xs uppercase tracking-[0.18em] text-cream-100/60 md:flex-row md:items-center md:justify-between">
               <p>Bodega La Abeja · San Rafael · Mendoza</p>
-              <p>Compra online, visitas y regalos con acompanamiento humano.</p>
+              <p>Compra online, visitas y regalos con acompañamiento humano.</p>
             </div>
           </div>
           </div>

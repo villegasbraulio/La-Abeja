@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Download, Save } from "lucide-react";
 import { backofficeApi } from "../../api/backoffice";
 import { Button } from "../../components/ui/Button";
 import { applyWineImageFallback, wineImageSrc } from "../../lib/assets";
+import { downloadBlob } from "../../lib/download";
 import { formatARS, formatDate } from "../../lib/utils";
 
 const statusOptions = [
@@ -22,6 +24,13 @@ export function BackofficeOrdersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [actionForm, setActionForm] = useState({
+    status: "",
+    tracking_number: "",
+    estimated_delivery: "",
+    notes: "",
+  });
+  const queryClient = useQueryClient();
 
   const ordersQuery = useQuery({
     queryKey: ["backoffice-orders", search, statusFilter],
@@ -50,13 +59,52 @@ export function BackofficeOrdersPage() {
     enabled: Boolean(selectedOrderId),
   });
 
+  useEffect(() => {
+    if (!detailQuery.data) {
+      return;
+    }
+    setActionForm({
+      status: detailQuery.data.status,
+      tracking_number: detailQuery.data.tracking_number || "",
+      estimated_delivery: detailQuery.data.estimated_delivery || "",
+      notes: detailQuery.data.notes || "",
+    });
+  }, [detailQuery.data]);
+
+  const actionMutation = useMutation({
+    mutationFn: () =>
+      backofficeApi.orders.updateAction(selectedOrderId ?? "", {
+        status: actionForm.status,
+        tracking_number: actionForm.tracking_number,
+        estimated_delivery: actionForm.estimated_delivery || null,
+        notes: actionForm.notes,
+      }),
+    onSuccess: (order) => {
+      queryClient.setQueryData(["backoffice-order-detail", order.id], order);
+      void queryClient.invalidateQueries({ queryKey: ["backoffice-orders"] });
+      void queryClient.invalidateQueries({ queryKey: ["backoffice-dashboard"] });
+    },
+  });
+
+  async function handleExport() {
+    downloadBlob(await backofficeApi.orders.exportCsv(), "pedidos.csv");
+  }
+
   return (
     <div className="space-y-6">
       <section className="rounded-lg border border-burgundy-100 bg-white p-5 shadow-[0_16px_48px_rgba(66,13,21,0.07)] md:p-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-burgundy-500">
-          Operación de pedidos
-        </p>
-        <h1 className="mt-1.5 text-2xl font-semibold text-burgundy-950">Pedidos</h1>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-burgundy-500">
+              Operación de pedidos
+            </p>
+            <h1 className="mt-1.5 text-2xl font-semibold text-burgundy-950">Pedidos</h1>
+          </div>
+          <Button variant="ghost" onClick={handleExport}>
+            <Download className="h-4 w-4" strokeWidth={1.9} />
+            Exportar CSV
+          </Button>
+        </div>
       </section>
 
       <section className="grid gap-4 rounded-lg border border-burgundy-100 bg-white p-5 shadow-[0_16px_48px_rgba(66,13,21,0.07)] lg:grid-cols-[1fr_240px]">
@@ -85,7 +133,7 @@ export function BackofficeOrdersPage() {
         </label>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="space-y-6">
         <section className="space-y-4">
           {ordersQuery.isLoading ? <p className="text-burgundy-700">Cargando pedidos...</p> : null}
           {ordersQuery.isError ? (
@@ -188,6 +236,83 @@ export function BackofficeOrdersPage() {
                   )}
                 </div>
               </div>
+
+              <form
+                className="grid gap-4 rounded-lg border border-burgundy-100 bg-cream-50 p-5 lg:grid-cols-[180px_1fr_180px_1fr_auto]"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  actionMutation.mutate();
+                }}
+              >
+                <label className="space-y-2 text-sm font-semibold text-burgundy-900">
+                  Estado
+                  <select
+                    value={actionForm.status}
+                    onChange={(event) =>
+                      setActionForm((current) => ({ ...current, status: event.target.value }))
+                    }
+                    className="w-full rounded-2xl border border-burgundy-100 bg-white px-4 py-3 text-sm text-burgundy-950 outline-none"
+                  >
+                    {statusOptions
+                      .filter((option) => option.value)
+                      .map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+                <label className="space-y-2 text-sm font-semibold text-burgundy-900">
+                  Tracking
+                  <input
+                    value={actionForm.tracking_number}
+                    onChange={(event) =>
+                      setActionForm((current) => ({
+                        ...current,
+                        tracking_number: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-2xl border border-burgundy-100 bg-white px-4 py-3 text-sm text-burgundy-950 outline-none"
+                    placeholder="Código de envío"
+                  />
+                </label>
+                <label className="space-y-2 text-sm font-semibold text-burgundy-900">
+                  Entrega estimada
+                  <input
+                    type="date"
+                    value={actionForm.estimated_delivery}
+                    onChange={(event) =>
+                      setActionForm((current) => ({
+                        ...current,
+                        estimated_delivery: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-2xl border border-burgundy-100 bg-white px-4 py-3 text-sm text-burgundy-950 outline-none"
+                  />
+                </label>
+                <label className="space-y-2 text-sm font-semibold text-burgundy-900">
+                  Nota interna
+                  <input
+                    value={actionForm.notes}
+                    onChange={(event) =>
+                      setActionForm((current) => ({ ...current, notes: event.target.value }))
+                    }
+                    className="w-full rounded-2xl border border-burgundy-100 bg-white px-4 py-3 text-sm text-burgundy-950 outline-none"
+                    placeholder="Comentario operativo"
+                  />
+                </label>
+                <div className="flex items-end">
+                  <Button type="submit" className="w-full" disabled={actionMutation.isPending}>
+                    <Save className="h-4 w-4" strokeWidth={1.9} />
+                    Guardar
+                  </Button>
+                </div>
+                {actionMutation.isError ? (
+                  <p className="text-sm text-burgundy-700 lg:col-span-5">
+                    No pudimos guardar la operación. Revisá si el cambio de estado es válido.
+                  </p>
+                ) : null}
+              </form>
 
               <div className="space-y-3">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-burgundy-500">

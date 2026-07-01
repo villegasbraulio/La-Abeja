@@ -372,6 +372,7 @@ function WineMetric({
 
 export function WinesPage() {
   const queryClient = useQueryClient();
+  const [screen, setScreen] = useState<"list" | "editor">("list");
   const [selectedWineId, setSelectedWineId] = useState<string | null>(null);
   const [formState, setFormState] = useState<WineFormState>(emptyWineForm);
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -421,6 +422,7 @@ export function WinesPage() {
       setFeedback("Vino guardado correctamente.");
       setSelectedWineId(wine.id);
       setFormState(toWineFormState(wine));
+      setScreen("editor");
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["backoffice-wines"] }),
         queryClient.invalidateQueries({ queryKey: ["backoffice-dashboard"] }),
@@ -445,6 +447,7 @@ export function WinesPage() {
       setFeedback("Vino eliminado.");
       setSelectedWineId(null);
       setFormState(emptyWineForm);
+      setScreen("list");
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["backoffice-wines"] }),
         queryClient.invalidateQueries({ queryKey: ["backoffice-dashboard"] }),
@@ -471,6 +474,12 @@ export function WinesPage() {
     setSelectedWineId(null);
     setFormState(emptyWineForm);
     setFeedback(null);
+    setScreen("editor");
+  }
+
+  function backToList() {
+    setScreen("list");
+    setFeedback(null);
   }
 
   function clearFilters() {
@@ -482,6 +491,7 @@ export function WinesPage() {
   function selectWine(wineId: string) {
     setSelectedWineId(wineId);
     setFeedback(null);
+    setScreen("editor");
   }
 
   function handleTextInput(field: WineTextField) {
@@ -579,9 +589,15 @@ export function WinesPage() {
         title="Vinos"
         description="Inventario, precios, contenido, imágenes y SEO."
         actions={
-          <Button variant="ghost" onClick={resetEditor}>
-            Nuevo vino
-          </Button>
+          screen === "editor" ? (
+            <Button variant="ghost" onClick={backToList}>
+              Volver al listado
+            </Button>
+          ) : (
+            <Button variant="ghost" onClick={resetEditor}>
+              Nuevo vino
+            </Button>
+          )
         }
         stats={[
           { label: "Vinos visibles", value: visibleWinesCount },
@@ -591,6 +607,8 @@ export function WinesPage() {
         ]}
       />
 
+      {screen === "list" ? (
+      <>
       <BackofficePanel>
         <BackofficePanelHeader
           eyebrow="Búsqueda y filtros"
@@ -661,7 +679,7 @@ export function WinesPage() {
         </div>
       </BackofficePanel>
 
-      <div className="grid items-start gap-6 xl:grid-cols-[0.92fr_1.08fr]">
+      <div className="space-y-6">
         <BackofficePanel>
           <BackofficePanelHeader
             eyebrow="Inventario visible"
@@ -768,25 +786,32 @@ export function WinesPage() {
             })}
           </div>
         </BackofficePanel>
-
+      </div>
+      </>
+      ) : (
         <BackofficePanel>
           <BackofficePanelHeader
             eyebrow="Editor de vino"
             title={selectedWineId ? currentWineSummary?.name ?? "Editar vino" : "Crear nuevo vino"}
             description="La ficha fue dividida en secciones para que cargar datos comerciales, editoriales y visuales sea mucho menos caótico."
             actions={
-              selectedWineId ? (
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    if (window.confirm("¿Querés eliminar este vino del catálogo?")) {
-                      deleteMutation.mutate();
-                    }
-                  }}
-                >
-                  Eliminar
+              <div className="flex flex-wrap gap-3">
+                <Button type="button" variant="ghost" onClick={backToList}>
+                  Volver al listado
                 </Button>
-              ) : null
+                {selectedWineId ? (
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      if (window.confirm("¿Querés eliminar este vino del catálogo?")) {
+                        deleteMutation.mutate();
+                      }
+                    }}
+                  >
+                    Eliminar
+                  </Button>
+                ) : null}
+              </div>
             }
           />
 
@@ -1179,7 +1204,7 @@ export function WinesPage() {
             </div>
           </form>
         </BackofficePanel>
-      </div>
+      )}
     </div>
   );
 }

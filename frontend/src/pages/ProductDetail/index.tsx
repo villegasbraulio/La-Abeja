@@ -154,7 +154,7 @@ export function ProductDetailPage() {
               <div className="mt-6 grid gap-3 text-sm text-burgundy-700 md:grid-cols-3">
                 <div className="rounded-lg bg-cream-50 px-4 py-3">Retiro en bodega disponible</div>
                 <div className="rounded-lg bg-cream-50 px-4 py-3">Asistencia para regalos y cajas</div>
-                <div className="rounded-lg bg-cream-50 px-4 py-3">Concierge comercial de lunes a sabado</div>
+                <div className="rounded-lg bg-cream-50 px-4 py-3">Concierge comercial de lunes a sábado</div>
               </div>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Button
@@ -275,7 +275,7 @@ export function ProductDetailPage() {
 
               <div className="rounded-lg border border-burgundy-100 bg-white p-6">
                 <p className="text-sm font-semibold uppercase tracking-[0.24em] text-burgundy-500">
-                  Notas del enologo
+                  Notas del enólogo
                 </p>
                 <p className="mt-4 leading-7 text-burgundy-800">
                   {data.winemaker_notes ||
@@ -310,7 +310,7 @@ export function ProductDetailPage() {
                 ))
               ) : (
                 <p className="text-burgundy-700">
-                  Todavia no hay opiniones publicadas para esta etiqueta.
+                  Todavía no hay opiniones publicadas para esta etiqueta.
                 </p>
               )}
             </div>
@@ -351,7 +351,7 @@ export function ProductDetailPage() {
               Tambien te puede gustar
             </p>
             <h2 className="mt-3 font-serif text-4xl text-burgundy-950">
-              Otras etiquetas para seguir explorando la coleccion.
+              Otras etiquetas para seguir explorando la colección.
             </h2>
           </div>
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">

@@ -37,3 +37,16 @@ html {
   background: rgba(200, 169, 110, 0.45);
   color: #420d15;
 }
+
+@keyframes toast-progress {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.toast-progress {
+  animation: toast-progress linear forwards;
+}

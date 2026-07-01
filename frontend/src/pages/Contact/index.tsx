@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
 import { SectionHeading } from "../../components/common/SectionHeading";
 import { Button } from "../../components/ui/Button";
+import { buildWhatsAppUrl } from "../../lib/contact";
 import { contactChannels } from "../../lib/siteContent";
 
 const inquiryOptions = [
@@ -10,7 +11,7 @@ const inquiryOptions = [
   { value: "evento", label: "Evento privado" },
   { value: "regalos", label: "Regalos y cajas" },
   { value: "corporativo", label: "Programa corporativo" },
-  { value: "envios", label: "Envios o retiro" },
+  { value: "envios", label: "Envíos o retiro" },
   { value: "general", label: "Consulta general" },
 ];
 
@@ -21,6 +22,19 @@ export function ContactPage() {
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const inquiry = String(form.get("inquiry") ?? "general");
+    const inquiryLabel = inquiryOptions.find((option) => option.value === inquiry)?.label ?? inquiry;
+    const message = [
+      "Hola, quiero hacer una consulta para Bodega La Abeja.",
+      `Nombre: ${form.get("first_name") ?? ""}`,
+      `Email: ${form.get("email") ?? ""}`,
+      `Teléfono: ${form.get("phone") ?? ""}`,
+      `Motivo: ${inquiryLabel}`,
+      `Mensaje: ${form.get("message") ?? ""}`,
+    ].join("\n");
+
+    window.open(buildWhatsAppUrl(message), "_blank", "noopener,noreferrer");
     setSubmitted(true);
   }
 
@@ -29,7 +43,7 @@ export function ContactPage() {
       <PageHero
         eyebrow="Contacto"
         title="Un canal directo para consultas, reservas y pedidos especiales."
-        description="Canales visibles y un formulario simple para ordenar consultas sobre visitas, regalos, envios y eventos privados."
+        description="Canales visibles y un formulario simple para ordenar consultas sobre visitas, regalos, envíos y eventos privados."
         aside={
           <div className="space-y-4">
             {contactChannels.map((channel) => (
@@ -50,7 +64,7 @@ export function ContactPage() {
           <div className="rounded-lg border border-burgundy-100 bg-white p-8 shadow-velvet">
             <SectionHeading
               eyebrow="Formulario de contacto"
-              title="Contanos que necesitas y te ayudamos a resolverlo."
+              title="Contanos qué necesitás y te ayudamos a resolverlo."
             />
             <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
               <div className="grid gap-5 md:grid-cols-2">
@@ -77,7 +91,7 @@ export function ContactPage() {
 
               <div className="grid gap-5 md:grid-cols-2">
                 <label className="grid gap-2">
-                  <span className="text-sm font-semibold text-burgundy-800">Telefono</span>
+                  <span className="text-sm font-semibold text-burgundy-800">Teléfono</span>
                   <input
                     className="rounded-2xl border border-burgundy-200 bg-cream-50 px-4 py-3 text-burgundy-950 outline-none focus:border-burgundy-400"
                     name="phone"
@@ -105,7 +119,7 @@ export function ContactPage() {
                 <textarea
                   className="min-h-36 rounded-lg border border-burgundy-200 bg-cream-50 px-4 py-3 text-burgundy-950 outline-none focus:border-burgundy-400"
                   name="message"
-                  placeholder="Contanos que necesitas: visita, regalo, compra o evento."
+                  placeholder="Contanos qué necesitás: visita, regalo, compra o evento."
                   required
                 />
               </label>
@@ -123,15 +137,15 @@ export function ContactPage() {
 
           <div className="rounded-lg border border-white/70 bg-burgundy-950 p-8 text-cream-50 shadow-velvet">
             <SectionHeading
-              eyebrow="Atencion personalizada"
-              title="Regalos, eventos y compras de volumen necesitan una conversacion propia."
-              description="Cuando el cliente encuentra contacto, direccion y asistencia clara, la experiencia gana confianza desde el primer mensaje."
+              eyebrow="Atención personalizada"
+              title="Regalos, eventos y compras de volumen necesitan una conversación propia."
+              description="Cuando el cliente encuentra contacto, dirección y asistencia clara, la experiencia gana confianza desde el primer mensaje."
               tone="light"
             />
             <ul className="mt-8 space-y-3 text-cream-100/80">
               <li>• Ayuda a capturar demanda corporativa y privada.</li>
               <li>• Ordena mejor el flujo para visitas y regalos.</li>
-              <li>• Refuerza confianza con direccion, horario y soporte directo.</li>
+              <li>• Refuerza confianza con dirección, horario y soporte directo.</li>
             </ul>
           </div>
         </div>

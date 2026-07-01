@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { buildMailtoUrl } from "../../lib/contact";
 import { Button } from "../ui/Button";
 
 interface NewsletterCardProps {
@@ -8,13 +9,17 @@ interface NewsletterCardProps {
 
 export function NewsletterCard({
   title = "Sumate a la lista privada de novedades",
-  description = "Recibi lanzamientos, agendas de visitas, recomendaciones de maridaje y regalos con criterio curado.",
+  description = "Recibí lanzamientos, agendas de visitas, recomendaciones de maridaje y regalos con criterio curado.",
 }: NewsletterCardProps) {
   const [email, setEmail] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    window.location.href = buildMailtoUrl(
+      "Alta newsletter Bodega La Abeja",
+      `Hola, quiero recibir novedades de Bodega La Abeja.\n\nEmail: ${email}`,
+    );
     setIsSubmitted(true);
     setEmail("");
   }
@@ -40,7 +45,7 @@ export function NewsletterCard({
       <p className="mt-3 text-sm text-burgundy-600">
         {isSubmitted
           ? "Gracias por sumarte. Te vamos a escribir con novedades, lanzamientos y fechas destacadas."
-          : "Sin spam: solo novedades utiles, agendas, etiquetas destacadas y ventanas especiales de compra."}
+          : "Sin spam: solo novedades útiles, agendas, etiquetas destacadas y ventanas especiales de compra."}
       </p>
     </div>
   );

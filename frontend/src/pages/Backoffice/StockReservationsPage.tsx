@@ -95,7 +95,7 @@ export function BackofficeStockReservationsPage() {
         </label>
       </section>
 
-      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+      <div className="space-y-6">
         <section className="space-y-4">
           {reservationsQuery.isLoading ? <p className="text-burgundy-700">Cargando reservas...</p> : null}
           {reservationsQuery.isError ? (

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
 import { SectionHeading } from "../../components/common/SectionHeading";
 import { Button } from "../../components/ui/Button";
+import { buildWhatsAppUrl } from "../../lib/contact";
 import { giftingCollections } from "../../lib/siteContent";
 
 export function GiftsPage() {
@@ -10,14 +11,14 @@ export function GiftsPage() {
       <PageHero
         eyebrow="Regalos y cajas"
         title="Cajas de vino, obsequios corporativos y selecciones pensadas para celebrar."
-        description="Reunimos propuestas para empresas, aniversarios, eventos y agradecimientos con presentacion cuidada y asesoramiento personalizado."
+        description="Reunimos propuestas para empresas, aniversarios, eventos y agradecimientos con presentación cuidada y asesoramiento personalizado."
         aside={
           <div className="space-y-4 text-burgundy-900">
             <p className="rounded-lg bg-cream-50 px-5 py-4">
-              Cajas de 2, 3 y 6 vinos con presentacion premium.
+              Cajas de 2, 3 y 6 vinos con presentación premium.
             </p>
             <p className="rounded-lg bg-cream-50 px-5 py-4">
-              Tarjetas personalizadas, coordinacion de entrega y asesoramiento humano.
+              Tarjetas personalizadas, coordinación de entrega y asesoramiento humano.
             </p>
             <p className="rounded-lg bg-cream-50 px-5 py-4">
               Programas especiales para empresas, eventos y celebraciones.
@@ -25,9 +26,13 @@ export function GiftsPage() {
           </div>
         }
       >
-        <Link to="/contacto?tipo=regalos">
+        <a
+          href={buildWhatsAppUrl("Hola, quiero solicitar una propuesta de regalos de Bodega La Abeja.")}
+          target="_blank"
+          rel="noreferrer"
+        >
           <Button>Solicitar propuesta</Button>
-        </Link>
+        </a>
         <Link to="/vinos">
           <Button variant="ghost">Elegir etiquetas</Button>
         </Link>
@@ -57,16 +62,20 @@ export function GiftsPage() {
           <SectionHeading
             eyebrow="Gift Concierge"
             title="Un canal dedicado a regalos ayuda a elegir mejor y cuidar cada detalle."
-            description="Desde una caja para agasajar hasta un programa corporativo completo, el equipo acompana la seleccion, el mensaje y la entrega."
+            description="Desde una caja para agasajar hasta un programa corporativo completo, el equipo acompaña la selección, el mensaje y la entrega."
             tone="light"
           />
           <div className="mt-8 flex flex-wrap gap-4">
-            <Link to="/contacto?tipo=corporativo">
+            <a
+              href={buildWhatsAppUrl("Hola, quiero consultar por regalos corporativos de Bodega La Abeja.")}
+              target="_blank"
+              rel="noreferrer"
+            >
               <Button variant="secondary">Hablar por regalos corporativos</Button>
-            </Link>
+            </a>
             <Link to="/guia-de-compra">
               <Button variant="ghost" className="border-white/30 text-cream-50 hover:bg-white/10">
-                Ver logistica y envios
+                Ver logística y envíos
               </Button>
             </Link>
           </div>

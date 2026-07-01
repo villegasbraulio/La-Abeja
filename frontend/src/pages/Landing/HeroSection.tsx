@@ -1,87 +1,66 @@
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { ArrowRight, CalendarDays, ShoppingBag } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { estateFacts } from "../../lib/siteContent";
 
 export function HeroSection() {
   return (
-    <section className="mx-auto grid max-w-7xl gap-12 px-6 py-16 lg:grid-cols-[1.08fr_0.92fr] lg:items-center lg:py-20">
-      <div>
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.65, ease: "easeOut" }}
-          className="mb-5 text-sm font-semibold uppercase tracking-[0.35em] text-burgundy-700"
-        >
-          San Rafael · Mendoza · Desde 1883
-        </motion.p>
-        <motion.h1
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.12, duration: 0.75, ease: "easeOut" }}
-          className="max-w-3xl font-serif text-5xl leading-tight text-burgundy-950 md:text-7xl"
-        >
-          Vinos de San Rafael, visitas guiadas y regalos con el lenguaje de una bodega que sabe recibir.
-        </motion.h1>
-        <motion.p
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.24, duration: 0.75, ease: "easeOut" }}
-          className="mt-6 max-w-2xl text-lg leading-8 text-burgundy-800"
-        >
-          Bodega La Abeja une legado, terroir y hospitalidad en una experiencia de compra clara:
-          explorar etiquetas, reservar una visita y pedir asesoramiento desde un mismo lugar.
-        </motion.p>
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.36, duration: 0.75, ease: "easeOut" }}
-          className="mt-10 flex flex-wrap gap-4"
-        >
-          <Link to="/vinos">
-            <Button>Explorar etiquetas</Button>
-          </Link>
-          <Link to="/visitas">
-            <Button variant="ghost">Planear una visita</Button>
-          </Link>
-          <Link to="/regalos">
-            <Button variant="secondary">Ver regalos</Button>
-          </Link>
-        </motion.div>
-        <div className="mt-10 grid gap-4 md:grid-cols-3">
-          {estateFacts.map((fact) => (
-            <div
-              key={fact.label}
-              className="rounded-lg border border-burgundy-100 bg-white/80 p-5 shadow-velvet"
-            >
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-burgundy-500">
-                {fact.label}
-              </p>
-              <p className="mt-3 font-serif text-3xl text-burgundy-950">{fact.value}</p>
-              <p className="mt-2 text-sm leading-6 text-burgundy-700">{fact.description}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.96 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.85, ease: "easeOut" }}
-        className="relative overflow-hidden rounded-lg border border-white/60 bg-hero-radial p-6 shadow-velvet"
-      >
+    <section className="relative overflow-hidden bg-burgundy-950 text-cream-50">
         <img
           src="https://images.unsplash.com/photo-1569919659476-f0852f6834b7?auto=format&fit=crop&w=1400&q=80"
-          alt="Viñedos de Bodega La Abeja"
-          className="h-[520px] w-full rounded-lg object-cover"
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-cover opacity-[0.58]"
         />
-        <div className="absolute bottom-12 left-12 max-w-sm rounded-lg bg-burgundy-950/88 p-6 text-cream-50">
-          <p className="text-sm uppercase tracking-[0.22em] text-gold-300">Compra con acompanamiento</p>
-          <p className="mt-3 text-lg leading-7">
-            Etiquetas recomendadas, retiro en bodega, regalos y visitas coordinadas para que cada
-            compra tenga contexto, servicio y continuidad.
-          </p>
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(66,13,21,0.94)_0%,rgba(66,13,21,0.68)_47%,rgba(66,13,21,0.2)_100%)]" />
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-burgundy-950/80 to-transparent" />
+
+        <div className="relative mx-auto grid min-h-[calc(100vh-74px)] max-w-7xl content-end gap-10 px-4 pb-8 pt-20 sm:px-6 lg:min-h-[720px] lg:grid-cols-[1fr_360px] lg:items-end lg:pb-12">
+          <div className="max-w-4xl">
+            <p className="mb-5 text-xs font-semibold uppercase tracking-[0.3em] text-gold-300">
+              San Rafael · Mendoza · desde 1883
+            </p>
+            <h1 className="font-serif text-5xl leading-[0.98] text-white sm:text-6xl lg:text-7xl">
+              La bodega histórica para comprar vino y vivir San Rafael.
+            </h1>
+            <p className="mt-6 max-w-2xl text-base leading-7 text-cream-100/88 sm:text-lg sm:leading-8">
+              Elegí etiquetas de la casa, reservá una visita guiada y coordiná retiro o envío con
+              atención humana desde el primer contacto.
+            </p>
+
+            <div className="mt-8 grid gap-3 sm:flex sm:flex-wrap">
+              <Link to="/vinos">
+                <Button className="w-full justify-between bg-gold-500 text-burgundy-950 hover:bg-gold-400 sm:w-auto">
+                  <ShoppingBag className="h-4 w-4" strokeWidth={1.9} />
+                  Comprar botellas
+                  <ArrowRight className="h-4 w-4" strokeWidth={1.9} />
+                </Button>
+              </Link>
+              <Link to="/visitas">
+                <Button
+                  variant="ghost"
+                  className="w-full justify-between border-white/25 bg-white/10 text-white hover:bg-white/15 sm:w-auto"
+                >
+                  <CalendarDays className="h-4 w-4" strokeWidth={1.9} />
+                  Reservar visita
+                  <ArrowRight className="h-4 w-4" strokeWidth={1.9} />
+                </Button>
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid gap-3 rounded-lg border border-white/14 bg-burgundy-950/72 p-4 backdrop-blur-md sm:grid-cols-3 lg:grid-cols-1">
+            {estateFacts.map((fact) => (
+              <div key={fact.label} className="border-white/10 py-2 sm:border-l sm:pl-4 lg:border-l-0 lg:border-t lg:pl-0 lg:first:border-t-0">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-300/80">
+                  {fact.label}
+                </p>
+                <p className="mt-2 font-serif text-2xl text-white">{fact.value}</p>
+                <p className="mt-1 text-sm leading-6 text-cream-100/76">{fact.description}</p>
+              </div>
+            ))}
+          </div>
         </div>
-      </motion.div>
     </section>
   );
 }

@@ -10,7 +10,7 @@ export function AboutPage() {
       <PageHero
         eyebrow="Historia y marca"
         title="La bodega se cuenta desde el legado, el terroir y la hospitalidad."
-        description="La coleccion nace de una historia concreta: viñas, cava, recepcion y una forma mendocina de recibir que sigue guiando la experiencia."
+        description="La colección nace de una historia concreta: viñas, cava, recepción y una forma mendocina de recibir que sigue guiando la experiencia."
         aside={
           <img
             src="https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?auto=format&fit=crop&w=1200&q=80"
@@ -23,7 +23,7 @@ export function AboutPage() {
           <Button>Vivir la bodega</Button>
         </Link>
         <Link to="/vinos">
-          <Button variant="ghost">Explorar la coleccion</Button>
+          <Button variant="ghost">Explorar la colección</Button>
         </Link>
       </PageHero>
 
@@ -44,8 +44,8 @@ export function AboutPage() {
       <section className="mx-auto max-w-7xl px-6 py-20">
         <div className="rounded-lg border border-burgundy-100 bg-white px-8 py-10 shadow-velvet md:px-10">
           <SectionHeading
-            eyebrow="Linea de tiempo"
-            title="Una cronologia breve para entender como se fue formando la identidad de la bodega."
+            eyebrow="Línea de tiempo"
+            title="Una cronología breve para entender cómo se fue formando la identidad de la bodega."
           />
           <div className="mt-10 grid gap-6 lg:grid-cols-3">
             {storyMilestones.map((item) => (

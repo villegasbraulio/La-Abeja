@@ -51,23 +51,6 @@ const manualRefundStatusOptions = [
   { value: "cancelled", label: "Cancelado" },
 ];
 
-const visitWorkspaceTabs: Array<{
-  value: "visitas" | "reservas";
-  label: string;
-  description: string;
-}> = [
-  {
-    value: "visitas",
-    label: "Visitas y agenda",
-    description: "Experiencias, contenido comercial y turnos publicados.",
-  },
-  {
-    value: "reservas",
-    label: "Reservas y check-in",
-    description: "Eventos reales, estados de pago y seguimiento operativo.",
-  },
-];
-
 interface ExperienceFormState {
   name: string;
   slug: string;
@@ -275,9 +258,13 @@ function VisitImage({ src, alt }: { src?: string | null; alt: string }) {
   );
 }
 
-export function BackofficeVisitsPage() {
+interface BackofficeVisitsPageProps {
+  section?: "visitas" | "reservas";
+}
+
+export function BackofficeVisitsPage({ section = "visitas" }: BackofficeVisitsPageProps) {
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<"visitas" | "reservas">("visitas");
+  const activeTab = section;
   const [selectedExperienceId, setSelectedExperienceId] = useState<string | null>(null);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
   const [selectedSlotId, setSelectedSlotId] = useState<number | null>(null);
@@ -676,7 +663,7 @@ export function BackofficeVisitsPage() {
   return (
     <div className="space-y-8">
       <BackofficeHero
-        eyebrow="Visitas y eventos"
+        eyebrow={activeTab === "visitas" ? "Oferta de visitas" : "Operación de reservas"}
         title={activeTab === "visitas" ? "Experiencias" : "Reservas"}
         description={
           activeTab === "visitas"
@@ -695,46 +682,11 @@ export function BackofficeVisitsPage() {
         stats={activeTab === "visitas" ? experienceStats : bookingStats}
       />
 
-      <section className="rounded-lg border border-burgundy-100 bg-white p-3 shadow-velvet">
-        <div className="grid gap-3 lg:grid-cols-2">
-          {visitWorkspaceTabs.map((tab) => {
-            const isActive = activeTab === tab.value;
-            const count = tab.value === "visitas" ? experiences.length : bookings.length;
-            return (
-              <button
-                key={tab.value}
-                type="button"
-                onClick={() => setActiveTab(tab.value)}
-                className={cn(
-                  "rounded-lg border px-5 py-5 text-left transition",
-                  isActive
-                    ? "border-burgundy-900 bg-burgundy-950 text-cream-50 shadow-velvet"
-                    : "border-burgundy-100 bg-cream-50/80 text-burgundy-950 hover:border-burgundy-300 hover:bg-white",
-                )}
-              >
-                <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                  <div>
-                    <p className="text-sm font-semibold uppercase tracking-[0.2em] text-current/70">
-                      Pestaña {tab.value === "visitas" ? "01" : "02"}
-                    </p>
-                    <h3 className="mt-2 font-serif text-3xl">{tab.label}</h3>
-                    <p className="mt-3 max-w-2xl text-sm leading-7 text-current/75">{tab.description}</p>
-                  </div>
-                  <BackofficeBadge tone={isActive ? "gold" : "soft"} className="self-start">
-                    {count} {tab.value === "visitas" ? "visitas" : "reservas"}
-                  </BackofficeBadge>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
       {feedback ? <BackofficeMessage tone={feedbackTone}>{feedback}</BackofficeMessage> : null}
 
       {activeTab === "visitas" ? (
         <>
-          <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+          <div className="space-y-6">
             <section className="space-y-4">
               {experiencesQuery.isLoading ? <p className="text-burgundy-700">Cargando visitas...</p> : null}
               {experiencesQuery.isError ? (
@@ -996,7 +948,7 @@ export function BackofficeVisitsPage() {
                 </Button>
               }
             />
-            <div className="mt-6 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+            <div className="mt-6 space-y-6">
               {slotsQuery.isLoading ? <p className="text-burgundy-700">Cargando turnos...</p> : null}
               {slotsQuery.isError ? (
                 <BackofficeMessage tone="danger">No pudimos cargar los turnos de esta experiencia.</BackofficeMessage>
@@ -1242,7 +1194,7 @@ export function BackofficeVisitsPage() {
             </BackofficeSectionCard>
           </div>
 
-          <div className="mt-6 grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+          <div className="mt-6 space-y-6">
             <section className="space-y-4">
               {bookingsQuery.isLoading ? <p className="text-burgundy-700">Cargando reservas...</p> : null}
               {bookingsQuery.isError ? (

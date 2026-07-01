@@ -312,7 +312,7 @@ export function CheckoutPage() {
             Checkout
           </p>
           <h1 className="mt-2 font-serif text-3xl text-burgundy-950 sm:text-4xl">
-            Cerrá la compra y pagá con Mercado Pago.
+            Confirmá tu compra y seguí el pago seguro.
           </h1>
         </div>
         <Link to="/carrito">
@@ -367,7 +367,7 @@ export function CheckoutPage() {
               </h2>
               <p className="mt-3 text-burgundy-700">
                 {authMode === "guest"
-                  ? "Solo necesitamos tu email para enviarte el detalle del pedido, las novedades del pago y las actualizaciones del despacho."
+                  ? "Solo necesitamos tu email para enviarte el pedido, el pago y las actualizaciones de entrega."
                   : "Si no querés crear una cuenta, podés cambiar a compra invitada y recibir todo por email."}
               </p>
 
@@ -406,6 +406,7 @@ export function CheckoutPage() {
                       <span className="text-sm font-semibold text-burgundy-800">Email</span>
                       <input
                         type="email"
+                        autoComplete="email"
                         value={registerForm.email}
                         onChange={(event) =>
                           setRegisterForm((current) => ({
@@ -421,6 +422,8 @@ export function CheckoutPage() {
                       <span className="text-sm font-semibold text-burgundy-800">Teléfono</span>
                       <input
                         value={registerForm.phone}
+                        autoComplete="tel"
+                        inputMode="tel"
                         onChange={(event) =>
                           setRegisterForm((current) => ({
                             ...current,
@@ -434,6 +437,7 @@ export function CheckoutPage() {
                       <span className="text-sm font-semibold text-burgundy-800">Contraseña</span>
                       <input
                         type="password"
+                        autoComplete="new-password"
                         value={registerForm.password}
                         onChange={(event) =>
                           setRegisterForm((current) => ({
@@ -452,6 +456,7 @@ export function CheckoutPage() {
                       <span className="text-sm font-semibold text-burgundy-800">Email</span>
                       <input
                         type="email"
+                        autoComplete="email"
                         value={loginForm.email}
                         onChange={(event) =>
                           setLoginForm((current) => ({
@@ -467,6 +472,7 @@ export function CheckoutPage() {
                       <span className="text-sm font-semibold text-burgundy-800">Contraseña</span>
                       <input
                         type="password"
+                        autoComplete="current-password"
                         value={loginForm.password}
                         onChange={(event) =>
                           setLoginForm((current) => ({
@@ -485,6 +491,7 @@ export function CheckoutPage() {
                       <span className="text-sm font-semibold text-burgundy-800">Email</span>
                       <input
                         type="email"
+                        autoComplete="email"
                         value={guestForm.email}
                         onChange={(event) =>
                           setGuestForm((current) => ({
@@ -535,7 +542,7 @@ export function CheckoutPage() {
                 </p>
                 <h2 className="mt-3 font-serif text-3xl text-burgundy-950">
                   {user
-                    ? `Tu orden va a quedar a nombre de ${user.full_name || user.email}.`
+                    ? `Tu compra va a quedar a nombre de ${user.full_name || user.email}.`
                     : `Tu orden va a quedar asociada al email ${guestForm.email || "que cargues abajo"}.`}
                 </h2>
               </div>
@@ -545,6 +552,7 @@ export function CheckoutPage() {
                   <span className="text-sm font-semibold text-burgundy-800">Email de contacto</span>
                   <input
                     type="email"
+                    autoComplete="email"
                     value={guestForm.email}
                     onChange={(event) =>
                       setGuestForm((current) => ({
@@ -565,6 +573,7 @@ export function CheckoutPage() {
                   </span>
                   <input
                     value={shippingForm.recipient_name}
+                    autoComplete="name"
                     onChange={(event) =>
                       setShippingForm((current) => ({
                         ...current,
@@ -579,6 +588,7 @@ export function CheckoutPage() {
                   <span className="text-sm font-semibold text-burgundy-800">Calle</span>
                   <input
                     value={shippingForm.street}
+                    autoComplete="address-line1"
                     onChange={(event) =>
                       setShippingForm((current) => ({ ...current, street: event.target.value }))
                     }
@@ -590,6 +600,8 @@ export function CheckoutPage() {
                   <span className="text-sm font-semibold text-burgundy-800">Número</span>
                   <input
                     value={shippingForm.number}
+                    autoComplete="address-line2"
+                    inputMode="numeric"
                     onChange={(event) =>
                       setShippingForm((current) => ({ ...current, number: event.target.value }))
                     }
@@ -601,6 +613,7 @@ export function CheckoutPage() {
                   <span className="text-sm font-semibold text-burgundy-800">Piso / dpto.</span>
                   <input
                     value={shippingForm.floor_apt}
+                    autoComplete="address-line3"
                     onChange={(event) =>
                       setShippingForm((current) => ({
                         ...current,
@@ -614,6 +627,7 @@ export function CheckoutPage() {
                   <span className="text-sm font-semibold text-burgundy-800">Ciudad</span>
                   <input
                     value={shippingForm.city}
+                    autoComplete="address-level2"
                     onChange={(event) =>
                       setShippingForm((current) => ({ ...current, city: event.target.value }))
                     }
@@ -625,6 +639,7 @@ export function CheckoutPage() {
                   <span className="text-sm font-semibold text-burgundy-800">Provincia</span>
                   <input
                     value={shippingForm.province}
+                    autoComplete="address-level1"
                     onChange={(event) =>
                       setShippingForm((current) => ({
                         ...current,
@@ -639,6 +654,8 @@ export function CheckoutPage() {
                   <span className="text-sm font-semibold text-burgundy-800">Código postal</span>
                   <input
                     value={shippingForm.postal_code}
+                    autoComplete="postal-code"
+                    inputMode="numeric"
                     onChange={(event) =>
                       setShippingForm((current) => ({
                         ...current,
@@ -653,6 +670,8 @@ export function CheckoutPage() {
                   <span className="text-sm font-semibold text-burgundy-800">Teléfono</span>
                   <input
                     value={shippingForm.phone}
+                    autoComplete="tel"
+                    inputMode="tel"
                     onChange={(event) =>
                       setShippingForm((current) => ({ ...current, phone: event.target.value }))
                     }
@@ -819,8 +838,7 @@ export function CheckoutPage() {
                 </div>
               ) : (
                 <div className="rounded-lg border border-burgundy-100 bg-cream-50 px-4 py-3 text-sm text-burgundy-700">
-                  Al confirmar el pedido preparamos la preferencia y mostramos el botón oficial de
-                  Mercado Pago para completar el cobro.
+                  Al confirmar, preparamos tu pedido y te mostramos el botón oficial de Mercado Pago.
                 </div>
               )}
 
@@ -843,8 +861,8 @@ export function CheckoutPage() {
                     : shippingQuoteQuery.isLoading
                       ? "Cotizando envío..."
                       : isGuestCheckout
-                        ? "Confirmar pedido como invitado"
-                        : "Confirmar pedido y mostrar botón de Mercado Pago"}
+                        ? "Confirmar compra"
+                        : "Confirmar compra y pagar"}
               </Button>
             </form>
           ) : null}
@@ -908,11 +926,9 @@ export function CheckoutPage() {
               Qué pasa ahora
             </p>
             <div className="mt-5 space-y-3 text-sm leading-6 text-cream-100/80">
-              <p>1. Creamos la orden en el backend con sus ítems, totales y dirección.</p>
-              <p>2. Generamos la preferencia de Checkout Pro en Mercado Pago.</p>
-              <p>3. Renderizamos el botón Wallet oficial para abrir el checkout seguro.</p>
-              <p>4. Mercado Pago procesa el cobro y nos notifica vía webhook.</p>
-              <p>5. El pedido queda disponible en tu historial con su estado real.</p>
+              <p>1. Confirmamos botellas, dirección y forma de entrega.</p>
+              <p>2. Abrís Mercado Pago desde el botón oficial.</p>
+              <p>3. Recibís el estado del pedido y el seguimiento por email.</p>
             </div>
           </div>
         </aside>

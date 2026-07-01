@@ -136,7 +136,7 @@ function ExperienceCard({
     <button
       type="button"
       onClick={onSelect}
-      className="w-[280px] flex-none overflow-hidden rounded-lg border border-burgundy-100 bg-white text-left shadow-velvet transition hover:-translate-y-0.5 hover:border-burgundy-300 md:w-[320px]"
+      className="w-full overflow-hidden rounded-lg border border-burgundy-100 bg-white text-left shadow-velvet transition hover:-translate-y-0.5 hover:border-burgundy-300"
     >
       <img
         src={wineImageSrc(experience.cover_image)}
@@ -167,7 +167,7 @@ function ExperienceCard({
             </span>
           ) : null}
         </div>
-        <div className="mt-3 flex justify-end">
+        <div className="mt-4 flex justify-end">
           <span className="rounded-full bg-burgundy-950 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-cream-50">
             Ver horarios
           </span>
@@ -596,34 +596,40 @@ export function VisitPage() {
   }
 
   const isIntroScreen = !isScheduleScreen && !isPaymentScreen;
+  const progressLabel = isIntroScreen ? "1 de 3" : isScheduleScreen ? "2 de 3" : "3 de 3";
 
   return (
     <div>
       {isIntroScreen ? (
         <PageHero
           eyebrow="Visitas y hospitalidad"
-          title="Visitas y degustaciones en bodega."
-          description="Recorridos, catas y propuestas privadas para grupos pequeños o encuentros especiales en bodega."
+          title="Reservá una visita y probá la bodega desde adentro."
+          description="Elegí experiencia, fecha y horario en pocos pasos. Ideal para turistas que quieren conocer San Rafael y llevarse una botella elegida con contexto."
           className="py-8 md:py-10"
           contentClassName="max-w-6xl"
           titleClassName="max-w-6xl"
           descriptionClassName="max-w-4xl"
         >
+          <Link to="/vinos">
+            <Button variant="secondary">Comprar vinos</Button>
+          </Link>
           <Link to="/contacto?tipo=evento">
-            <Button variant="ghost">Consultar evento privado</Button>
+            <Button variant="ghost">Evento privado</Button>
           </Link>
         </PageHero>
       ) : null}
 
       {isIntroScreen ? (
         <section className="mx-auto max-w-7xl px-6 py-8">
-          <SectionHeading
-            eyebrow="Visitas"
-            title="Elegí la experiencia"
-          />
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <SectionHeading eyebrow={`Paso ${progressLabel}`} title="Elegí la experiencia" />
+            <p className="text-sm font-semibold text-burgundy-700">
+              Después vas a elegir fecha, horario y pago.
+            </p>
+          </div>
           <div className="mt-6 rounded-lg border border-burgundy-100 bg-white p-4 shadow-velvet">
             {experiencesQuery.isLoading ? <p className="text-burgundy-700">Cargando experiencias...</p> : null}
-            <div className="flex gap-3 overflow-x-auto pb-2">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {experiences.map((experience) => (
                 <ExperienceCard
                   key={experience.id}
@@ -645,9 +651,14 @@ export function VisitPage() {
 
             <div className="rounded-lg border border-burgundy-100 bg-white p-5 shadow-velvet">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <p className="text-sm font-semibold uppercase tracking-[0.24em] text-burgundy-500">
-                  Disponibilidad
-                </p>
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-[0.24em] text-burgundy-500">
+                    Paso {progressLabel}
+                  </p>
+                  <h1 className="mt-2 font-serif text-3xl text-burgundy-950">
+                    Fecha, cupos y horario
+                  </h1>
+                </div>
                 <Link to="/visitas">
                   <Button variant="ghost">Cambiar visita</Button>
                 </Link>
@@ -658,6 +669,7 @@ export function VisitPage() {
                   Personas
                   <input
                     type="number"
+                    inputMode="numeric"
                     min={selectedExperience.min_guests}
                     max={selectedExperience.max_guests}
                     value={guestCount}
@@ -738,6 +750,11 @@ export function VisitPage() {
                         <button
                           key={day.date}
                           type="button"
+                          aria-label={
+                            isAvailable
+                              ? `${formatDate(day.date)}: ${daySlots.length} horarios, ${totalSpots} lugares`
+                              : `${formatDate(day.date)} sin cupos`
+                          }
                           onClick={() => handleSelectDate(day.date)}
                           disabled={!isAvailable}
                           className={cn(

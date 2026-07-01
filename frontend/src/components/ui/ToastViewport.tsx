@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { AlertCircle, CheckCircle2, Info, X } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { type Toast, useToastStore } from "../../store/toastStore";
@@ -44,12 +43,7 @@ function ToastCard({ toast }: { toast: Toast }) {
   }, [dismissToast, toast.duration, toast.id]);
 
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: -18, scale: 0.96 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -12, scale: 0.94 }}
-      transition={{ duration: 0.22, ease: "easeOut" }}
+    <div
       className={cn(
         "pointer-events-auto relative overflow-hidden rounded-lg border px-4 py-4 shadow-[0_24px_65px_-34px_rgba(31,27,24,0.45)] backdrop-blur-xl",
         styles.container,
@@ -83,17 +77,15 @@ function ToastCard({ toast }: { toast: Toast }) {
         </button>
       </div>
 
-      <motion.span
+      <span
         aria-hidden="true"
-        initial={{ scaleX: 1 }}
-        animate={{ scaleX: 0 }}
-        transition={{ duration: (toast.duration ?? 4200) / 1000, ease: "linear" }}
+        style={{ animationDuration: `${toast.duration ?? 4200}ms` }}
         className={cn(
-          "absolute inset-x-0 bottom-0 h-1 origin-left rounded-full",
+          "toast-progress absolute inset-x-0 bottom-0 h-1 origin-left rounded-full",
           styles.progress,
         )}
       />
-    </motion.div>
+    </div>
   );
 }
 
@@ -106,11 +98,9 @@ export function ToastViewport() {
       aria-atomic="true"
       className="pointer-events-none fixed inset-x-4 top-20 z-[90] flex flex-col gap-3 sm:left-auto sm:right-6 sm:top-24 sm:w-full sm:max-w-sm"
     >
-      <AnimatePresence initial={false}>
-        {toasts.map((toast) => (
-          <ToastCard key={toast.id} toast={toast} />
-        ))}
-      </AnimatePresence>
+      {toasts.map((toast) => (
+        <ToastCard key={toast.id} toast={toast} />
+      ))}
     </div>
   );
 }

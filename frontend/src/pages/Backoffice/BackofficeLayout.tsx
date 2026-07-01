@@ -1,9 +1,11 @@
 import {
   Ban,
   Bot,
+  CalendarCheck,
   CalendarDays,
   ChartNoAxesColumn,
   CircleCheck,
+  BadgePercent,
   ExternalLink,
   Layers,
   LayoutDashboard,
@@ -13,6 +15,7 @@ import {
   PackageCheck,
   ShoppingBag,
   Tags,
+  Users,
   Wine,
   X,
 } from "lucide-react";
@@ -24,19 +27,24 @@ import { useAuthStore } from "../../store/authStore";
 import { cn } from "../../lib/utils";
 
 const backofficeLinks = [
-  { label: "Resumen", href: "/backoffice", icon: LayoutDashboard },
-  { label: "Métricas", href: "/backoffice/metricas", icon: ChartNoAxesColumn },
-  { label: "Copilot", href: "/backoffice/copilot", icon: Bot },
-  { label: "Tareas", href: "/backoffice/tareas", icon: ListChecks },
-  { label: "Aprobaciones", href: "/backoffice/aprobaciones", icon: CircleCheck },
-  { label: "Reservas de stock", href: "/backoffice/reservas-stock", icon: PackageCheck },
-  { label: "Cancelaciones", href: "/backoffice/cancelaciones", icon: Ban },
-  { label: "Visitas", href: "/backoffice/visitas", icon: CalendarDays },
-  { label: "Pedidos", href: "/backoffice/pedidos", icon: ShoppingBag },
-  { label: "Vinos", href: "/backoffice/vinos", icon: Wine },
-  { label: "Categorias", href: "/backoffice/categorias", icon: Tags },
-  { label: "Varietales", href: "/backoffice/varietales", icon: Layers },
+  { label: "Resumen", href: "/backoffice", icon: LayoutDashboard, group: "Control" },
+  { label: "Métricas", href: "/backoffice/metricas", icon: ChartNoAxesColumn, group: "Control" },
+  { label: "Copilot", href: "/backoffice/copilot", icon: Bot, group: "Control" },
+  { label: "Tareas", href: "/backoffice/tareas", icon: ListChecks, group: "Operación" },
+  { label: "Aprobaciones", href: "/backoffice/aprobaciones", icon: CircleCheck, group: "Operación" },
+  { label: "Stock reservado", href: "/backoffice/reservas-stock", icon: PackageCheck, group: "Operación" },
+  { label: "Cancelaciones", href: "/backoffice/cancelaciones", icon: Ban, group: "Operación" },
+  { label: "Pedidos", href: "/backoffice/pedidos", icon: ShoppingBag, group: "Ventas" },
+  { label: "Clientes", href: "/backoffice/clientes", icon: Users, group: "Ventas" },
+  { label: "Cupones", href: "/backoffice/cupones", icon: BadgePercent, group: "Ventas" },
+  { label: "Visitas", href: "/backoffice/visitas", icon: CalendarDays, group: "Ventas" },
+  { label: "Reservas", href: "/backoffice/reservas", icon: CalendarCheck, group: "Ventas" },
+  { label: "Vinos", href: "/backoffice/vinos", icon: Wine, group: "Catálogo" },
+  { label: "Categorías", href: "/backoffice/categorias", icon: Tags, group: "Catálogo" },
+  { label: "Varietales", href: "/backoffice/varietales", icon: Layers, group: "Catálogo" },
 ];
+
+const backofficeGroups = ["Control", "Operación", "Ventas", "Catálogo"];
 
 export function BackofficeLayout() {
   const accessToken = useAuthStore((state) => state.accessToken);
@@ -105,34 +113,45 @@ export function BackofficeLayout() {
   }
 
   const renderNavigation = () => (
-    <nav className="grid gap-1.5">
-      {backofficeLinks.map((link) => {
-        const Icon = link.icon;
+    <nav className="grid gap-5">
+      {backofficeGroups.map((group) => (
+        <div key={group}>
+          <p className="mb-2 px-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-300/70">
+            {group}
+          </p>
+          <div className="grid gap-1">
+            {backofficeLinks
+              .filter((link) => link.group === group)
+              .map((link) => {
+                const Icon = link.icon;
 
-        return (
-          <NavLink
-            key={link.href}
-            to={link.href}
-            end={link.href === "/backoffice"}
-            className={({ isActive }) =>
-              cn(
-                "flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition-colors",
-                isActive
-                  ? "bg-white text-burgundy-950 shadow-[0_10px_28px_rgba(0,0,0,0.12)]"
-                  : "text-cream-100/78 hover:bg-white/10 hover:text-white",
-              )
-            }
-          >
-            <Icon className="h-4 w-4 shrink-0" strokeWidth={1.9} />
-            <span className="truncate">{link.label}</span>
-          </NavLink>
-        );
-      })}
+                return (
+                  <NavLink
+                    key={link.href}
+                    to={link.href}
+                    end={link.href === "/backoffice"}
+                    className={({ isActive }) =>
+                      cn(
+                        "flex min-h-10 items-center gap-3 rounded-md px-3 text-sm font-semibold transition-colors",
+                        isActive
+                          ? "bg-white text-burgundy-950 shadow-[0_10px_28px_rgba(0,0,0,0.12)]"
+                          : "text-cream-100/76 hover:bg-white/10 hover:text-white",
+                      )
+                    }
+                  >
+                    <Icon className="h-4 w-4 shrink-0" strokeWidth={1.9} />
+                    <span className="truncate">{link.label}</span>
+                  </NavLink>
+                );
+              })}
+          </div>
+        </div>
+      ))}
     </nav>
   );
 
   return (
-    <div className="min-h-screen bg-[#f7f5f1] text-burgundy-950">
+    <div className="min-h-screen bg-[#f3f1ec] text-burgundy-950">
       <header className="sticky top-0 z-50 border-b border-burgundy-100 bg-[#fbfaf7]/95 px-4 py-3 backdrop-blur-xl lg:hidden">
         <div className="flex items-center justify-between gap-3">
           <button
@@ -202,14 +221,14 @@ export function BackofficeLayout() {
         </div>
       </aside>
 
-      <div className="grid min-h-screen lg:grid-cols-[264px_minmax(0,1fr)]">
+      <div className="grid min-h-screen lg:grid-cols-[288px_minmax(0,1fr)]">
         <aside className="sticky top-0 hidden h-screen flex-col border-r border-white/10 bg-burgundy-950 px-4 py-5 text-cream-50 lg:flex">
           <Link to="/backoffice" className="rounded-lg px-2 py-2">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gold-300">Backoffice</p>
             <h1 className="mt-1.5 text-xl font-semibold">Bodega La Abeja</h1>
           </Link>
 
-          <div className="mt-5 flex-1 overflow-y-auto pr-1">{renderNavigation()}</div>
+          <div className="mt-6 flex-1 overflow-y-auto pr-1">{renderNavigation()}</div>
 
           <div className="mt-5 rounded-lg border border-white/10 bg-white/5 p-3">
             <p className="truncate text-sm font-semibold">{user.full_name || user.email}</p>
@@ -219,7 +238,7 @@ export function BackofficeLayout() {
 
         <div className="flex min-h-screen min-w-0 flex-col">
           <header className="sticky top-0 z-30 hidden border-b border-burgundy-100 bg-[#fbfaf7]/95 px-6 py-3 backdrop-blur-xl lg:block">
-            <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4">
+            <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-burgundy-500">
                   Operaciones
@@ -241,8 +260,8 @@ export function BackofficeLayout() {
             </div>
           </header>
 
-          <main className="flex-1 px-4 py-5 sm:px-6 lg:px-8 lg:py-6">
-            <div className="mx-auto max-w-[1600px]">
+          <main className="flex-1 px-4 py-5 sm:px-6 lg:px-7 lg:py-6 2xl:px-10">
+            <div className="w-full">
               <Outlet />
             </div>
           </main>

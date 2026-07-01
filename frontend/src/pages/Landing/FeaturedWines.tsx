@@ -9,19 +9,23 @@ export function FeaturedWines() {
   const featuredWines = data ?? [];
 
   return (
-    <section className="mx-auto max-w-7xl px-6 py-20">
+    <section className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:py-20">
       <div className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <SectionHeading
-          eyebrow="Seleccion destacada"
-          title="Etiquetas emblema para empezar a explorar la coleccion."
-          description="Vinos recomendados por estilo, ocasion y expresion de la casa para elegir con mas confianza."
+          eyebrow="Compra directa"
+          title="Botellas elegidas para llevar la bodega a tu mesa."
+          description="Etiquetas disponibles para compra online, retiro en bodega o envío coordinado con el equipo."
         />
         <Link to="/vinos" className="shrink-0">
-          <Button variant="ghost">Ver la coleccion completa</Button>
+          <Button variant="ghost">Ver colección completa</Button>
         </Link>
       </div>
       {isLoading ? (
-        <p className="text-burgundy-700">Cargando selección...</p>
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {[1, 2, 3].map((item) => (
+            <div key={item} className="h-[520px] animate-pulse rounded-lg bg-white/80 shadow-velvet" />
+          ))}
+        </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
           {featuredWines.map((wine, index) => (

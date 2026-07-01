@@ -3,17 +3,22 @@ import type {
   BackofficeCategory,
   BackofficeBooking,
   BackofficeBookingPayload,
+  BackofficeCustomer,
   BackofficeExperience,
   BackofficeExperiencePayload,
   BackofficeDashboard,
   BackofficeTimeSlot,
+  BackofficeOrderActionPayload,
   BackofficeOrderDetail,
   BackofficeOrderListItem,
+  BackofficePromoCode,
+  BackofficePromoCodePayload,
   BackofficeTimeSlotPayload,
   BackofficeVarietal,
   BackofficeWineDetail,
   BackofficeWineListItem,
   BackofficeWinePayload,
+  ReservationMetricsDashboard,
   SalesMetricsDashboard,
 } from "../types/backoffice";
 
@@ -32,6 +37,12 @@ export const backofficeApi = {
   salesMetrics: async (period: string): Promise<SalesMetricsDashboard> => {
     const response = await apiClient.get<SalesMetricsDashboard>(
       `/backoffice/sales-metrics/?period=${encodeURIComponent(period)}`,
+    );
+    return response.data;
+  },
+  reservationMetrics: async (period: string): Promise<ReservationMetricsDashboard> => {
+    const response = await apiClient.get<ReservationMetricsDashboard>(
+      `/backoffice/visits/reservation-metrics/?period=${encodeURIComponent(period)}`,
     );
     return response.data;
   },
@@ -261,6 +272,66 @@ export const backofficeApi = {
     detail: async (orderId: string): Promise<BackofficeOrderDetail> => {
       const response = await apiClient.get<BackofficeOrderDetail>(`/backoffice/orders/${orderId}/`);
       return response.data;
+    },
+    updateAction: async (
+      orderId: string,
+      payload: BackofficeOrderActionPayload,
+    ): Promise<BackofficeOrderDetail> => {
+      const response = await apiClient.patch<BackofficeOrderDetail>(
+        `/backoffice/orders/${orderId}/action/`,
+        payload,
+      );
+      return response.data;
+    },
+    exportCsv: async (): Promise<Blob> => {
+      const response = await apiClient.get("/backoffice/orders/export.csv", {
+        responseType: "blob",
+      });
+      return response.data;
+    },
+  },
+  customers: {
+    list: async (params?: { search?: string }): Promise<PaginatedResponse<BackofficeCustomer>> => {
+      const searchParams = new URLSearchParams();
+      if (params?.search) {
+        searchParams.set("search", params.search);
+      }
+      const suffix = searchParams.toString();
+      const response = await apiClient.get<PaginatedResponse<BackofficeCustomer>>(
+        `/backoffice/customers/${suffix ? `?${suffix}` : ""}`,
+      );
+      return response.data;
+    },
+    exportCsv: async (): Promise<Blob> => {
+      const response = await apiClient.get("/backoffice/customers/export.csv", {
+        responseType: "blob",
+      });
+      return response.data;
+    },
+  },
+  promoCodes: {
+    list: async (): Promise<PaginatedResponse<BackofficePromoCode>> => {
+      const response = await apiClient.get<PaginatedResponse<BackofficePromoCode>>(
+        "/backoffice/promo-codes/",
+      );
+      return response.data;
+    },
+    create: async (payload: BackofficePromoCodePayload): Promise<BackofficePromoCode> => {
+      const response = await apiClient.post<BackofficePromoCode>("/backoffice/promo-codes/", payload);
+      return response.data;
+    },
+    update: async (
+      promoCodeId: number,
+      payload: Partial<BackofficePromoCodePayload>,
+    ): Promise<BackofficePromoCode> => {
+      const response = await apiClient.patch<BackofficePromoCode>(
+        `/backoffice/promo-codes/${promoCodeId}/`,
+        payload,
+      );
+      return response.data;
+    },
+    remove: async (promoCodeId: number): Promise<void> => {
+      await apiClient.delete(`/backoffice/promo-codes/${promoCodeId}/`);
     },
   },
 };

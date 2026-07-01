@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import csv
 from datetime import timedelta
 from typing import cast
 
 import structlog
-from django.db.models import Count, F, QuerySet
+from django.db.models import Count, F, Max, Q, QuerySet, Sum
+from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework import filters, generics, permissions, status
 from rest_framework.request import Request
@@ -26,14 +28,18 @@ from apps.ai.tools.analytics_tools import (
     get_sales_summary,
 )
 from apps.ai.tools.base import ToolContext
+from apps.authentication.models import CustomUser
 from apps.authentication.permissions import IsStaffUser
-from apps.orders.models import Order
+from apps.orders.models import Order, PromoCode
 
 from .backoffice_serializers import (
     BackofficeCategorySerializer,
+    BackofficeCustomerSerializer,
     BackofficeDashboardSerializer,
+    BackofficeOrderActionSerializer,
     BackofficeOrderDetailSerializer,
     BackofficeOrderListSerializer,
+    BackofficePromoCodeSerializer,
     BackofficeVarietalSerializer,
     BackofficeWineDetailSerializer,
     BackofficeWineListSerializer,
@@ -96,6 +102,12 @@ class BackofficeDashboardView(APIView):
 
     def get(self, request: Request) -> Response:
         """Serialize high-level KPIs for the internal panel."""
+        paid_without_tracking = Order.objects.filter(
+            status__in=[Order.Status.PAID, Order.Status.PREPARING, Order.Status.READY_TO_SHIP],
+            tracking_number="",
+        ).count()
+        payment_failed = Order.objects.filter(status=Order.Status.PAYMENT_FAILED).count()
+        ready_to_ship = Order.objects.filter(status=Order.Status.READY_TO_SHIP).count()
         payload = {
             "total_wines": Wine.objects.count(),
             "active_wines": Wine.objects.filter(is_active=True).count(),
@@ -114,6 +126,31 @@ class BackofficeDashboardView(APIView):
                 Wine.objects.filter(is_active=True, stock__lte=F("low_stock_threshold"))
                 .values("id", "name", "stock", "low_stock_threshold")[:5]
             ),
+            "action_items": [
+                {
+                    "label": "Pedidos pagados sin tracking",
+                    "count": paid_without_tracking,
+                    "href": "/backoffice/pedidos",
+                },
+                {
+                    "label": "Pagos fallidos para contactar",
+                    "count": payment_failed,
+                    "href": "/backoffice/pedidos",
+                },
+                {
+                    "label": "Pedidos listos para enviar",
+                    "count": ready_to_ship,
+                    "href": "/backoffice/pedidos",
+                },
+                {
+                    "label": "Vinos con stock bajo",
+                    "count": Wine.objects.filter(
+                        is_active=True,
+                        stock__lte=F("low_stock_threshold"),
+                    ).count(),
+                    "href": "/backoffice/vinos",
+                },
+            ],
         }
         serializer = BackofficeDashboardSerializer(payload)
         return Response(serializer.data)
@@ -313,3 +350,169 @@ class BackofficeOrderDetailView(generics.RetrieveAPIView):
         .prefetch_related("items__wine__images")
         .all()
     )
+
+
+class BackofficeOrderActionView(generics.GenericAPIView):
+    """Update the operational fields staff needs day to day."""
+
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    serializer_class = BackofficeOrderActionSerializer
+    queryset = (
+        Order.objects.select_related("user", "payment")
+        .prefetch_related("items__wine__images")
+        .all()
+    )
+
+    def patch(self, request: Request, pk: str) -> Response:
+        """Apply a status/tracking/note update and return the refreshed order."""
+        order = self.get_object()
+        serializer = self.get_serializer(data=request.data, context={"order": order})
+        serializer.is_valid(raise_exception=True)
+        order = serializer.save()
+        return Response(BackofficeOrderDetailSerializer(order).data)
+
+
+class BackofficePromoCodeListCreateView(generics.ListCreateAPIView):
+    """List and create promo codes."""
+
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    serializer_class = BackofficePromoCodeSerializer
+    queryset = PromoCode.objects.all().order_by("-valid_until", "code")
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["code"]
+    ordering_fields = ["code", "valid_until", "used_count", "is_active"]
+
+
+class BackofficePromoCodeDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Retrieve, update or delete a promo code."""
+
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    serializer_class = BackofficePromoCodeSerializer
+    queryset = PromoCode.objects.all()
+
+
+class BackofficeCustomerListView(APIView):
+    """List registered and guest customers with basic buying history."""
+
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def get(self, request: Request) -> Response:
+        """Return a paginated-shape customer list for the frontend table."""
+        search = str(request.query_params.get("search") or "").strip().lower()
+        registered = (
+            CustomUser.objects.filter(is_staff=False)
+            .annotate(
+                orders_count=Count("orders", distinct=True),
+                total_spent=Sum("orders__total", filter=Q(orders__status=Order.Status.DELIVERED)),
+                last_order_at=Max("orders__created_at"),
+            )
+        )
+        if search:
+            registered = registered.filter(
+                Q(email__icontains=search)
+                | Q(first_name__icontains=search)
+                | Q(last_name__icontains=search)
+                | Q(phone__icontains=search)
+            )
+
+        rows = list(BackofficeCustomerSerializer(registered, many=True).data)
+        registered_emails = {row["email"] for row in rows}
+        guests = (
+            Order.objects.filter(user__isnull=True)
+            .exclude(customer_email="")
+            .values("customer_email")
+            .annotate(
+                orders_count=Count("id"),
+                total_spent=Sum("total", filter=Q(status=Order.Status.DELIVERED)),
+                last_order_at=Max("created_at"),
+            )
+        )
+        if search:
+            guests = guests.filter(customer_email__icontains=search)
+
+        for guest in guests:
+            email = str(guest["customer_email"])
+            if email in registered_emails:
+                continue
+            rows.append(
+                {
+                    "id": f"guest:{email}",
+                    "email": email,
+                    "full_name": email,
+                    "phone": "",
+                    "newsletter_subscribed": False,
+                    "orders_count": guest["orders_count"],
+                    "total_spent": guest["total_spent"],
+                    "last_order_at": guest["last_order_at"],
+                    "date_joined": guest["last_order_at"],
+                }
+            )
+
+        rows.sort(key=lambda row: str(row.get("last_order_at") or row.get("date_joined") or ""), reverse=True)
+        return Response({"count": len(rows), "next": None, "previous": None, "results": rows})
+
+
+class BackofficeOrderExportView(APIView):
+    """Export orders as CSV."""
+
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def get(self, request: Request) -> HttpResponse:
+        """Return a compact order export for operations."""
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="pedidos.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["pedido", "cliente", "email", "estado", "total", "tracking", "creado"])
+        for order in Order.objects.select_related("user").order_by("-created_at"):
+            customer_name = BackofficeOrderListSerializer().get_customer_name(order)
+            customer_email = BackofficeOrderListSerializer().get_customer_email(order)
+            writer.writerow(
+                [
+                    order.order_number,
+                    customer_name,
+                    customer_email,
+                    order.get_status_display(),
+                    order.total,
+                    order.tracking_number,
+                    order.created_at.isoformat(),
+                ]
+            )
+        return response
+
+
+class BackofficeCustomerExportView(APIView):
+    """Export customers as CSV."""
+
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def get(self, request: Request) -> HttpResponse:
+        """Return a compact customer export."""
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="clientes.csv"'
+        writer = csv.writer(response)
+        writer.writerow(["nombre", "email", "telefono", "newsletter", "alta"])
+        seen_emails = set()
+        for user in CustomUser.objects.filter(is_staff=False).order_by("-date_joined"):
+            seen_emails.add(user.email)
+            writer.writerow(
+                [
+                    user.full_name,
+                    user.email,
+                    user.phone,
+                    "si" if user.newsletter_subscribed else "no",
+                    user.date_joined.isoformat(),
+                ]
+            )
+        guests = (
+            Order.objects.filter(user__isnull=True)
+            .exclude(customer_email="")
+            .values("customer_email")
+            .annotate(last_order_at=Max("created_at"))
+            .order_by("-last_order_at")
+        )
+        for guest in guests:
+            email = str(guest["customer_email"])
+            if email in seen_emails:
+                continue
+            writer.writerow(["", email, "", "no", guest["last_order_at"].isoformat()])
+        return response

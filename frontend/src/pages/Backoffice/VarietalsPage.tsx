@@ -132,7 +132,7 @@ export function VarietalsPage() {
         ]}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+      <div className="space-y-6">
         <BackofficePanel>
           <BackofficePanelHeader
             eyebrow="Mapa de uvas"

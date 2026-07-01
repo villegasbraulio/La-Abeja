@@ -53,7 +53,7 @@ export const footerGroups: FooterGroup[] = [
   {
     title: "Explorar",
     links: [
-      { label: "Coleccion de vinos", href: "/vinos" },
+      { label: "Colección de vinos", href: "/vinos" },
       { label: "Planear una visita", href: "/visitas" },
       { label: "Historia de la bodega", href: "/historia" },
       { label: "Regalos y cajas", href: "/regalos" },
@@ -62,9 +62,10 @@ export const footerGroups: FooterGroup[] = [
   {
     title: "Asistencia",
     links: [
-      { label: "Guia de compra y envios", href: "/guia-de-compra" },
+      { label: "Guía de compra y envíos", href: "/guia-de-compra" },
+      { label: "Compra segura", href: "/compra-segura" },
       { label: "Retiro en bodega", href: "/guia-de-compra#retiro" },
-      { label: "Preguntas frecuentes", href: "/guia-de-compra#faq" },
+      { label: "Cambios y privacidad", href: "/compra-segura" },
       { label: "Contacto y concierge", href: "/contacto" },
     ],
   },
@@ -74,7 +75,7 @@ export const estateFacts: FactItem[] = [
   {
     label: "Legado",
     value: "1883",
-    description: "Una de las bodegas pioneras de San Rafael, con identidad cuyana y vocacion anfitriona.",
+    description: "Una de las bodegas pioneras de San Rafael, con identidad cuyana y vocación anfitriona.",
   },
   {
     label: "Hospitalidad",
@@ -84,7 +85,7 @@ export const estateFacts: FactItem[] = [
   {
     label: "Compra directa",
     value: "Tienda + visitas",
-    description: "Coleccion online, reservas y atencion personalizada en una misma experiencia.",
+    description: "Colección online, reservas y atención personalizada en una misma experiencia.",
   },
 ];
 
@@ -92,40 +93,40 @@ export const hospitalityPromises: FactItem[] = [
   {
     label: "Retiro",
     value: "Sin costo",
-    description: "Retiro coordinado en bodega con ventana de 48 horas y atencion personalizada.",
+    description: "Retiro coordinado en bodega con ventana de 48 horas y atención personalizada.",
   },
   {
     label: "Despachos",
     value: "Todo Cuyo + AMBA",
-    description: "Envios programados con embalaje protegido, seguimiento y soporte humano.",
+    description: "Envíos programados con embalaje protegido, seguimiento y soporte humano.",
   },
   {
     label: "Concierge",
-    value: "Lunes a sabado",
+    value: "Lunes a sábado",
     description: "Asistencia para regalos, maridajes, compras corporativas y reservas privadas.",
   },
 ];
 
 export const featuredExperiences: ExperienceItem[] = [
   {
-    title: "Recorrido fundacional y cata clasica",
+    title: "Recorrido fundacional y cata clásica",
     description:
-      "Un paseo por la historia de la bodega, sala de barricas y degustacion guiada de etiquetas emblema.",
+      "Un paseo por la historia de la bodega, sala de barricas y degustación guiada de etiquetas emblema.",
     details: ["90 minutos", "3 vinos", "Tabla regional", "Ideal primera visita"],
     cta: "Reservar recorrido",
   },
   {
     title: "Cata premium entre toneles",
     description:
-      "Experiencia para quienes buscan profundidad en varietales, guarda y expresion del terroir sanrafaelino.",
-    details: ["75 minutos", "5 vinos", "Sommelier anfitrion", "Cup 10 personas"],
+      "Experiencia para quienes buscan profundidad en varietales, guarda y expresión del terroir sanrafaelino.",
+    details: ["75 minutos", "5 vinos", "Sommelier anfitrión", "Cupo 10 personas"],
     cta: "Solicitar fecha",
   },
   {
     title: "Mesa larga y maridaje cuyano",
     description:
-      "Formato gastronomico para celebraciones, agasajos corporativos y grupos que quieren vivir la finca.",
-    details: ["Chef invitado", "Menu por pasos", "Privado", "Disponible a medida"],
+      "Formato gastronómico para celebraciones, agasajos corporativos y grupos que quieren vivir la finca.",
+    details: ["Chef invitado", "Menú por pasos", "Privado", "Disponible a medida"],
     cta: "Consultar evento privado",
   },
 ];
@@ -141,7 +142,7 @@ export const storyMilestones = [
     year: "1930",
     title: "Consolidacion en San Rafael",
     description:
-      "La finca se afirma como punto de encuentro entre produccion, comercio local y cultura del vino.",
+      "La finca se afirma como punto de encuentro entre producción, comercio local y cultura del vino.",
   },
   {
     year: "2000+",
@@ -163,7 +164,7 @@ export const editorialCards: EditorialCard[] = [
     eyebrow: "Maridajes",
     title: "Tres combinaciones para lucirte con carnes, fuegos lentos y quesos cuyanos",
     description:
-      "Ideas de servicio que llevan la experiencia del vino a la mesa con una narrativa mas afinada.",
+      "Ideas de servicio que llevan la experiencia del vino a la mesa con una narrativa más afinada.",
     href: "/guia-de-compra",
   },
   {
@@ -241,7 +242,7 @@ export const visitFaqs: FaqItem[] = [
   {
     question: "¿Necesito reserva previa?",
     answer:
-      "Para vivir la experiencia completa, si. Las visitas guiadas y maridajes se coordinan con antelacion para garantizar cupos y anfitrion.",
+      "Para vivir la experiencia completa, sí. Las visitas guiadas y maridajes se coordinan con antelación para garantizar cupos y anfitrión.",
   },
   {
     question: "¿Aceptan grupos grandes o eventos privados?",
@@ -258,13 +259,13 @@ export const visitFaqs: FaqItem[] = [
 export const contactChannels: ContactChannel[] = [
   {
     label: "Concierge comercial",
-    value: "reservas@bodegelaabeja.com.ar",
+    value: "reservas@bodegalaabeja.com.ar",
     note: "Compras especiales, regalos corporativos y asesoramiento de etiquetas.",
   },
   {
     label: "Telefono y WhatsApp",
     value: "+54 260 443 1122",
-    note: "Atencion de lunes a sabado de 10 a 18 h.",
+    note: "Atención de lunes a sábado de 10 a 18 h.",
   },
   {
     label: "Visitas y hospitalidad",
@@ -277,14 +278,14 @@ export const visitPlanningSteps = [
   "Elegis experiencia, cantidad de invitados y fecha ideal.",
   "El equipo confirma cupos, horario y recomendaciones de llegada.",
   "Recibis asistencia previa por WhatsApp para adaptar dieta, traslados o regalos.",
-  "La visita puede continuar con compra asistida o retiro de una seleccion preparada.",
+  "La visita puede continuar con compra asistida o retiro de una selección preparada.",
 ];
 
 export const aboutPillars = [
   {
     title: "Terroir con identidad",
     description:
-      "San Rafael aporta amplitud termica, suelos aluviales y una expresion de fruta franca que la marca asume como su centro narrativo.",
+      "San Rafael aporta amplitud térmica, suelos aluviales y una expresión de fruta franca que la marca asume como su centro narrativo.",
   },
   {
     title: "Hospitalidad como producto",
@@ -294,6 +295,6 @@ export const aboutPillars = [
   {
     title: "Atencion conectada",
     description:
-      "La tienda, las visitas y el canal de contacto funcionan como una sola conversacion para acompanar mejor cada compra.",
+      "La tienda, las visitas y el canal de contacto funcionan como una sola conversación para acompañar mejor cada compra.",
   },
 ];

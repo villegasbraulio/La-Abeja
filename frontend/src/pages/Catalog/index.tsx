@@ -1,5 +1,4 @@
 import { startTransition, useMemo } from "react";
-import { motion } from "framer-motion";
 import { Link, useSearchParams } from "react-router-dom";
 import { PageHero } from "../../components/common/PageHero";
 import { Button } from "../../components/ui/Button";
@@ -27,25 +26,25 @@ const collectionCards: Array<{
   {
     id: "gift",
     eyebrow: "Para regalar",
-    title: "Selecciones para aniversarios, cenas y obsequios corporativos.",
+    title: "Regalos con presencia",
     description: "Botellas con gran presentacion, favoritas de la casa y listas para sorprender.",
   },
   {
     id: "limited",
     eyebrow: "Series especiales",
-    title: "Ediciones limitadas para ocasiones que piden una etiqueta singular.",
-    description: "Producciones acotadas y vinos de perfil mas coleccionable.",
+    title: "Ediciones limitadas",
+    description: "Producciones acotadas y vinos de perfil más coleccionable.",
   },
   {
     id: "featured",
     eyebrow: "Recomendadas",
-    title: "Las etiquetas emblema para empezar a explorar la bodega.",
+    title: "Emblemas de la casa",
     description: "Una puerta de entrada clara para quienes quieren comprar con confianza.",
   },
   {
     id: "ready",
     eyebrow: "Entrega simple",
-    title: "Disponibles para compra inmediata, retiro en bodega o plan de visita.",
+    title: "Stock para hoy",
     description: "Etiquetas en stock para resolver una compra de hoy sin fricciones.",
   },
 ];
@@ -68,11 +67,6 @@ function filterByCollection(wines: WineListItem[], collection: string) {
       return wines;
   }
 }
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 22 },
-  visible: { opacity: 1, y: 0 },
-};
 
 export function CatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -131,11 +125,11 @@ export function CatalogPage() {
     const categoryName = categories?.find((item) => item.slug === category)?.name;
     const varietalName = varietals?.find((item) => item.slug === varietal)?.name;
 
-    if (collection === "gift") labels.push("Coleccion: Para regalar");
-    if (collection === "limited") labels.push("Coleccion: Ediciones limitadas");
-    if (collection === "featured") labels.push("Coleccion: Recomendadas");
-    if (collection === "ready") labels.push("Coleccion: Entrega simple");
-    if (category) labels.push(`Categoria: ${categoryName ?? category}`);
+    if (collection === "gift") labels.push("Colección: Para regalar");
+    if (collection === "limited") labels.push("Colección: Ediciones limitadas");
+    if (collection === "featured") labels.push("Colección: Recomendadas");
+    if (collection === "ready") labels.push("Colección: Entrega simple");
+    if (category) labels.push(`Categoría: ${categoryName ?? category}`);
     if (varietal) labels.push(`Varietal: ${varietalName ?? varietal}`);
     if (minPrice !== undefined) labels.push(`Desde ${minPrice}`);
     if (maxPrice !== undefined) labels.push(`Hasta ${maxPrice}`);
@@ -167,24 +161,45 @@ export function CatalogPage() {
     <div>
       <PageHero
         eyebrow="Vinos de la bodega"
-        title="Etiquetas para descubrir, regalar o comprar con entrega inmediata."
-        description="Explorá varietales, categorías y rangos de precio con una navegación clara para encontrar la botella indicada."
-        className="pb-10 md:pb-12"
+        title="Elegí la botella para hoy, para regalar o para llevar después de la visita."
+        description="Compra directa de etiquetas seleccionadas, con stock visible, retiro en bodega y envío coordinado."
+        className="pb-6 md:pb-8"
         titleClassName="max-w-5xl text-4xl md:text-5xl"
         descriptionClassName="max-w-3xl text-base leading-7 md:text-lg"
       />
 
-      <motion.section
-        initial="hidden"
-        animate="visible"
-        variants={fadeUp}
-        transition={{ duration: 0.5, ease: "easeOut", delay: 0.08 }}
-        className="mx-auto grid max-w-7xl gap-8 px-6 pb-20 lg:grid-cols-[320px_1fr]"
-      >
-        <motion.aside
-          variants={fadeUp}
-          className="h-fit rounded-lg border border-burgundy-100 bg-white p-6 shadow-velvet"
-        >
+      <section className="mx-auto max-w-7xl px-4 pb-8 sm:px-6">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {collectionCards.map((item) => {
+            const isActive = collection === item.id;
+
+            return (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => updateParam("collection", isActive ? null : item.id)}
+                className={`rounded-lg border px-4 py-4 text-left transition ${
+                  isActive
+                    ? "border-burgundy-950 bg-burgundy-950 text-cream-50 shadow-velvet"
+                    : "border-burgundy-100 bg-white text-burgundy-950 hover:border-burgundy-300"
+                }`}
+              >
+                <span
+                  className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${
+                    isActive ? "text-gold-300" : "text-burgundy-500"
+                  }`}
+                >
+                  {item.eyebrow}
+                </span>
+                <span className="mt-2 block font-serif text-xl leading-tight">{item.title}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="mx-auto grid max-w-7xl gap-8 px-4 pb-20 sm:px-6 lg:grid-cols-[320px_1fr]">
+        <aside className="h-fit rounded-lg border border-burgundy-100 bg-white p-6 shadow-velvet">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
               Filtros
@@ -212,7 +227,7 @@ export function CatalogPage() {
             </label>
 
             <label className="grid gap-2">
-              <span className="text-sm font-semibold text-burgundy-800">Categoria</span>
+              <span className="text-sm font-semibold text-burgundy-800">Categoría</span>
               <select
                 value={category}
                 onChange={(event) => updateParam("category", event.target.value || null)}
@@ -280,7 +295,7 @@ export function CatalogPage() {
                 Compra asistida
               </p>
               <p className="mt-3 text-sm leading-6 text-cream-100/80">
-                ¿Buscas un regalo, retiro en bodega o una recomendacion para tu visita?
+                ¿Buscás un regalo, retiro en bodega o una recomendación para tu visita?
               </p>
               <div className="mt-4 flex flex-col gap-3">
                 <Link to="/regalos">
@@ -299,19 +314,18 @@ export function CatalogPage() {
               </div>
             </div>
           </div>
-        </motion.aside>
+        </aside>
 
-        <motion.div variants={fadeUp}>
-          <motion.div
-            variants={fadeUp}
-            className="mb-8 flex flex-col gap-4 rounded-lg border border-burgundy-100 bg-white p-5 shadow-velvet md:flex-row md:items-center md:justify-between"
-          >
+        <div>
+          <div className="mb-8 flex flex-col gap-4 rounded-lg border border-burgundy-100 bg-white p-5 shadow-velvet md:flex-row md:items-center md:justify-between">
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-burgundy-500">
-                Resultado de la coleccion
+                Resultado de la colección
               </p>
               <p className="mt-2 text-burgundy-800">
-                {wines.length} etiqueta{wines.length === 1 ? "" : "s"} para explorar
+                {isLoading
+                  ? "Buscando etiquetas disponibles..."
+                  : `${wines.length} etiqueta${wines.length === 1 ? "" : "s"} para explorar`}
               </p>
               {activeFilterLabels.length > 0 ? (
                 <div className="mt-4 flex flex-wrap gap-2">
@@ -337,18 +351,24 @@ export function CatalogPage() {
                 <option value="price-asc">Precio menor a mayor</option>
                 <option value="price-desc">Precio mayor a menor</option>
                 <option value="name">Nombre A-Z</option>
-                <option value="vintage-desc">Añada mas nueva</option>
+                <option value="vintage-desc">Añada más nueva</option>
               </select>
               <Link to="/regalos">
                 <Button variant="ghost">Ver ideas para regalar</Button>
               </Link>
             </div>
-          </motion.div>
+          </div>
 
-          {isLoading ? <p className="text-burgundy-700">Cargando vinos...</p> : null}
+          {isLoading ? (
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {[1, 2, 3, 4, 5, 6].map((item) => (
+                <div key={item} className="h-[520px] animate-pulse rounded-lg bg-white shadow-velvet" />
+              ))}
+            </div>
+          ) : null}
           {isError ? (
             <p className="rounded-3xl border border-burgundy-200 bg-white px-6 py-5 text-burgundy-900">
-              No pudimos cargar la coleccion por el momento. Intenta nuevamente en unos minutos o
+              No pudimos cargar la colección por el momento. Intentá nuevamente en unos minutos o
               escribinos para recibir asistencia personalizada.
             </p>
           ) : null}
@@ -359,7 +379,7 @@ export function CatalogPage() {
                 No encontramos etiquetas con esos filtros.
               </h2>
               <p className="mt-4 max-w-2xl leading-7 text-burgundy-800">
-                Prueba ampliar el rango de precio, limpiar la busqueda o pedir una recomendacion
+                Probá ampliar el rango de precio, limpiar la búsqueda o pedir una recomendación
                 personalizada para regalos, visitas o compras corporativas.
               </p>
               <div className="mt-6 flex flex-wrap gap-4">
@@ -369,67 +389,19 @@ export function CatalogPage() {
                 </Link>
               </div>
             </div>
-          ) : (
+          ) : !isLoading && !isError ? (
             <>
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                transition={{ staggerChildren: 0.06, delayChildren: 0.06 }}
-                className="grid gap-6 md:grid-cols-2 xl:grid-cols-3"
-              >
+              <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {wines.map((wine) => (
-                  <motion.div key={wine.id} variants={fadeUp}>
+                  <div key={wine.id}>
                     <WineCard wine={wine} />
-                  </motion.div>
+                  </div>
                 ))}
-              </motion.div>
-
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                transition={{ staggerChildren: 0.08, delayChildren: 0.08 }}
-                className="mt-10 grid gap-6 xl:grid-cols-[1.2fr_1.2fr_1.2fr_0.9fr]"
-              >
-                {collectionCards.map((item) => {
-                  const isActive = collection === item.id;
-
-                  return (
-                    <motion.button
-                      key={item.id}
-                      type="button"
-                      onClick={() => updateParam("collection", isActive ? null : item.id)}
-                      variants={fadeUp}
-                      whileHover={{ y: isActive ? 0 : -4 }}
-                      whileTap={{ scale: 0.985 }}
-                      className={`rounded-lg border p-6 text-left shadow-velvet transition-all duration-300 ${
-                        isActive
-                          ? "border-burgundy-900 bg-burgundy-950 text-cream-50"
-                          : "border-burgundy-100 bg-white text-burgundy-950 hover:-translate-y-1"
-                      }`}
-                    >
-                      <p
-                        className={`text-xs font-semibold uppercase tracking-[0.2em] ${
-                          isActive ? "text-gold-300" : "text-burgundy-500"
-                        }`}
-                      >
-                        {item.eyebrow}
-                      </p>
-                      <h2 className="mt-3 font-serif text-3xl">{item.title}</h2>
-                      <p
-                        className={`mt-4 leading-7 ${
-                          isActive ? "text-cream-100/80" : "text-burgundy-800"
-                        }`}
-                      >
-                        {item.description}
-                      </p>
-                    </motion.button>
-                  );
-                })}
-              </motion.div>
+              </div>
             </>
-          )}
-        </motion.div>
-      </motion.section>
+          ) : null}
+        </div>
+      </section>
     </div>
   );
 }

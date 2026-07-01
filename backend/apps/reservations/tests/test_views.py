@@ -547,6 +547,50 @@ class TestVisitBookingAPI:
         assert slot.spots_available == 5
         assert not hasattr(booking, "payment")
 
+    def test_staff_can_view_reservation_metrics(self, authenticated_client) -> None:
+        """Backoffice staff should see visit revenue, occupancy, and status KPIs."""
+        client, user = authenticated_client
+        user.is_staff = True
+        user.save(update_fields=["is_staff"])
+        experience = make_experience(name="Cata de Barricas")
+        slot = TimeSlot.objects.create(
+            experience=experience,
+            date=timezone.localdate(),
+            start_time=timezone.datetime.strptime("12:00", "%H:%M").time(),
+            end_time=timezone.datetime.strptime("13:30", "%H:%M").time(),
+            capacity=8,
+            spots_available=5,
+        )
+        booking = Booking.objects.create(
+            confirmation_code=Booking.generate_confirmation_code(),
+            time_slot=slot,
+            customer_first_name="Mora",
+            customer_last_name="Funes",
+            customer_email="mora@example.com",
+            customer_phone="+5492604333333",
+            guest_count=3,
+            total_price=Decimal("75000.00"),
+            status=Booking.Status.CONFIRMED,
+            special_requests="Mesa cerca de la galeria.",
+            dietary_restrictions=["sin gluten"],
+        )
+        BookingManualRefund.objects.create(
+            booking=booking,
+            amount=Decimal("25000.00"),
+            status=BookingManualRefund.Status.PENDING,
+        )
+
+        response = client.get("/api/v1/backoffice/visits/reservation-metrics/?period=last_30_days")
+
+        assert response.status_code == 200
+        assert response.data["summary"]["booking_count"] == 1
+        assert response.data["summary"]["total_revenue"] == "75000"
+        assert response.data["capacity"]["booked_guests"] == 3
+        assert response.data["capacity"]["occupancy_rate"] == 0.375
+        assert response.data["by_experience"]["results"][0]["experience_name"] == "Cata de Barricas"
+        assert response.data["operations"]["pending_refunds_count"] == 1
+        assert response.data["operations"]["dietary_restrictions_count"] == 1
+
     def test_staff_can_move_manual_booking_between_slots(self, authenticated_client) -> None:
         """Moving a manual booking should release the origin slot and occupy the new one."""
         client, user = authenticated_client

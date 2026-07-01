@@ -11,7 +11,7 @@ export function StoryPreviewSection() {
           <SectionHeading
             eyebrow="Nuestra historia"
             title="Una historia de origen, oficio y hospitalidad que sigue viva en cada visita."
-            description="La coleccion se entiende mejor cuando se la conecta con el territorio, la cava y el caracter de la bodega."
+            description="La colección se entiende mejor cuando se la conecta con el territorio, la cava y el carácter de la bodega."
             tone="light"
           />
           <div className="space-y-5">

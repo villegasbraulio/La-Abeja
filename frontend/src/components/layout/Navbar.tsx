@@ -11,7 +11,6 @@ import {
   Wine,
   X,
 } from "lucide-react";
-import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { CartDrawer } from "./CartDrawer";
@@ -72,20 +71,26 @@ export function Navbar() {
 
   return (
     <>
-      <header className="relative sticky top-0 z-50 border-b border-white/50 bg-cream-50/85 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-4">
+      <header className="relative sticky top-0 z-50 border-b border-burgundy-100/70 bg-cream-50/92 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-4">
             <button
               type="button"
-              className="inline-flex h-12 w-12 items-center justify-center rounded-full border border-burgundy-200 bg-white text-burgundy-900 transition-colors duration-300 hover:bg-burgundy-50 md:hidden"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-burgundy-200 bg-white text-burgundy-900 transition-colors duration-300 hover:bg-burgundy-50 md:hidden"
               onClick={() => setIsMenuOpen((current) => !current)}
               aria-expanded={isMenuOpen}
-              aria-label={isMenuOpen ? "Cerrar navegacion" : "Abrir navegacion"}
+              aria-controls="mobile-site-navigation"
+              aria-label={isMenuOpen ? "Cerrar navegación" : "Abrir navegación"}
             >
               {isMenuOpen ? <X className="h-5 w-5" strokeWidth={1.9} /> : <Menu className="h-5 w-5" strokeWidth={1.9} />}
             </button>
-            <Link to="/" className="font-serif text-2xl text-burgundy-900 md:text-3xl">
-              Bodega La Abeja
+            <Link to="/" className="leading-none">
+              <span className="block font-serif text-xl text-burgundy-950 sm:text-2xl md:text-3xl">
+                Bodega La Abeja
+              </span>
+              <span className="mt-1 hidden text-[10px] font-semibold uppercase tracking-[0.22em] text-burgundy-500 sm:block">
+                San Rafael · 1883
+              </span>
             </Link>
           </div>
 
@@ -97,8 +102,7 @@ export function Navbar() {
                 className="relative"
               >
                 {({ isActive }) => (
-                  <motion.span
-                    whileTap={{ scale: 0.96 }}
+                  <span
                     className={cn(
                       "relative inline-flex px-1 py-2 text-xs font-semibold uppercase tracking-[0.2em] transition-colors duration-300",
                       isActive ? "text-burgundy-950" : "text-burgundy-700",
@@ -106,13 +110,9 @@ export function Navbar() {
                   >
                     {link.label}
                     {isActive ? (
-                      <motion.span
-                        layoutId="site-nav-underline"
-                        className="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-burgundy-900"
-                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
-                      />
+                      <span className="absolute inset-x-0 -bottom-0.5 h-0.5 rounded-full bg-burgundy-900" />
                     ) : null}
-                  </motion.span>
+                  </span>
                 )}
               </NavLink>
             ))}
@@ -136,9 +136,9 @@ export function Navbar() {
               </Link>
             ) : null}
             <p className="text-right text-xs uppercase tracking-[0.18em] text-burgundy-600">
-              San Rafael
+              Botellas y visitas
               <span className="block pt-1 text-[11px] tracking-[0.16em] text-burgundy-400">
-                Compras, visitas y concierge
+                Compra directa en bodega
               </span>
             </p>
           </div>
@@ -150,10 +150,10 @@ export function Navbar() {
               setIsCartOpen(true);
             }}
             aria-label={`Abrir carrito con ${itemCount} ${itemCount === 1 ? "vino" : "vinos"}`}
-            className="group inline-flex items-center gap-3 rounded-full border border-burgundy-900 bg-burgundy-900 px-3 py-2 text-left text-cream-50 shadow-[0_18px_40px_-24px_rgba(79,18,31,0.85)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-burgundy-800"
+            className="group inline-flex items-center gap-2 rounded-lg border border-burgundy-900 bg-burgundy-900 px-2.5 py-2 text-left text-cream-50 shadow-[0_18px_40px_-24px_rgba(79,18,31,0.85)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-burgundy-800 sm:gap-3 sm:px-3"
             data-testid="cart-count"
           >
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-gold-300 transition-transform duration-300 group-hover:scale-105">
+            <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-gold-300 transition-transform duration-300 group-hover:scale-105 sm:h-10 sm:w-10">
               <ShoppingBag className="h-5 w-5" strokeWidth={1.9} />
             </span>
             <span className="hidden flex-col sm:flex">
@@ -170,35 +170,34 @@ export function Navbar() {
           </button>
         </div>
 
-        <button
-          type="button"
-          aria-label="Cerrar menu"
-          onClick={() => setIsMenuOpen(false)}
-          className={cn(
-            "fixed inset-0 z-40 bg-burgundy-950/20 backdrop-blur-[2px] transition-opacity duration-300 md:hidden",
-            isMenuOpen ? "opacity-100" : "pointer-events-none opacity-0",
-          )}
-        />
+        {isMenuOpen ? (
+          <button
+            type="button"
+            aria-label="Cerrar menú"
+            onClick={() => setIsMenuOpen(false)}
+            className="fixed inset-0 z-40 bg-burgundy-950/25 backdrop-blur-[2px] md:hidden"
+          />
+        ) : null}
 
+        {isMenuOpen ? (
         <div
-          className={cn(
-            "absolute inset-x-4 top-[calc(100%+0.75rem)] z-50 origin-top rounded-lg border border-white/70 bg-[linear-gradient(180deg,rgba(255,249,242,0.97)_0%,rgba(248,241,232,0.98)_100%)] p-5 shadow-[0_28px_70px_-35px_rgba(79,18,31,0.45)] transition-all duration-300 ease-out md:hidden",
-            isMenuOpen
-              ? "visible translate-y-0 scale-100 opacity-100"
-              : "invisible -translate-y-3 scale-[0.98] opacity-0",
-          )}
+          id="mobile-site-navigation"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navegación principal"
+          className="absolute inset-x-4 top-[calc(100%+0.65rem)] z-50 origin-top rounded-lg border border-white/70 bg-[linear-gradient(180deg,rgba(255,249,242,0.98)_0%,rgba(248,241,232,0.99)_100%)] p-4 shadow-[0_28px_70px_-35px_rgba(79,18,31,0.45)] md:hidden"
         >
           <div className="mb-4 flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-burgundy-500">
-                Navegacion
+                Navegación
               </p>
-              <p className="mt-2 font-serif text-2xl text-burgundy-950">Explora la bodega</p>
+              <p className="mt-2 font-serif text-2xl text-burgundy-950">Comprar o reservar</p>
             </div>
             <button
               type="button"
               onClick={() => setIsMenuOpen(false)}
-              aria-label="Cerrar navegacion"
+              aria-label="Cerrar navegación"
               className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-burgundy-100 bg-white/80 text-burgundy-900 transition-colors duration-300 hover:bg-white"
             >
               <X className="h-5 w-5" strokeWidth={1.9} />
@@ -221,31 +220,40 @@ export function Navbar() {
                   }
                 >
                   {({ isActive }) => (
-                    <motion.div
-                      whileTap={{ scale: 0.98 }}
-                      className="flex w-full items-center justify-between"
-                    >
+                    <div className="flex w-full items-center justify-between">
                       <span className="flex items-center gap-3">
-                        <motion.span
-                          animate={isActive ? { scale: 1.06 } : { scale: 1 }}
-                          transition={{ type: "spring", stiffness: 320, damping: 22 }}
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-burgundy-50 text-burgundy-900"
+                        <span
+                          className={cn(
+                            "inline-flex h-10 w-10 items-center justify-center rounded-full bg-burgundy-50 text-burgundy-900 transition-transform",
+                            isActive && "scale-105",
+                          )}
                         >
                           <Icon className="h-5 w-5" strokeWidth={1.8} />
-                        </motion.span>
+                        </span>
                         {link.label}
                       </span>
-                      <motion.span
-                        animate={isActive ? { x: 2 } : { x: 0 }}
-                        transition={{ type: "spring", stiffness: 320, damping: 22 }}
-                      >
+                      <span className={cn("transition-transform", isActive && "translate-x-0.5")}>
                         <ChevronRight className="h-4 w-4 text-burgundy-400" strokeWidth={1.8} />
-                      </motion.span>
-                    </motion.div>
+                      </span>
+                    </div>
                   )}
                 </NavLink>
               );
             })}
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <Link
+                to="/vinos"
+                className="rounded-lg bg-burgundy-950 px-4 py-3 text-center text-sm font-semibold text-gold-300"
+              >
+                Comprar vinos
+              </Link>
+              <Link
+                to="/visitas"
+                className="rounded-lg border border-burgundy-200 bg-white px-4 py-3 text-center text-sm font-semibold text-burgundy-900"
+              >
+                Reservar visita
+              </Link>
+            </div>
             {user ? (
               <NavLink
                 to="/pedidos"
@@ -291,10 +299,11 @@ export function Navbar() {
               Concierge
             </p>
             <p className="mt-3 text-sm leading-6 text-cream-100/80">
-              Compras, visitas y regalos con atencion cercana desde cualquier dispositivo.
+              Compras, visitas y regalos con atención cercana desde cualquier dispositivo.
             </p>
           </div>
         </div>
+        ) : null}
       </header>
 
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />

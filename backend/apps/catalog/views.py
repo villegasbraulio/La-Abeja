@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from decimal import Decimal, InvalidOperation
+
+from django.db.models import Q
 from rest_framework import generics, permissions
 
-from .filters import WineFilter
 from .models import Category, Review, Varietal, Wine
 from .serializers import (
     CategorySerializer,
@@ -16,20 +18,65 @@ from .serializers import (
 )
 
 
+def _int_param(value: str | None) -> int | None:
+    if not value:
+        return None
+    try:
+        return int(value)
+    except ValueError:
+        return None
+
+
+def _decimal_param(value: str | None) -> Decimal | None:
+    if not value:
+        return None
+    try:
+        return Decimal(value)
+    except InvalidOperation:
+        return None
+
+
 class WineListView(generics.ListAPIView):
     """List active wines with filtering."""
 
     serializer_class = WineListSerializer
-    filterset_class = WineFilter
     ordering_fields = ["price", "name", "vintage_year"]
 
     def get_queryset(self):  # type: ignore[override]
         """Build the list queryset with eager loading."""
-        return (
+        queryset = (
             Wine.objects.filter(is_active=True)
             .select_related("category", "varietal")
             .prefetch_related("images", "reviews")
         )
+        params = self.request.query_params
+
+        if category := params.get("category"):
+            queryset = queryset.filter(category__slug=category)
+        if varietal := params.get("varietal"):
+            queryset = queryset.filter(varietal__slug=varietal)
+        if vintage_year := _int_param(params.get("vintage_year")):
+            queryset = queryset.filter(vintage_year=vintage_year)
+        if vintage_min := _int_param(params.get("vintage_min")):
+            queryset = queryset.filter(vintage_year__gte=vintage_min)
+        if vintage_max := _int_param(params.get("vintage_max")):
+            queryset = queryset.filter(vintage_year__lte=vintage_max)
+        if min_price := _decimal_param(params.get("min_price")):
+            queryset = queryset.filter(price__gte=min_price)
+        if max_price := _decimal_param(params.get("max_price")):
+            queryset = queryset.filter(price__lte=max_price)
+        if params.get("in_stock") == "true":
+            queryset = queryset.filter(stock__gt=0)
+        if params.get("featured") == "true":
+            queryset = queryset.filter(is_featured=True)
+        if search := params.get("search"):
+            queryset = queryset.filter(
+                Q(name__icontains=search)
+                | Q(description__icontains=search)
+                | Q(varietal__name__icontains=search)
+            )
+
+        return queryset
 
 
 class WineDetailView(generics.RetrieveAPIView):

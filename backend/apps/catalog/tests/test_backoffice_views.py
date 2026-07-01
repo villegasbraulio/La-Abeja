@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
+
 import pytest
+from django.utils import timezone
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -295,3 +298,78 @@ def test_staff_can_list_guest_orders_without_crashing(staff_client: tuple[APICli
     assert response.data["results"][0]["customer_name"] == "Maria Guest"
     assert response.data["results"][0]["customer_email"] == "guest@example.com"
     assert response.data["results"][0]["customer_phone"] == "+5492604555555"
+
+
+@pytest.mark.django_db
+def test_staff_can_update_order_operation_fields(staff_client: tuple[APIClient, object]) -> None:
+    """Staff can move an order and add tracking from the custom backoffice."""
+    client, _ = staff_client
+    order = OrderFactory(status="pending_payment")
+    OrderItemFactory(order=order)
+
+    response = client.patch(
+        f"/api/v1/backoffice/orders/{order.id}/action/",
+        {
+            "status": "preparing",
+            "tracking_number": "AND-123",
+            "estimated_delivery": "2026-07-05",
+            "notes": "Sale en la próxima tanda.",
+        },
+        format="json",
+    )
+
+    order.refresh_from_db()
+    assert response.status_code == 200
+    assert order.status == "preparing"
+    assert order.tracking_number == "AND-123"
+    assert response.data["notes"] == "Sale en la próxima tanda."
+
+
+@pytest.mark.django_db
+def test_staff_can_list_customers_and_export_csv(staff_client: tuple[APIClient, object]) -> None:
+    """Customer rows and CSV export should be available to staff."""
+    client, _ = staff_client
+    user = UserFactory(email="compradora@example.com", is_staff=False)
+    order = OrderFactory(user=user, customer_email=user.email, status="delivered")
+    OrderItemFactory(order=order)
+
+    list_response = client.get("/api/v1/backoffice/customers/")
+    export_response = client.get("/api/v1/backoffice/customers/export.csv")
+
+    assert list_response.status_code == 200
+    assert list_response.data["results"][0]["email"] == "compradora@example.com"
+    assert list_response.data["results"][0]["orders_count"] == 1
+    assert export_response.status_code == 200
+    assert b"compradora@example.com" in export_response.content
+
+
+@pytest.mark.django_db
+def test_staff_can_create_and_pause_promo_code(staff_client: tuple[APIClient, object]) -> None:
+    """Staff can manage simple promo codes."""
+    client, _ = staff_client
+    now = timezone.now()
+
+    create_response = client.post(
+        "/api/v1/backoffice/promo-codes/",
+        {
+            "code": "ABEJA10",
+            "discount_type": "percentage",
+            "discount_value": "10.00",
+            "min_order_amount": "0.00",
+            "max_uses": 20,
+            "valid_from": now.isoformat(),
+            "valid_until": (now + timedelta(days=30)).isoformat(),
+            "is_active": True,
+        },
+        format="json",
+    )
+    promo_id = create_response.data["id"]
+    patch_response = client.patch(
+        f"/api/v1/backoffice/promo-codes/{promo_id}/",
+        {"is_active": False},
+        format="json",
+    )
+
+    assert create_response.status_code == 201
+    assert patch_response.status_code == 200
+    assert patch_response.data["is_active"] is False
