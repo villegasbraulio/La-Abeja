@@ -28,8 +28,8 @@ export function ContactPage() {
     <div>
       <PageHero
         eyebrow="Contacto"
-        title="Un canal directo para consultas, reservas y pedidos especiales."
-        description="Canales visibles y un formulario simple para ordenar consultas sobre visitas, regalos, envios y eventos privados."
+        title="Atención directa para compras, visitas, regalos y empresas."
+        description="Nuestro equipo acompaña pedidos especiales, reservas de hospitalidad, regalos corporativos y consultas de envío."
         aside={
           <div className="space-y-4">
             {contactChannels.map((channel) => (
@@ -49,8 +49,8 @@ export function ContactPage() {
         <div className="grid gap-10 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="rounded-lg border border-burgundy-100 bg-white p-8 shadow-velvet">
             <SectionHeading
-              eyebrow="Formulario de contacto"
-              title="Contanos que necesitas y te ayudamos a resolverlo."
+              eyebrow="Consulta"
+              title="Dejanos tus datos y el equipo se comunica con vos."
             />
             <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
               <div className="grid gap-5 md:grid-cols-2">
@@ -124,14 +124,14 @@ export function ContactPage() {
           <div className="rounded-lg border border-white/70 bg-burgundy-950 p-8 text-cream-50 shadow-velvet">
             <SectionHeading
               eyebrow="Atencion personalizada"
-              title="Regalos, eventos y compras de volumen necesitan una conversacion propia."
-              description="Cuando el cliente encuentra contacto, direccion y asistencia clara, la experiencia gana confianza desde el primer mensaje."
+              title="Regalos, eventos y compras de volumen reciben asesoramiento dedicado."
+              description="Coordinamos etiquetas, presentaciones, fechas de entrega y propuestas privadas según cada necesidad."
               tone="light"
             />
             <ul className="mt-8 space-y-3 text-cream-100/80">
-              <li>• Ayuda a capturar demanda corporativa y privada.</li>
-              <li>• Ordena mejor el flujo para visitas y regalos.</li>
-              <li>• Refuerza confianza con direccion, horario y soporte directo.</li>
+              <li>• Selección de vinos según ocasión, presupuesto y destinatario.</li>
+              <li>• Opciones para empresas, eventos privados y celebraciones familiares.</li>
+              <li>• Coordinación de retiro, envío o entrega programada.</li>
             </ul>
           </div>
         </div>

@@ -962,7 +962,7 @@ export function BackofficeVisitsPage() {
                       <span>
                         <span className="block text-sm font-semibold">Destacada</span>
                         <span className="mt-1 block text-sm leading-6 text-current/70">
-                          Sube la experiencia a módulos de foco o recomendaciones.
+                          Prioriza la experiencia en destacados y recomendaciones.
                         </span>
                       </span>
                     </label>

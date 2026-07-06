@@ -54,8 +54,7 @@ export function Footer() {
             <div className="max-w-md">
               <p className="font-serif text-3xl text-gold-300">Bodega La Abeja</p>
               <p className="mt-4 leading-7 text-cream-100/80">
-                Vinos de San Rafael, hospitalidad, regalos y visitas en una experiencia de marca
-                pensada para comprar con calma y volver.
+                Vinos de San Rafael, visitas guiadas, regalos y atención directa desde la bodega.
               </p>
               <div className="mt-6 space-y-2 text-sm text-cream-100/75">
                 <p>Av. Hipolito Yrigoyen 9500 · San Rafael · Mendoza</p>
@@ -85,12 +84,12 @@ export function Footer() {
 
             <div>
               <p className="text-sm font-semibold uppercase tracking-[0.22em] text-gold-300">
-                Senales de confianza
+                Compra segura
               </p>
               <div className="mt-5 space-y-3 text-sm text-cream-100/80">
-                <p>Envios coordinados, retiro en bodega y soporte humano para compras complejas.</p>
+                <p>Pago online, envios coordinados y retiro en bodega.</p>
                 <p>Asistencia para regalos, eventos privados y selecciones a medida.</p>
-                <p>Seguimiento de pedidos y atencion personalizada antes y despues de la compra.</p>
+                <p>Atencion personalizada antes y despues de la compra.</p>
               </div>
             </div>
           </div>

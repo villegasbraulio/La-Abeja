@@ -98,7 +98,7 @@ export function CheckoutResultPage() {
       ? "Recibimos una confirmacion positiva de Mercado Pago. En breve vas a ver el pedido actualizado con su seguimiento."
       : checkoutStatus === "pending"
         ? "La operacion quedo pendiente. Si elegiste un medio offline, segui las instrucciones del comprobante y revisa luego el estado del pedido."
-        : "El flujo de pago no terminó aprobado. Podés reintentar desde el detalle del pedido.";
+        : "El pago no terminó aprobado. Podés reintentar desde el detalle del pedido.";
 
   return (
     <section className="mx-auto max-w-5xl px-6 py-16">

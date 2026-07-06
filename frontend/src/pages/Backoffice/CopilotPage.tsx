@@ -45,7 +45,7 @@ const quickActionCards = [
   },
   {
     title: "Reservar stock",
-    description: "Prepará una reserva con approval para separar unidades críticas.",
+    description: "Prepará una reserva con aprobación para separar unidades críticas.",
     prompt: "Reservá 3 unidades del SKU LAB-RES-900 para LAB-2026-000145",
     mode: "draft" as const,
   },
@@ -499,7 +499,7 @@ export function BackofficeCopilotPage() {
               <div className="mt-3 space-y-2">
                 {blockedExecutions.map((tool) => (
                   <p key={tool.id}>
-                    {tool.tool_name} · approval{" "}
+                    {tool.tool_name} · aprobación{" "}
                     {String(tool.output_payload["approval_request_id"] ?? "pendiente")}
                   </p>
                 ))}
@@ -609,7 +609,7 @@ export function BackofficeCopilotPage() {
             </div>
           ) : (
             <p className="mt-5 text-sm text-burgundy-700">
-              La ultima sesion no dejo writes ni approvals para revisar.
+              La ultima sesion no dejó acciones ni aprobaciones para revisar.
             </p>
           )}
         </section>
@@ -753,8 +753,8 @@ export function BackofficeCopilotPage() {
             <li>• lectura de stock y pedidos</li>
             <li>• métricas de ventas por período, varietal y etiqueta</li>
             <li>• follow-ups de pago, reclamos logísticos y reservas de stock</li>
-            <li>• approvals humanas para writes sensibles y cancelaciones</li>
-            <li>• auditoría por run, tool, workflow y reserva</li>
+            <li>• aprobaciones humanas para acciones sensibles y cancelaciones</li>
+            <li>• auditoría por conversación, acción y reserva</li>
           </ul>
         </section>
       </aside>

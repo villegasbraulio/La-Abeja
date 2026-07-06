@@ -84,7 +84,7 @@ export const estateFacts: FactItem[] = [
   {
     label: "Compra directa",
     value: "Tienda + visitas",
-    description: "Coleccion online, reservas y atencion personalizada en una misma experiencia.",
+    description: "Etiquetas, reservas y atención personalizada desde la bodega.",
   },
 ];
 
@@ -210,7 +210,7 @@ export const shippingHighlights = [
   {
     title: "Atencion humana",
     description:
-      "Si estas comprando para regalar o queres ayuda con maridajes, te responde una persona, no un formulario perdido.",
+      "Si comprás para regalar o necesitás ayuda con maridajes, el equipo te asesora antes de confirmar.",
   },
 ];
 
@@ -233,7 +233,7 @@ export const guideFaqs: FaqItem[] = [
   {
     question: "¿Puedo pagar online desde la tienda?",
     answer:
-      "Si. La tienda permite avanzar con el pedido, elegir modalidad de entrega y continuar el pago online con seguimiento posterior desde el historial.",
+      "Si. Podés elegir tus vinos, definir entrega o retiro y completar el pago online de forma segura.",
   },
 ];
 
@@ -294,6 +294,6 @@ export const aboutPillars = [
   {
     title: "Atencion conectada",
     description:
-      "La tienda, las visitas y el canal de contacto funcionan como una sola conversacion para acompanar mejor cada compra.",
+      "El equipo acompaña compras, visitas y regalos con criterio comercial y trato directo.",
   },
 ];

@@ -785,8 +785,8 @@ export function CheckoutPage() {
 
                   {walletUnavailable ? (
                     <div className="rounded-lg border border-burgundy-200 bg-white px-4 py-3 text-sm text-burgundy-800">
-                      Falta configurar <code>VITE_MERCADOPAGO_PUBLIC_KEY</code> en el frontend para
-                      renderizar el botón Wallet.
+                      El botón de Mercado Pago no está disponible por ahora. Podés abrir el checkout
+                      desde el enlace seguro.
                     </div>
                   ) : (
                     <div className="rounded-lg border border-burgundy-100 bg-white px-4 py-5">
@@ -905,14 +905,13 @@ export function CheckoutPage() {
 
           <div className="rounded-lg border border-white/70 bg-burgundy-950 p-6 text-cream-50 shadow-velvet">
             <p className="text-sm font-semibold uppercase tracking-[0.22em] text-gold-300">
-              Qué pasa ahora
+              Próximos pasos
             </p>
             <div className="mt-5 space-y-3 text-sm leading-6 text-cream-100/80">
-              <p>1. Creamos la orden en el backend con sus ítems, totales y dirección.</p>
-              <p>2. Generamos la preferencia de Checkout Pro en Mercado Pago.</p>
-              <p>3. Renderizamos el botón Wallet oficial para abrir el checkout seguro.</p>
-              <p>4. Mercado Pago procesa el cobro y nos notifica vía webhook.</p>
-              <p>5. El pedido queda disponible en tu historial con su estado real.</p>
+              <p>1. Confirmamos el pedido con tus botellas, dirección y modalidad de entrega.</p>
+              <p>2. Completás el pago en Mercado Pago de forma segura.</p>
+              <p>3. El equipo prepara tu compra y coordina despacho o retiro en bodega.</p>
+              <p>4. Vas a poder consultar el estado del pedido y el seguimiento cuando esté disponible.</p>
             </div>
           </div>
         </aside>

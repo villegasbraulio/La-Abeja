@@ -52,7 +52,7 @@ export function GuidePage() {
           <div className="rounded-lg border border-burgundy-100 bg-white p-8 shadow-[0_16px_48px_rgba(66,13,21,0.08)]">
             <SectionHeading
               eyebrow="Retiro en bodega"
-              title="Una opcion simple y visible para quienes pasan por San Rafael."
+              title="Retirá tu compra en San Rafael con coordinación previa."
             />
             <p className="mt-6 leading-8 text-burgundy-800">
               Comprar online y retirar en bodega permite sumar flexibilidad, evitar esperas y
@@ -61,7 +61,7 @@ export function GuidePage() {
           </div>
           <div className="rounded-lg border border-white/70 bg-burgundy-950 p-8 text-cream-50 shadow-[0_16px_48px_rgba(66,13,21,0.08)]">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-gold-300">
-              Lo que comunica
+              Condiciones de retiro
             </p>
             <ul className="mt-6 list-disc space-y-3 pl-5 text-cream-100/80">
               <li>Coordinacion posterior a la compra con franja horaria sugerida.</li>

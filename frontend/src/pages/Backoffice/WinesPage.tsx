@@ -119,7 +119,7 @@ const wineFlags = [
   {
     field: "is_featured" as const,
     label: "Destacado en home",
-    description: "Se usa para priorizarlo en home, curadurías y módulos promocionales.",
+    description: "Se usa para priorizarlo en home, curadurías y recomendaciones comerciales.",
   },
   {
     field: "is_limited_edition" as const,
@@ -1039,7 +1039,7 @@ export function WinesPage() {
 
                 <BackofficeField
                   label="Blend varietal"
-                  hint="Usá el formato Varietal: porcentaje para que el backend lo procese correctamente."
+                  hint="Usá el formato Varietal: porcentaje."
                 >
                   <BackofficeTextarea
                     value={formState.blend_varietals_text}

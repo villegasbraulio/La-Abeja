@@ -24,8 +24,8 @@ export function ConciergeSection() {
         <div className="rounded-lg border border-burgundy-100 bg-white p-8 shadow-velvet">
           <SectionHeading
             eyebrow="Concierge"
-            title="Envios, retiro, regalos y contacto resueltos con informacion clara."
-            description="Una compra fluye mejor cuando la logistica, los tiempos y el acompanamiento estan visibles desde el primer clic."
+            title="Envios, retiro, regalos y reservas con acompañamiento del equipo."
+            description="Compras personales, regalos corporativos y visitas se coordinan con atención humana de lunes a sábado."
           />
           <div className="mt-8 flex flex-wrap gap-4">
             <Link to="/guia-de-compra">

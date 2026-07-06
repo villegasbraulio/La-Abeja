@@ -221,7 +221,7 @@ export function VarietalsPage() {
 
                 <BackofficeField
                   label="Slug"
-                  hint="Podés completarlo manualmente o dejarlo para resolver en backend."
+                  hint="Podés completarlo manualmente o dejarlo vacío para generarlo automáticamente."
                 >
                   <BackofficeInput
                     value={formState.slug}

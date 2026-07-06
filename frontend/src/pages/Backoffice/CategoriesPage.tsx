@@ -229,7 +229,7 @@ export function CategoriesPage() {
 
                 <BackofficeField
                   label="Slug"
-                  hint="Podés dejarlo vacío si preferís que se resuelva automáticamente en backend."
+                  hint="Podés dejarlo vacío para generarlo automáticamente."
                 >
                   <BackofficeInput
                     value={formState.slug}
