@@ -45,7 +45,6 @@ export const siteLinks: SiteLink[] = [
   { label: "Visitas", href: "/visitas" },
   { label: "Historia", href: "/historia" },
   { label: "Regalos", href: "/regalos" },
-  { label: "Compras", href: "/guia-de-compra" },
   { label: "Contacto", href: "/contacto" },
 ];
 

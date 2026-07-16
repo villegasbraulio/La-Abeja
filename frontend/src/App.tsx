@@ -2,6 +2,7 @@ import { Route, Routes } from "react-router-dom";
 import { Layout } from "./components/layout/Layout";
 import { ScrollToTop } from "./components/layout/ScrollToTop";
 import { ToastViewport } from "./components/ui/ToastViewport";
+import { AccountPage } from "./pages/Account";
 import { AboutPage } from "./pages/About";
 import { BackofficeApprovalsPage } from "./pages/Backoffice/ApprovalsPage";
 import { BackofficeLayout } from "./pages/Backoffice/BackofficeLayout";
@@ -48,6 +49,7 @@ export default function App() {
           <Route path="/regalos" element={<GiftsPage />} />
           <Route path="/guia-de-compra" element={<GuidePage />} />
           <Route path="/contacto" element={<ContactPage />} />
+          <Route path="/cuenta" element={<AccountPage />} />
           <Route path="/carrito" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/checkout/resultado" element={<CheckoutResultPage />} />

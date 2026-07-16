@@ -210,7 +210,7 @@ class MercadoPagoClient:
             {
                 "id": item.wine_sku,
                 "title": item.wine_name,
-                "description": f"Pedido {order.order_number}",
+                "description": f"SKU {item.wine_sku} · {item.quantity} botella(s)",
                 "currency_id": "ARS",
                 "quantity": item.quantity,
                 "unit_price": float(item.unit_price),
@@ -219,11 +219,19 @@ class MercadoPagoClient:
         ]
 
         if order.shipping_cost > 0:
+            destination = ", ".join(
+                part
+                for part in [
+                    str(order.shipping_address.get("city", "")).strip(),
+                    str(order.shipping_address.get("province", "")).strip(),
+                ]
+                if part
+            )
             items.append(
                 {
                     "id": f"{order.order_number}-shipping",
-                    "title": order.get_shipping_method_display(),
-                    "description": f"Envío del pedido {order.order_number}",
+                    "title": f"Envío - {order.get_shipping_method_display()}",
+                    "description": destination or f"Envío del pedido {order.order_number}",
                     "currency_id": "ARS",
                     "quantity": 1,
                     "unit_price": float(order.shipping_cost),

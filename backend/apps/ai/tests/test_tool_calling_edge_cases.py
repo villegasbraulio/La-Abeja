@@ -9,10 +9,11 @@ import sys
 from types import SimpleNamespace
 
 import pytest
+from django.db import connection
 
 from apps.ai.agents.orchestrator import AIOrchestrator
 from apps.ai.agents.prompt_manager import PromptManager
-from apps.ai.agents.tool_calling_agent import OpenAIToolCallingAgent
+from apps.ai.agents.tool_calling_agent import OpenAIToolCallingAgent, ToolCallingAgentResult
 from apps.ai.models import AgentRun, Conversation, KnowledgeSource, ToolExecution
 from apps.ai.rag.ingest import KnowledgeIngestionService
 from apps.ai.tools.base import ToolContext
@@ -97,6 +98,21 @@ def _context(mode: str = Conversation.Mode.SUPPORT, *, is_staff: bool = False) -
     return ToolContext(run=run, user_id=str(user.id), is_staff=is_staff)
 
 
+class _NoAtomicToolCallingAgent:
+    """Assert the slow provider/tool loop does not hold a DB transaction."""
+
+    def run(self, **kwargs: object) -> ToolCallingAgentResult:
+        del kwargs
+        assert not connection.in_atomic_block
+        return ToolCallingAgentResult(
+            text="Listo.",
+            model="test-model",
+            used_llm=True,
+            citations=[],
+            metadata={},
+        )
+
+
 @pytest.mark.django_db
 def test_tool_calling_agent_executes_multiple_tools_in_order(
     settings, monkeypatch, seeded_catalog_and_knowledge
@@ -138,6 +154,26 @@ def test_tool_calling_agent_executes_multiple_tools_in_order(
     assert result is not None
     assert result.metadata["executed_tools"] == ["search_catalog", "search_knowledge_base"]
     assert len(result.citations) >= 1
+
+
+@pytest.mark.django_db(transaction=True)
+def test_orchestrator_does_not_hold_transaction_during_tool_calling(settings) -> None:
+    """SQLite should not be locked while the provider/tool loop is running."""
+    settings.AI_USE_LLM = True
+    settings.AI_USE_TOOL_CALLING = True
+    user = UserFactory(is_staff=True)
+    conversation = Conversation.objects.create(mode=Conversation.Mode.OPS, customer=user)
+    orchestrator = AIOrchestrator()
+    orchestrator.tool_calling_agent = _NoAtomicToolCallingAgent()
+
+    result = orchestrator.handle_message(
+        conversation=conversation,
+        message="Mostrame el stock bajo",
+        user_id=str(user.id),
+        is_staff=True,
+    )
+
+    assert result.assistant_turn.content == "Listo."
 
 
 @pytest.mark.django_db

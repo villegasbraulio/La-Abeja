@@ -1,5 +1,4 @@
 import {
-  BookOpen,
   ChevronRight,
   Gift,
   House,
@@ -8,6 +7,7 @@ import {
   MapPinned,
   Menu,
   ShoppingBag,
+  UserRound,
   Wine,
   X,
 } from "lucide-react";
@@ -26,7 +26,6 @@ const mobileLinkIcons = {
   "/visitas": MapPinned,
   "/historia": Landmark,
   "/regalos": Gift,
-  "/guia-de-compra": BookOpen,
   "/contacto": Mail,
 } as const;
 
@@ -84,8 +83,12 @@ export function Navbar() {
             >
               {isMenuOpen ? <X className="h-5 w-5" strokeWidth={1.9} /> : <Menu className="h-5 w-5" strokeWidth={1.9} />}
             </button>
-            <Link to="/" className="font-serif text-2xl text-burgundy-900 md:text-3xl">
-              Bodega La Abeja
+            <Link to="/" className="flex items-center" aria-label="Bodega La Abeja">
+              <img
+                src="/logo-la-abeja-wordmark.jpg"
+                alt="La Abeja Finca & Bodega"
+                className="h-10 w-auto mix-blend-multiply md:h-11"
+              />
             </Link>
           </div>
 
@@ -119,28 +122,12 @@ export function Navbar() {
           </nav>
 
           <div className="hidden items-center gap-3 xl:flex">
-            {user ? (
-              <Link
-                to="/pedidos"
-                className="rounded-full border border-burgundy-200 bg-white px-4 py-2 text-sm font-semibold text-burgundy-900"
-              >
-                Mis pedidos
-              </Link>
-            ) : null}
-            {user?.is_staff ? (
-              <Link
-                to="/backoffice"
-                className="rounded-full border border-burgundy-900 bg-burgundy-900 px-4 py-2 text-sm font-semibold text-gold-300"
-              >
-                Backoffice
-              </Link>
-            ) : null}
-            <p className="text-right text-xs uppercase tracking-[0.18em] text-burgundy-600">
-              San Rafael
-              <span className="block pt-1 text-[11px] tracking-[0.16em] text-burgundy-400">
-                Compras, visitas y concierge
-              </span>
-            </p>
+            <Link
+              to="/cuenta"
+              className="rounded-full border border-burgundy-900 bg-burgundy-900 px-4 py-2 text-sm font-semibold text-gold-300 transition-colors hover:bg-burgundy-800"
+            >
+              {user ? "Mi cuenta" : "Ingresar"}
+            </Link>
           </div>
 
           <button
@@ -246,44 +233,23 @@ export function Navbar() {
                 </NavLink>
               );
             })}
-            {user ? (
-              <NavLink
-                to="/pedidos"
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center justify-between rounded-lg border border-transparent bg-white/75 px-4 py-4 text-sm font-semibold text-burgundy-800 transition-all duration-300",
-                    isActive && "border-burgundy-200 bg-white text-burgundy-950 shadow-velvet",
-                  )
-                }
-              >
-                <span className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-burgundy-50 text-burgundy-900">
-                    <ShoppingBag className="h-5 w-5" strokeWidth={1.8} />
-                  </span>
-                  Mis pedidos
+            <NavLink
+              to="/cuenta"
+              className={({ isActive }) =>
+                cn(
+                  "flex items-center justify-between rounded-lg border border-transparent bg-white/75 px-4 py-4 text-sm font-semibold text-burgundy-800 transition-all duration-300",
+                  isActive && "border-burgundy-200 bg-white text-burgundy-950 shadow-velvet",
+                )
+              }
+            >
+              <span className="flex items-center gap-3">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-burgundy-50 text-burgundy-900">
+                  <UserRound className="h-5 w-5" strokeWidth={1.8} />
                 </span>
-                <ChevronRight className="h-4 w-4 text-burgundy-400" strokeWidth={1.8} />
-              </NavLink>
-            ) : null}
-            {user?.is_staff ? (
-              <NavLink
-                to="/backoffice"
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center justify-between rounded-lg border border-transparent bg-burgundy-900 px-4 py-4 text-sm font-semibold text-gold-300 transition-all duration-300",
-                    isActive && "shadow-velvet",
-                  )
-                }
-              >
-                <span className="flex items-center gap-3">
-                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-gold-300">
-                    <Landmark className="h-5 w-5" strokeWidth={1.8} />
-                  </span>
-                  Backoffice
-                </span>
-                <span className="text-gold-300/70">Admin</span>
-              </NavLink>
-            ) : null}
+                {user ? "Mi cuenta" : "Ingresar"}
+              </span>
+              <ChevronRight className="h-4 w-4 text-burgundy-400" strokeWidth={1.8} />
+            </NavLink>
           </nav>
 
           <div className="mt-4 rounded-lg bg-burgundy-950 px-5 py-5 text-cream-50">

@@ -82,8 +82,15 @@ def test_client_uses_official_sdk_for_preferences(monkeypatch, settings) -> None
     fake_module = type("FakeMercadoPagoModule", (), {"SDK": FakeSDK})
     monkeypatch.setattr("apps.payments.mercadopago.mercadopago", fake_module)
 
-    order = OrderFactory(total=Decimal("9800.00"), shipping_cost=Decimal("500.00"))
-    OrderItemFactory(order=order)
+    order = OrderFactory(total=Decimal("9500.00"), shipping_cost=Decimal("500.00"))
+    OrderItemFactory(
+        order=order,
+        wine_name="Malbec Reserva",
+        wine_sku="LAB-MAL-001",
+        quantity=2,
+        unit_price=Decimal("4500.00"),
+        subtotal=Decimal("9000.00"),
+    )
 
     client = MercadoPagoClient()
     response = client.create_preference(order)
@@ -92,8 +99,20 @@ def test_client_uses_official_sdk_for_preferences(monkeypatch, settings) -> None
     assert client.sdk.access_token == "test-token"
     assert client.sdk.preference_resource.payload["external_reference"] == str(order.id)
     assert len(client.sdk.preference_resource.payload["items"]) == 2
+    assert client.sdk.preference_resource.payload["items"][0] == {
+        "id": "LAB-MAL-001",
+        "title": "Malbec Reserva",
+        "description": "SKU LAB-MAL-001 · 2 botella(s)",
+        "currency_id": "ARS",
+        "quantity": 2,
+        "unit_price": 4500.0,
+    }
     assert client.sdk.preference_resource.payload["items"][-1]["unit_price"] == 500.0
-    assert client.sdk.preference_resource.payload["items"][-1]["title"].startswith("Envío ")
+    assert client.sdk.preference_resource.payload["items"][-1]["title"].startswith("Envío - ")
+    assert (
+        client.sdk.preference_resource.payload["items"][-1]["description"]
+        == "San Rafael, Mendoza"
+    )
     assert (
         client.sdk.preference_resource.payload["notification_url"]
         == "https://api.example.com/api/v1/payments/webhook/"

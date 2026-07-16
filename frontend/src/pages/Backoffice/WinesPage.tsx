@@ -481,6 +481,7 @@ export function WinesPage() {
 
   function selectWine(wineId: string) {
     setSelectedWineId(wineId);
+    setFormState(emptyWineForm);
     setFeedback(null);
   }
 
@@ -696,7 +697,7 @@ export function WinesPage() {
                   onClick={() => selectWine(wine.id)}
                   className={`w-full rounded-lg border p-5 text-left transition ${
                     isSelected
-                      ? "border-burgundy-900 bg-burgundy-950 text-cream-50 shadow-velvet"
+                      ? "border-burgundy-400 bg-burgundy-50 text-burgundy-950 shadow-velvet"
                       : "border-burgundy-100 bg-white text-burgundy-950 hover:border-burgundy-200 hover:bg-cream-50/60"
                   }`}
                 >
@@ -711,16 +712,14 @@ export function WinesPage() {
                       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                         <div className="min-w-0">
                           <div className="flex flex-wrap gap-2">
-                            <BackofficeBadge tone={isSelected ? "gold" : stockMeta.tone}>
+                            <BackofficeBadge tone={stockMeta.tone}>
                               {stockMeta.label}
                             </BackofficeBadge>
                             {wine.is_featured ? (
-                              <BackofficeBadge tone={isSelected ? "gold" : "soft"}>
-                                Destacado
-                              </BackofficeBadge>
+                              <BackofficeBadge tone="soft">Destacado</BackofficeBadge>
                             ) : null}
                             {wine.is_limited_edition ? (
-                              <BackofficeBadge tone={isSelected ? "gold" : "soft"}>
+                              <BackofficeBadge tone="soft">
                                 Edición limitada
                               </BackofficeBadge>
                             ) : null}
@@ -744,7 +743,6 @@ export function WinesPage() {
                         <WineMetric
                           label="Stock"
                           value={`${wine.stock} botellas`}
-                          inverted={isSelected}
                         />
                         <WineMetric
                           label="Margen"
@@ -753,12 +751,10 @@ export function WinesPage() {
                               ? "Sin cálculo"
                               : `${wine.gross_margin_percentage}%`
                           }
-                          inverted={isSelected}
                         />
                         <WineMetric
                           label="Publicación"
                           value={wine.is_active ? "Activo en tienda" : "Oculto"}
-                          inverted={isSelected}
                         />
                       </div>
                     </div>
@@ -834,6 +830,10 @@ export function WinesPage() {
               />
             </BackofficeSectionCard>
           )}
+
+          {selectedWineQuery.isLoading ? (
+            <BackofficeMessage>Cargando datos completos del vino seleccionado...</BackofficeMessage>
+          ) : null}
 
           <form className="mt-6 space-y-6" onSubmit={handleSubmit}>
             <BackofficeSectionCard>
@@ -1156,10 +1156,6 @@ export function WinesPage() {
                 </BackofficeField>
               </div>
             </BackofficeSectionCard>
-
-            {selectedWineQuery.isLoading ? (
-              <BackofficeMessage>Cargando datos completos del vino seleccionado...</BackofficeMessage>
-            ) : null}
 
             {selectedWineQuery.isError ? (
               <BackofficeMessage>

@@ -16,40 +16,6 @@ function parseNumericParam(value: string | null): number | undefined {
   return Number.isNaN(parsedValue) ? undefined : parsedValue;
 }
 
-type CollectionId = "gift" | "limited" | "featured" | "ready";
-
-const collectionCards: Array<{
-  id: CollectionId;
-  eyebrow: string;
-  title: string;
-  description: string;
-}> = [
-  {
-    id: "gift",
-    eyebrow: "Para regalar",
-    title: "Selecciones para aniversarios, cenas y obsequios corporativos.",
-    description: "Botellas con gran presentacion, favoritas de la casa y listas para sorprender.",
-  },
-  {
-    id: "limited",
-    eyebrow: "Series especiales",
-    title: "Ediciones limitadas para ocasiones que piden una etiqueta singular.",
-    description: "Producciones acotadas y vinos de perfil mas coleccionable.",
-  },
-  {
-    id: "featured",
-    eyebrow: "Recomendadas",
-    title: "Las etiquetas emblema para empezar a explorar la bodega.",
-    description: "Una puerta de entrada clara para quienes quieren comprar con confianza.",
-  },
-  {
-    id: "ready",
-    eyebrow: "Entrega simple",
-    title: "Disponibles para compra inmediata, retiro en bodega o plan de visita.",
-    description: "Etiquetas en stock para resolver una compra de hoy sin fricciones.",
-  },
-];
-
 function filterByCollection(wines: WineListItem[], collection: string) {
   switch (collection) {
     case "gift":
@@ -370,63 +336,18 @@ export function CatalogPage() {
               </div>
             </div>
           ) : (
-            <>
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                transition={{ staggerChildren: 0.06, delayChildren: 0.06 }}
-                className="grid gap-6 md:grid-cols-2 xl:grid-cols-3"
-              >
-                {wines.map((wine) => (
-                  <motion.div key={wine.id} variants={fadeUp}>
-                    <WineCard wine={wine} />
-                  </motion.div>
-                ))}
-              </motion.div>
-
-              <motion.div
-                initial="hidden"
-                animate="visible"
-                transition={{ staggerChildren: 0.08, delayChildren: 0.08 }}
-                className="mt-10 grid gap-6 xl:grid-cols-[1.2fr_1.2fr_1.2fr_0.9fr]"
-              >
-                {collectionCards.map((item) => {
-                  const isActive = collection === item.id;
-
-                  return (
-                    <motion.button
-                      key={item.id}
-                      type="button"
-                      onClick={() => updateParam("collection", isActive ? null : item.id)}
-                      variants={fadeUp}
-                      whileHover={{ y: isActive ? 0 : -4 }}
-                      whileTap={{ scale: 0.985 }}
-                      className={`rounded-lg border p-6 text-left shadow-velvet transition-all duration-300 ${
-                        isActive
-                          ? "border-burgundy-900 bg-burgundy-950 text-cream-50"
-                          : "border-burgundy-100 bg-white text-burgundy-950 hover:-translate-y-1"
-                      }`}
-                    >
-                      <p
-                        className={`text-xs font-semibold uppercase tracking-[0.2em] ${
-                          isActive ? "text-gold-300" : "text-burgundy-500"
-                        }`}
-                      >
-                        {item.eyebrow}
-                      </p>
-                      <h2 className="mt-3 font-serif text-3xl">{item.title}</h2>
-                      <p
-                        className={`mt-4 leading-7 ${
-                          isActive ? "text-cream-100/80" : "text-burgundy-800"
-                        }`}
-                      >
-                        {item.description}
-                      </p>
-                    </motion.button>
-                  );
-                })}
-              </motion.div>
-            </>
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              transition={{ staggerChildren: 0.06, delayChildren: 0.06 }}
+              className="grid gap-6 md:grid-cols-2 xl:grid-cols-3"
+            >
+              {wines.map((wine) => (
+                <motion.div key={wine.id} variants={fadeUp}>
+                  <WineCard wine={wine} />
+                </motion.div>
+              ))}
+            </motion.div>
           )}
         </motion.div>
       </motion.section>

@@ -638,6 +638,16 @@ npm run dev -- --host 127.0.0.1 --port 3000
 - `ANDREANI_ORDER_PATH`
 - `ANDREANI_TRACKING_URL_TEMPLATE`
 
+### Email / Brevo SMTP
+
+- `DEFAULT_FROM_EMAIL`
+- `DEFAULT_FROM_NAME`
+- `EMAIL_HOST=smtp-relay.brevo.com`
+- `EMAIL_PORT=587`
+- `EMAIL_HOST_USER`
+- `EMAIL_HOST_PASSWORD`
+- `EMAIL_USE_TLS=True`
+
 ### AI
 
 - `AI_LLM_PROVIDER`

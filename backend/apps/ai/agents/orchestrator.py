@@ -10,7 +10,6 @@ from uuid import UUID
 
 import structlog
 from django.conf import settings
-from django.db import transaction
 from django.utils import timezone
 
 from apps.ai.agents.prompt_manager import PromptManager
@@ -49,7 +48,6 @@ class AIOrchestrator:
         self.llm_client = LLMClient()
         self.tool_calling_agent = ToolCallingAgent()
 
-    @transaction.atomic
     def handle_message(
         self,
         *,
